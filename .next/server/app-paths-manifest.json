@@ -1,0 +1,20 @@
+{
+  "/api/activities/[id]/route": "app/api/activities/[id]/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/activities/export/route": "app/api/activities/export/route.js",
+  "/api/activities/import/route": "app/api/activities/import/route.js",
+  "/api/activities/route": "app/api/activities/route.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/health/route": "app/api/health/route.js",
+  "/api/notifications/preferences/route": "app/api/notifications/preferences/route.js",
+  "/api/notifications/test/route": "app/api/notifications/test/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/activities/upload/route": "app/api/activities/upload/route.js",
+  "/page": "app/page.js",
+  "/dashboard/settings/notifications/page": "app/dashboard/settings/notifications/page.js",
+  "/dashboard/calendar/page": "app/dashboard/calendar/page.js",
+  "/dashboard/activities/page": "app/dashboard/activities/page.js",
+  "/dashboard/analytics/page": "app/dashboard/analytics/page.js",
+  "/dashboard/page": "app/dashboard/page.js"
+}
