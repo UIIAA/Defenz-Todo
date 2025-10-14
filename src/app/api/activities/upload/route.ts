@@ -72,25 +72,25 @@ export async function POST(request: NextRequest) {
         const statusLower = status.toLowerCase();
 
         // Map common status values
-        if (statusLower.includes('ok') || statusLower.includes('concluído') || statusLower.includes('concluido') || statusLower.includes('completed')) {
+        if (statusLower.includes('completed') || statusLower.includes('concluído') || statusLower.includes('concluido') || statusLower.includes('ok')) {
           return 'completed';
         }
-        if (statusLower.includes('andamento') || statusLower.includes('progress') || statusLower.includes('em andamento')) {
+        if (statusLower.includes('in_progress') || statusLower.includes('andamento') || statusLower.includes('progress') || statusLower.includes('em andamento')) {
           return 'in_progress';
         }
-        // Default to pending if empty or unknown
-        return statusLower === '' ? 'pending' : statusLower;
+        // Default to pending for any other value (including custom statuses)
+        return 'pending';
       };
 
       return {
         // O Quê? (What) - Título da ação
-        title: getField(['O Quê?', 'O Que?', 'What', 'Título', 'Title', 'Atividade', 'Task', 'titulo']),
+        title: getField(['O Quê? (What)', 'O Quê?', 'O Que?', 'What', 'Título', 'Title', 'Atividade', 'Task', 'titulo']),
 
         // Por Quê? (Why) - Justificativa detalhada
-        description: getField(['Por Quê?', 'Por Que?', 'Why', 'Descrição', 'Description', 'Justificativa', 'descricao']),
+        description: getField(['Por Quê? (Why)', 'Por Quê?', 'Por Que?', 'Why', 'Descrição', 'Description', 'Justificativa', 'descricao']),
 
-        // Área
-        area: getField(['Área', 'Area', 'Setor', 'area']),
+        // Área (note: some spreadsheets have trailing space)
+        area: getField(['Área ', 'Área', 'Area', 'Setor', 'area']),
 
         // Prioridade (0=Alta, 1=Média, 2=Baixa)
         priority: getPriority(),
@@ -99,19 +99,19 @@ export async function POST(request: NextRequest) {
         status: getStatus(),
 
         // Quem? (Who) - Responsável
-        responsible: getField(['Quem?', 'Quem', 'Who', 'Responsável', 'Responsible', 'responsavel']),
+        responsible: getField(['Quem? (Who)', 'Quem?', 'Quem', 'Who', 'Responsável', 'Responsible', 'responsavel']),
 
         // Quando? (When) - Prazo/Timeline
-        deadline: getField(['Quando?', 'Quando', 'When', 'Prazo', 'Deadline', 'Data', 'prazo']),
+        deadline: getField(['Quando? (When)', 'Quando?', 'Quando', 'When', 'Prazo', 'Deadline', 'Data', 'prazo']),
 
         // Onde? (Where) - Local/Plataforma
-        location: getField(['Onde?', 'Onde', 'Where', 'Local', 'Location', 'Plataforma', 'local']),
+        location: getField(['Onde? (Where)', 'Onde?', 'Onde', 'Where', 'Local', 'Location', 'Plataforma', 'local']),
 
         // Como? (How) - Método/Processo detalhado
-        how: getField(['Como?', 'Como', 'How', 'Método', 'Processo', 'Execução']),
+        how: getField(['Como? (How)', 'Como?', 'Como', 'How', 'Método', 'Processo', 'Execução']),
 
         // Quanto? (How Much) - Investimento/Custo
-        cost: getField(['Quanto?', 'Quanto', 'How Much', 'Custo', 'Cost', 'Valor', 'Investimento', 'Orçamento'])
+        cost: getField(['Quanto? (How Much)', 'Quanto?', 'Quanto', 'How Much', 'Custo', 'Cost', 'Valor', 'Investimento', 'Orçamento'])
       };
     });
 

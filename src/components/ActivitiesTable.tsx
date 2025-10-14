@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Plus,
   Download,
@@ -13,7 +14,9 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Trash2
+  Trash2,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 
 interface Activity {
@@ -167,70 +170,148 @@ export default function ActivitiesTable({
     )
   }
 
-  const renderActivityRow = (activity: Activity) => (
-    <div
-      key={activity.id}
-      className="grid grid-cols-12 gap-4 items-center py-4 px-4 hover:bg-slate-800/30 rounded-lg transition-colors border-b border-slate-800/50 last:border-b-0"
-    >
-      {/* Task - 5 cols */}
-      <div className="col-span-5">
-        <h3 className="text-sm font-medium text-slate-100 mb-1">
-          {activity.title}
-        </h3>
-        <p className="text-xs text-slate-400">
-          Assigned to: {activity.responsible || 'Não definido'}
-        </p>
-      </div>
+  const renderActivityRow = (activity: Activity) => {
+    const [isExpanded, setIsExpanded] = useState(false)
 
-      {/* Area - 2 cols */}
-      <div className="col-span-2">
-        <Badge variant="outline" className="bg-slate-800/50 text-slate-300 border-slate-700">
-          {activity.area}
-        </Badge>
-      </div>
+    return (
+      <Collapsible key={activity.id} open={isExpanded} onOpenChange={setIsExpanded}>
+        <div className="hover:bg-slate-800/30 transition-colors border-b border-slate-800/50 last:border-b-0">
+          {/* Main Row */}
+          <div className="grid grid-cols-12 gap-4 items-center py-4 px-4">
+            {/* Task - 5 cols */}
+            <div className="col-span-5 flex items-center gap-2">
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="p-0 h-auto hover:bg-transparent"
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <div>
+                <h3 className="text-sm font-medium text-slate-100 mb-1">
+                  {activity.title}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Assigned to: {activity.responsible || 'Não definido'}
+                </p>
+              </div>
+            </div>
 
-      {/* Priority - 2 cols */}
-      <div className="col-span-2">
-        {getPriorityBadge(activity.priority)}
-      </div>
+            {/* Area - 2 cols */}
+            <div className="col-span-2">
+              <Badge variant="outline" className="bg-slate-800/50 text-slate-300 border-slate-700">
+                {activity.area}
+              </Badge>
+            </div>
 
-      {/* Status - 2 cols */}
-      <div className="col-span-2">
-        {getStatusBadge(activity.status)}
-      </div>
+            {/* Priority - 2 cols */}
+            <div className="col-span-2">
+              {getPriorityBadge(activity.priority)}
+            </div>
 
-      {/* Actions - 1 col */}
-      <div className="col-span-1 flex justify-end gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 p-2 h-auto"
-          onClick={() => onView(activity)}
-          title="View"
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-green-400 hover:text-green-300 hover:bg-green-500/10 p-2 h-auto"
-          onClick={() => onEdit(activity)}
-          title="Edit"
-        >
-          <Edit2 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 h-auto"
-          onClick={() => onDelete(activity)}
-          title="Delete"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  )
+            {/* Status - 2 cols */}
+            <div className="col-span-2">
+              {getStatusBadge(activity.status)}
+            </div>
+
+            {/* Actions - 1 col */}
+            <div className="col-span-1 flex justify-end gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 p-2 h-auto"
+                onClick={() => onView(activity)}
+                title="View"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-green-400 hover:text-green-300 hover:bg-green-500/10 p-2 h-auto"
+                onClick={() => onEdit(activity)}
+                title="Edit"
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 h-auto"
+                onClick={() => onDelete(activity)}
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Expanded 5W2H Details */}
+          <CollapsibleContent>
+            <div className="px-4 pb-4 bg-slate-800/20">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                {/* Por Quê? (Why) */}
+                {activity.description && (
+                  <div className="md:col-span-2 border-l-2 border-blue-500/50 pl-3">
+                    <p className="text-xs font-semibold text-blue-400 mb-1">
+                      Por Quê? <span className="text-slate-500 font-normal">(Why - Justificativa)</span>
+                    </p>
+                    <p className="text-slate-300 whitespace-pre-wrap">{activity.description}</p>
+                  </div>
+                )}
+
+                {/* Quando? (When) */}
+                {activity.deadline && (
+                  <div className="border-l-2 border-purple-500/50 pl-3">
+                    <p className="text-xs font-semibold text-purple-400 mb-1">
+                      Quando? <span className="text-slate-500 font-normal">(When - Prazo)</span>
+                    </p>
+                    <p className="text-slate-300">{activity.deadline}</p>
+                  </div>
+                )}
+
+                {/* Onde? (Where) */}
+                {activity.location && (
+                  <div className="border-l-2 border-green-500/50 pl-3">
+                    <p className="text-xs font-semibold text-green-400 mb-1">
+                      Onde? <span className="text-slate-500 font-normal">(Where - Local)</span>
+                    </p>
+                    <p className="text-slate-300">{activity.location}</p>
+                  </div>
+                )}
+
+                {/* Como? (How) */}
+                {activity.how && (
+                  <div className="md:col-span-2 border-l-2 border-yellow-500/50 pl-3">
+                    <p className="text-xs font-semibold text-yellow-400 mb-1">
+                      Como? <span className="text-slate-500 font-normal">(How - Método)</span>
+                    </p>
+                    <p className="text-slate-300 whitespace-pre-wrap">{activity.how}</p>
+                  </div>
+                )}
+
+                {/* Quanto? (How Much) */}
+                {activity.cost && (
+                  <div className="border-l-2 border-orange-500/50 pl-3">
+                    <p className="text-xs font-semibold text-orange-400 mb-1">
+                      Quanto? <span className="text-slate-500 font-normal">(How Much - Custo)</span>
+                    </p>
+                    <p className="text-slate-300">{activity.cost}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+    )
+  }
 
   return (
     <div className="space-y-6">
