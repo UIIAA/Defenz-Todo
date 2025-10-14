@@ -22,25 +22,48 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
+    console.log('🔐 Login attempt started:', { email })
+
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false
-      })
+      console.log('🔐 Calling signIn...')
+
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Login timeout')), 30000)
+      )
+
+      const result = await Promise.race([
+        signIn('credentials', {
+          email,
+          password,
+          redirect: false
+        }),
+        timeoutPromise
+      ]) as any
+
+      console.log('🔐 SignIn result:', result)
 
       if (result?.error) {
+        console.error('🔐 Login error:', result.error)
         toast.error('Credenciais inválidas')
         setIsLoading(false)
         return
       }
 
       if (result?.ok) {
+        console.log('🔐 Login successful, redirecting...')
+        toast.success('Login realizado com sucesso!')
         router.push('/dashboard')
         router.refresh()
+        // Don't stop loading - let the redirect happen
+      } else {
+        console.warn('🔐 Unexpected result:', result)
+        toast.error('Erro inesperado no login')
+        setIsLoading(false)
       }
-    } catch (error) {
-      toast.error('Erro ao fazer login')
+    } catch (error: any) {
+      console.error('🔐 Login exception:', error)
+      toast.error(error.message === 'Login timeout' ? 'Tempo de login excedido. Tente novamente.' : 'Erro ao fazer login')
       setIsLoading(false)
     }
   }
