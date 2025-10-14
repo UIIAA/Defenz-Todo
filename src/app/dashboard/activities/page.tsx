@@ -319,17 +319,20 @@ export default function ActivitiesPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-slate-200">Título (O Quê?)</Label>
+                <Label htmlFor="title" className="text-slate-200 font-semibold">
+                  O Quê? <span className="text-slate-400 font-normal">(What - Título da Ação)</span>
+                </Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Descreva a ação a ser executada"
                   required
                   className="bg-slate-800 border-slate-700 text-slate-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="area" className="text-slate-200">Área</Label>
+                <Label htmlFor="area" className="text-slate-200 font-semibold">Área</Label>
                 <Select value={formData.area} onValueChange={(value) => setFormData(prev => ({ ...prev, area: value }))}>
                   <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
                     <SelectValue placeholder="Selecione uma área" />
@@ -344,11 +347,14 @@ export default function ActivitiesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-slate-200">Descrição (Por Quê?)</Label>
+              <Label htmlFor="description" className="text-slate-200 font-semibold">
+                Por Quê? <span className="text-slate-400 font-normal">(Why - Justificativa)</span>
+              </Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Justifique a importância e o objetivo desta ação"
                 rows={3}
                 className="bg-slate-800 border-slate-700 text-slate-100"
               />
@@ -385,20 +391,26 @@ export default function ActivitiesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="responsible" className="text-slate-200">Responsável (Quem?)</Label>
+                <Label htmlFor="responsible" className="text-slate-200 font-semibold">
+                  Quem? <span className="text-slate-400 font-normal">(Who - Responsável)</span>
+                </Label>
                 <Input
                   id="responsible"
                   value={formData.responsible}
                   onChange={(e) => setFormData(prev => ({ ...prev, responsible: e.target.value }))}
+                  placeholder="Nome do responsável pela execução"
                   className="bg-slate-800 border-slate-700 text-slate-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="deadline" className="text-slate-200">Prazo (Quando?)</Label>
+                <Label htmlFor="deadline" className="text-slate-200 font-semibold">
+                  Quando? <span className="text-slate-400 font-normal">(When - Prazo)</span>
+                </Label>
                 <Input
                   id="deadline"
                   value={formData.deadline}
                   onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+                  placeholder="Ex: Semana 2-4, Contínuo, 14/10-19/11"
                   className="bg-slate-800 border-slate-700 text-slate-100"
                 />
               </div>
@@ -406,32 +418,41 @@ export default function ActivitiesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="location" className="text-slate-200">Local (Onde?)</Label>
+                <Label htmlFor="location" className="text-slate-200 font-semibold">
+                  Onde? <span className="text-slate-400 font-normal">(Where - Local/Plataforma)</span>
+                </Label>
                 <Input
                   id="location"
                   value={formData.location}
                   onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Ex: Site, Google Ads, LinkedIn, Pipedrive"
                   className="bg-slate-800 border-slate-700 text-slate-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cost" className="text-slate-200">Custo (Quanto?)</Label>
+                <Label htmlFor="cost" className="text-slate-200 font-semibold">
+                  Quanto? <span className="text-slate-400 font-normal">(How Much - Custo)</span>
+                </Label>
                 <Input
                   id="cost"
                   value={formData.cost}
                   onChange={(e) => setFormData(prev => ({ ...prev, cost: e.target.value }))}
+                  placeholder="Ex: R$ 5.000, 14/10-19/11, Horas internas"
                   className="bg-slate-800 border-slate-700 text-slate-100"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="how" className="text-slate-200">Como?</Label>
+              <Label htmlFor="how" className="text-slate-200 font-semibold">
+                Como? <span className="text-slate-400 font-normal">(How - Método/Processo)</span>
+              </Label>
               <Textarea
                 id="how"
                 value={formData.how}
                 onChange={(e) => setFormData(prev => ({ ...prev, how: e.target.value }))}
-                rows={3}
+                placeholder="Descreva o método, processo e etapas para execução desta ação"
+                rows={4}
                 className="bg-slate-800 border-slate-700 text-slate-100"
               />
             </div>
@@ -463,8 +484,10 @@ export default function ActivitiesPage() {
                 <Card className="bg-slate-800/50 border-slate-700">
                   <CardContent className="p-6 space-y-4">
                     <div>
-                      <Label className="text-slate-400 text-sm">Por Quê?</Label>
-                      <p className="text-slate-100 mt-1">{viewingActivity.description || 'Não especificado'}</p>
+                      <Label className="text-slate-400 text-sm font-semibold">
+                        Por Quê? <span className="font-normal">(Why - Justificativa)</span>
+                      </Label>
+                      <p className="text-slate-100 mt-1 whitespace-pre-wrap">{viewingActivity.description || 'Não especificado'}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -474,34 +497,36 @@ export default function ActivitiesPage() {
                       <div>
                         <Label className="text-slate-400 text-sm">Prioridade</Label>
                         <p className="text-slate-100 mt-1">
-                          {viewingActivity.priority === 0 ? 'Alta' : viewingActivity.priority === 1 ? 'Média' : 'Baixa'}
+                          {viewingActivity.priority === 0 ? '🔴 Alta' : viewingActivity.priority === 1 ? '🟡 Média' : '🟢 Baixa'}
                         </p>
                       </div>
                       <div>
                         <Label className="text-slate-400 text-sm">Status</Label>
                         <p className="text-slate-100 mt-1">
-                          {viewingActivity.status === 'pending' ? 'Pendente' : viewingActivity.status === 'in_progress' ? 'Em Andamento' : 'Concluído'}
+                          {viewingActivity.status === 'pending' ? '⏳ Pendente' : viewingActivity.status === 'in_progress' ? '🔄 Em Andamento' : '✅ Concluído'}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-slate-400 text-sm">Responsável</Label>
+                        <Label className="text-slate-400 text-sm">Quem? (Who - Responsável)</Label>
                         <p className="text-slate-100 mt-1">{viewingActivity.responsible || 'Não definido'}</p>
                       </div>
                       <div>
-                        <Label className="text-slate-400 text-sm">Prazo</Label>
+                        <Label className="text-slate-400 text-sm">Quando? (When - Prazo)</Label>
                         <p className="text-slate-100 mt-1">{viewingActivity.deadline || 'Não definido'}</p>
                       </div>
                       <div>
-                        <Label className="text-slate-400 text-sm">Local</Label>
+                        <Label className="text-slate-400 text-sm">Onde? (Where - Local)</Label>
                         <p className="text-slate-100 mt-1">{viewingActivity.location || 'Não definido'}</p>
                       </div>
                       <div className="col-span-2">
-                        <Label className="text-slate-400 text-sm">Custo</Label>
+                        <Label className="text-slate-400 text-sm">Quanto? (How Much - Custo)</Label>
                         <p className="text-slate-100 mt-1">{viewingActivity.cost || 'Não definido'}</p>
                       </div>
                     </div>
                     <div>
-                      <Label className="text-slate-400 text-sm">Como?</Label>
+                      <Label className="text-slate-400 text-sm font-semibold">
+                        Como? <span className="font-normal">(How - Método/Processo)</span>
+                      </Label>
                       <p className="text-slate-100 mt-1 whitespace-pre-wrap">{viewingActivity.how || 'Não especificado'}</p>
                     </div>
                   </CardContent>

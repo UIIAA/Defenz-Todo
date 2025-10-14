@@ -46,13 +46,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mapear colunas para formato esperado
+    // Mapear colunas para formato esperado (5W2H)
     const activities = jsonData.map((row: any, index: number) => {
       // Mapear diferentes possíveis nomes de colunas
       const getField = (possibleNames: string[]) => {
         for (const name of possibleNames) {
-          if (row[name] !== undefined && row[name] !== null) {
-            return String(row[name]);
+          if (row[name] !== undefined && row[name] !== null && row[name] !== '') {
+            return String(row[name]).trim();
           }
         }
         return '';
@@ -60,30 +60,58 @@ export async function POST(request: NextRequest) {
 
       const getPriority = () => {
         const priority = getField(['Prioridade', 'Priority', 'prioridade', 'priority']);
-        if (priority.toLowerCase().includes('alta') || priority.toLowerCase().includes('high') || priority === '0') return 0;
-        if (priority.toLowerCase().includes('média') || priority.toLowerCase().includes('medium') || priority === '1') return 1;
-        if (priority.toLowerCase().includes('baixa') || priority.toLowerCase().includes('low') || priority === '2') return 2;
+        // Convert numeric or text priority
+        if (priority === '0' || priority.toLowerCase().includes('alta') || priority.toLowerCase().includes('high')) return 0;
+        if (priority === '1' || priority.toLowerCase().includes('média') || priority.toLowerCase().includes('media') || priority.toLowerCase().includes('medium')) return 1;
+        if (priority === '2' || priority.toLowerCase().includes('baixa') || priority.toLowerCase().includes('low')) return 2;
         return 1; // default: média
       };
 
       const getStatus = () => {
         const status = getField(['Status', 'Estado', 'status']);
-        if (status.toLowerCase().includes('concluído') || status.toLowerCase().includes('completed') || status.toLowerCase().includes('concluido')) return 'completed';
-        if (status.toLowerCase().includes('andamento') || status.toLowerCase().includes('progress')) return 'in_progress';
-        return 'pending';
+        const statusLower = status.toLowerCase();
+
+        // Map common status values
+        if (statusLower.includes('ok') || statusLower.includes('concluído') || statusLower.includes('concluido') || statusLower.includes('completed')) {
+          return 'completed';
+        }
+        if (statusLower.includes('andamento') || statusLower.includes('progress') || statusLower.includes('em andamento')) {
+          return 'in_progress';
+        }
+        // Default to pending if empty or unknown
+        return statusLower === '' ? 'pending' : statusLower;
       };
 
       return {
-        title: getField(['Título', 'Title', 'O Quê?', 'O Que?', 'Atividade', 'Task', 'titulo']),
-        description: getField(['Descrição', 'Description', 'Por Quê?', 'Por Que?', 'Justificativa', 'descricao']),
+        // O Quê? (What) - Título da ação
+        title: getField(['O Quê?', 'O Que?', 'What', 'Título', 'Title', 'Atividade', 'Task', 'titulo']),
+
+        // Por Quê? (Why) - Justificativa detalhada
+        description: getField(['Por Quê?', 'Por Que?', 'Why', 'Descrição', 'Description', 'Justificativa', 'descricao']),
+
+        // Área
         area: getField(['Área', 'Area', 'Setor', 'area']),
+
+        // Prioridade (0=Alta, 1=Média, 2=Baixa)
         priority: getPriority(),
+
+        // Status
         status: getStatus(),
-        responsible: getField(['Responsável', 'Responsible', 'Quem?', 'Quem', 'responsavel']),
-        deadline: getField(['Prazo', 'Deadline', 'Quando?', 'Quando', 'Data', 'prazo']),
-        location: getField(['Local', 'Location', 'Onde?', 'Onde', 'local']),
-        how: getField(['Como?', 'Como', 'How', 'Método', 'Processo']),
-        cost: getField(['Custo', 'Cost', 'Quanto?', 'Quanto', 'Valor', 'Investimento'])
+
+        // Quem? (Who) - Responsável
+        responsible: getField(['Quem?', 'Quem', 'Who', 'Responsável', 'Responsible', 'responsavel']),
+
+        // Quando? (When) - Prazo/Timeline
+        deadline: getField(['Quando?', 'Quando', 'When', 'Prazo', 'Deadline', 'Data', 'prazo']),
+
+        // Onde? (Where) - Local/Plataforma
+        location: getField(['Onde?', 'Onde', 'Where', 'Local', 'Location', 'Plataforma', 'local']),
+
+        // Como? (How) - Método/Processo detalhado
+        how: getField(['Como?', 'Como', 'How', 'Método', 'Processo', 'Execução']),
+
+        // Quanto? (How Much) - Investimento/Custo
+        cost: getField(['Quanto?', 'Quanto', 'How Much', 'Custo', 'Cost', 'Valor', 'Investimento', 'Orçamento'])
       };
     });
 
