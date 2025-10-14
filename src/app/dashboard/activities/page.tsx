@@ -313,7 +313,7 @@ export default function ActivitiesPage() {
               {editingActivity ? 'Editar Atividade' : 'Nova Atividade'}
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Preencha os detalhes da atividade estratégica
+              Preencha os detalhes da atividade estratégica (5W2H)
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
