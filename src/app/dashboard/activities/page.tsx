@@ -212,27 +212,43 @@ export default function ActivitiesPage() {
       const result = await response.json()
 
       if (result.success) {
-        // Filter out duplicates before adding
-        const newActivities = result.data.filter((importedAct: any) => {
-          return !activities.some(existingAct =>
-            existingAct.title.trim().toLowerCase() === importedAct.title.trim().toLowerCase() &&
-            existingAct.area.trim().toLowerCase() === importedAct.area.trim().toLowerCase()
-          )
-        }).map((act: any) => ({
-          ...act,
-          id: Date.now().toString() + Math.random(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }))
+        // Save each activity to the database
+        const importPromises = result.data.map(async (activityData: any) => {
+          try {
+            const response = await fetch('/api/activities', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(activityData)
+            })
 
-        const duplicatesCount = result.data.length - newActivities.length
+            if (response.ok) {
+              return await response.json()
+            } else if (response.status === 409) {
+              // Duplicate - skip silently
+              return null
+            } else {
+              console.error('Failed to save activity:', activityData.title)
+              return null
+            }
+          } catch (error) {
+            console.error('Error saving activity:', error)
+            return null
+          }
+        })
 
-        setActivities(prev => [...prev, ...newActivities])
+        const savedActivities = (await Promise.all(importPromises)).filter(Boolean)
+
+        // Update local state with saved activities
+        if (savedActivities.length > 0) {
+          setActivities(prev => [...prev, ...savedActivities])
+        }
+
+        const duplicatesCount = result.data.length - savedActivities.length
 
         if (duplicatesCount > 0) {
-          toast.success(`✅ ${newActivities.length} atividades importadas, ${duplicatesCount} duplicadas ignoradas`)
+          toast.success(`✅ ${savedActivities.length} atividades importadas, ${duplicatesCount} duplicadas ignoradas`)
         } else {
-          toast.success(result.message || `${result.count} atividades importadas!`)
+          toast.success(`✅ ${savedActivities.length} atividades importadas com sucesso!`)
         }
       } else {
         toast.error(result.error || 'Erro ao importar arquivo')
