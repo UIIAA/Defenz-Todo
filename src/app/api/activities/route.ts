@@ -3,6 +3,8 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { sendEmailWithChecks } from '@/lib/email'
 import ActivityAssigned from '@/emails/ActivityAssigned'
+import { createActivitySchema } from '@/lib/validations/activity'
+import { handleApiError, createdResponse, ApiError } from '@/lib/api-helpers'
 
 export async function GET() {
   try {
@@ -15,10 +17,10 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json(activities)
+    return NextResponse.json({ success: true, data: activities, count: activities.length })
   } catch (error) {
     console.error('Error fetching activities:', error)
-    return NextResponse.json({ error: 'Failed to fetch activities' }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
@@ -27,52 +29,50 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      throw new ApiError('Não autorizado', 401)
     }
 
-    const data = await request.json()
+    if (!user.id) {
+      throw new ApiError('ID de usuário inválido', 400)
+    }
 
-    // Manual check since Prisma doesn't support case-insensitive search on SQLite
-    const allActivities = await db.activity.findMany({
+    // Parse e validar dados com Zod
+    const body = await request.json()
+    const validatedData = createActivitySchema.parse(body)
+
+    // Verificação otimizada de duplicatas - busca específica ao invés de carregar tudo
+    const existingActivity = await db.activity.findFirst({
       where: {
-        userId: user.id!,
-        deletedAt: null
-      }
+        userId: user.id,
+        deletedAt: null,
+        title: {
+          equals: validatedData.title,
+          mode: 'insensitive' // Case-insensitive (funciona em PostgreSQL, não em SQLite)
+        },
+        area: {
+          equals: validatedData.area,
+          mode: 'insensitive'
+        }
+      },
+      select: { id: true } // Apenas o ID, não precisa de todos os campos
     })
 
-    const isDuplicate = allActivities.some(activity =>
-      activity.title.trim().toLowerCase() === data.title.trim().toLowerCase() &&
-      activity.area.trim().toLowerCase() === data.area.trim().toLowerCase()
-    )
-
-    if (isDuplicate) {
-      return NextResponse.json(
-        {
-          error: 'Duplicate activity',
-          message: `Atividade duplicada! Já existe uma atividade com o título "${data.title}" na área "${data.area}"`
-        },
-        { status: 409 }
+    if (existingActivity) {
+      throw new ApiError(
+        `Atividade duplicada! Já existe uma atividade com o título "${validatedData.title}" na área "${validatedData.area}"`,
+        409
       )
     }
 
     const activity = await db.activity.create({
       data: {
-        title: data.title,
-        area: data.area,
-        priority: data.priority,
-        status: data.status,
-        description: data.description,
-        responsible: data.responsible,
-        deadline: data.deadline,
-        location: data.location,
-        how: data.how,
-        cost: data.cost,
-        userId: user.id!
+        ...validatedData,
+        userId: user.id
       }
     })
 
     // Send assignment email if responsible person is assigned
-    if (data.responsible && user.email) {
+    if (validatedData.responsible && user.email) {
       const getPriorityLabel = (priority: number) => {
         switch (priority) {
           case 0: return 'Alta' as const
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       // Send email notification (non-blocking)
       sendEmailWithChecks(
         {
-          userId: user.id!,
+          userId: user.id,
           emailType: 'assigned',
           activityId: activity.id,
           to: user.email,
@@ -107,9 +107,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return NextResponse.json(activity)
+    return createdResponse(activity, 'Atividade criada com sucesso')
   } catch (error) {
     console.error('Error creating activity:', error)
-    return NextResponse.json({ error: 'Failed to create activity' }, { status: 500 })
+    return handleApiError(error)
   }
 }

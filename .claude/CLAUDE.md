@@ -1,5 +1,33 @@
 # Defenz - Gestão Estratégica de Atividades
 
+## ⚠️ IMPORTANTE: Claude Code SDK como Base
+
+**ESTE PROJETO SEGUE ESTRITAMENTE O CLAUDE CODE SDK**
+
+Todo desenvolvimento, estrutura e workflow deste projeto são baseados no Claude Code SDK. Este é um requisito fundamental e não negociável.
+
+### Princípios Fundamentais:
+- ✅ **Sempre consultar a documentação oficial do SDK** quando houver dúvidas
+- ✅ **Utilizar os agentes especializados** definidos em `.claude/agents/`
+- ✅ **Seguir as convenções e padrões** estabelecidos pelo SDK
+- ✅ **Respeitar a estrutura de arquivos e organização** do SDK
+
+### Documentação Oficial:
+- **SDK Overview**: https://docs.claude.com/en/docs/claude-code/sdk/sdk-overview
+- **Mapa de Documentação**: https://docs.claude.com/en/docs/claude-code/claude_code_docs_map.md
+- **Documentação Completa**: https://docs.claude.com/en/docs/claude-code
+
+### Quando Consultar a Documentação:
+- Ao criar novos agentes especializados
+- Ao modificar configurações do SDK
+- Ao implementar workflows complexos
+- Em caso de dúvidas sobre melhores práticas
+- Antes de desviar de qualquer padrão estabelecido
+
+**⚡ LEMBRE-SE: O SDK é a fundação. Não improvise sem consultar a documentação.**
+
+---
+
 ## Visão Geral do Projeto
 
 Aplicação completa para gerenciamento de atividades estratégicas do projeto Defenz, desenvolvida com Next.js 15, TypeScript, Prisma ORM e Neon Database.

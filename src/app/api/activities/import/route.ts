@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
+import { importActivitiesSchema } from '@/lib/validations/activity'
+import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 
+/**
+ * Atividades iniciais da planilha do projeto Defenz
+ * Estas atividades são usadas apenas para seed inicial do banco
+ */
 const initialActivities = [
   {
     title: 'Definição e Aplicação da Identidade Visual',
@@ -184,29 +191,90 @@ const initialActivities = [
   }
 ]
 
+/**
+ * POST /api/activities/import
+ *
+ * Importa as atividades iniciais do projeto Defenz.
+ *
+ * SEGURANÇA:
+ * - Requer autenticação
+ * - Apenas permite importação se:
+ *   1. O banco está vazio (primeiro uso), ou
+ *   2. O usuário é admin e confirma explicitamente
+ * - Valida todos os dados com Zod antes de inserir
+ * - Nunca deleta atividades de outros usuários
+ *
+ * Query params:
+ * - confirm=true: Obrigatório para admin forçar reimportação
+ */
 export async function POST(request: NextRequest) {
   try {
-    // Limpar atividades existentes
-    await db.activity.deleteMany({})
-    
-    // Inserir atividades iniciais
-    const activities = await Promise.all(
-      initialActivities.map(activity => 
-        db.activity.create({
-          data: {
-            ...activity,
-            userId: 'default-user'
-          }
-        })
-      )
-    )
-    
-    return NextResponse.json({ 
-      message: 'Activities imported successfully',
-      count: activities.length 
+    // 1. Verificar autenticação
+    const user = await getCurrentUser()
+
+    if (!user) {
+      throw new ApiError('Não autorizado', 401)
+    }
+
+    if (!user.id) {
+      throw new ApiError('ID de usuário inválido', 400)
+    }
+
+    // 2. Verificar se banco está vazio (primeiro uso)
+    const activityCount = await db.activity.count()
+    const isFirstUse = activityCount === 0
+
+    // 3. Se não for primeiro uso, verificar permissões de admin
+    if (!isFirstUse) {
+      // Apenas admin pode reimportar dados
+      if (user.role !== 'admin') {
+        throw new ApiError(
+          'Apenas administradores podem reimportar atividades em um banco com dados existentes',
+          403
+        )
+      }
+
+      // Admin precisa confirmar explicitamente
+      const { searchParams } = new URL(request.url)
+      const confirmed = searchParams.get('confirm') === 'true'
+
+      if (!confirmed) {
+        throw new ApiError(
+          'Reimportação requer confirmação explícita. Use ?confirm=true',
+          400
+        )
+      }
+
+      // Admin confirmou: deletar APENAS atividades do próprio usuário
+      await db.activity.deleteMany({
+        where: { userId: user.id }
+      })
+    }
+
+    // 4. Validar dados com Zod
+    const validation = importActivitiesSchema.safeParse(initialActivities)
+
+    if (!validation.success) {
+      throw new ApiError('Dados de importação inválidos', 400, validation.error.errors)
+    }
+
+    // 5. Inserir atividades validadas com userId correto
+    const activities = await db.activity.createMany({
+      data: validation.data.map(activity => ({
+        ...activity,
+        userId: user.id
+      }))
     })
+
+    return successResponse(
+      {
+        count: activities.count,
+        imported: validation.data.length
+      },
+      `${activities.count} atividades importadas com sucesso${isFirstUse ? ' (primeira configuração)' : ' (reimportação admin)'}`
+    )
   } catch (error) {
     console.error('Error importing activities:', error)
-    return NextResponse.json({ error: 'Failed to import activities' }, { status: 500 })
+    return handleApiError(error)
   }
 }
