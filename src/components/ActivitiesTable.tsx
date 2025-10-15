@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import ActivityComments from '@/components/ActivityComments'
 import {
   Plus,
   Download,
@@ -52,7 +54,8 @@ function ActivityRow({
   onEdit,
   onDelete,
   getPriorityBadge,
-  getStatusBadge
+  getStatusBadge,
+  currentUserEmail
 }: {
   activity: Activity
   onView: (activity: Activity) => void
@@ -60,6 +63,7 @@ function ActivityRow({
   onDelete: (activity: Activity) => void
   getPriorityBadge: (priority: number) => JSX.Element
   getStatusBadge: (status: string) => JSX.Element
+  currentUserEmail: string
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -196,6 +200,12 @@ function ActivityRow({
                 </div>
               )}
             </div>
+
+            {/* Comments Section */}
+            <ActivityComments
+              activityId={activity.id}
+              currentUserEmail={currentUserEmail}
+            />
           </div>
         </CollapsibleContent>
       </div>
@@ -212,6 +222,7 @@ export default function ActivitiesTable({
   onDownload,
   onAddNew
 }: ActivitiesTableProps) {
+  const { data: session } = useSession()
   const [activeTab, setActiveTab] = useState('active')
   const [sortField, setSortField] = useState<keyof Activity | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -442,6 +453,7 @@ export default function ActivitiesTable({
                     onDelete={onDelete}
                     getPriorityBadge={getPriorityBadge}
                     getStatusBadge={getStatusBadge}
+                    currentUserEmail={session?.user?.email || ''}
                   />
                 ))
               ) : (
@@ -462,6 +474,7 @@ export default function ActivitiesTable({
                     onDelete={onDelete}
                     getPriorityBadge={getPriorityBadge}
                     getStatusBadge={getStatusBadge}
+                    currentUserEmail={session?.user?.email || ''}
                   />
                 ))
               ) : (

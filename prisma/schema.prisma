@@ -27,28 +27,30 @@ model User {
   sessions                 Session[]
   notificationPreferences  NotificationPreferences?
   emailLogs                EmailLog[]
+  activityComments         ActivityComment[]
 
   @@index([email])
 }
 
 model Activity {
-  id          String    @id @default(cuid())
-  priority    Int       // 0=Alta, 1=Média, 2=Baixa
-  area        String    // Marketing, Vendas, Gestão, Estratégico, Back office
-  title       String    // O Quê? (What) - Título da ação
-  description String?   @db.Text // Por Quê? (Why) - Justificativa detalhada
-  responsible String?   // Quem? (Who) - Responsável pela execução
-  deadline    String?   // Quando? (When) - Prazo/Timeline
-  location    String?   // Onde? (Where) - Local/Plataforma de execução
-  how         String?   @db.Text // Como? (How) - Método/Processo detalhado
-  cost        String?   // Quanto? (How Much) - Investimento/Custo
-  status      String    @default("pending") // pending, in_progress, completed, ok
-  deletedAt   DateTime? // Soft delete
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id          String            @id @default(cuid())
+  priority    Int               // 0=Alta, 1=Média, 2=Baixa
+  area        String            // Marketing, Vendas, Gestão, Estratégico, Back office
+  title       String            // O Quê? (What) - Título da ação
+  description String?           @db.Text // Por Quê? (Why) - Justificativa detalhada
+  responsible String?           // Quem? (Who) - Responsável pela execução
+  deadline    String?           // Quando? (When) - Prazo/Timeline
+  location    String?           // Onde? (Where) - Local/Plataforma de execução
+  how         String?           @db.Text // Como? (How) - Método/Processo detalhado
+  cost        String?           // Quanto? (How Much) - Investimento/Custo
+  status      String            @default("pending") // pending, in_progress, completed, ok
+  deletedAt   DateTime?         // Soft delete
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  user        User              @relation(fields: [userId], references: [id])
   auditLogs   AuditLog[]
+  comments    ActivityComment[]
 
   @@index([userId])
   @@index([status])
@@ -145,4 +147,21 @@ model EmailLog {
   @@index([emailType])
   @@index([sentAt])
   @@index([status])
+}
+
+model ActivityComment {
+  id         String   @id @default(cuid())
+  activityId String
+  userId     String
+  userName   String   // Denormalizado para performance
+  userEmail  String
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([activityId, createdAt])
+  @@index([userId])
 }
