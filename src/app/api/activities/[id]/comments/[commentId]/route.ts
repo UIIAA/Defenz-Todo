@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { db } from '@/lib/db'
-import { updateCommentSchema } from '@/lib/validations/comment'
+import { updateCommentSchema, cuidSchema } from '@/lib/validations/comment'
 
 // PUT /api/activities/[id]/comments/[commentId] - Update a comment
 export async function PUT(
@@ -16,6 +16,24 @@ export async function PUT(
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
+      )
+    }
+
+    // Validate activity ID format
+    const activityIdValidation = cuidSchema.safeParse(params.id)
+    if (!activityIdValidation.success) {
+      return NextResponse.json(
+        { error: 'ID de atividade inválido' },
+        { status: 400 }
+      )
+    }
+
+    // Validate comment ID format
+    const commentIdValidation = cuidSchema.safeParse(params.commentId)
+    if (!commentIdValidation.success) {
+      return NextResponse.json(
+        { error: 'ID de comentário inválido' },
+        { status: 400 }
       )
     }
 
@@ -82,9 +100,11 @@ export async function PUT(
 
     return NextResponse.json(comment)
   } catch (error: any) {
-    console.error('Update comment error:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Update comment error:', error)
+    }
     return NextResponse.json(
-      { error: 'Erro ao atualizar comentário', details: error.message },
+      { error: 'Erro ao atualizar comentário' },
       { status: 500 }
     )
   }
@@ -102,6 +122,24 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
+      )
+    }
+
+    // Validate activity ID format
+    const activityIdValidation = cuidSchema.safeParse(params.id)
+    if (!activityIdValidation.success) {
+      return NextResponse.json(
+        { error: 'ID de atividade inválido' },
+        { status: 400 }
+      )
+    }
+
+    // Validate comment ID format
+    const commentIdValidation = cuidSchema.safeParse(params.commentId)
+    if (!commentIdValidation.success) {
+      return NextResponse.json(
+        { error: 'ID de comentário inválido' },
+        { status: 400 }
       )
     }
 
@@ -146,9 +184,11 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Delete comment error:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Delete comment error:', error)
+    }
     return NextResponse.json(
-      { error: 'Erro ao deletar comentário', details: error.message },
+      { error: 'Erro ao deletar comentário' },
       { status: 500 }
     )
   }

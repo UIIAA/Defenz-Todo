@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -8,6 +8,7 @@ import { MessageSquare, Send, Edit2, Trash2, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import DOMPurify from 'isomorphic-dompurify'
 
 interface Comment {
   id: string
@@ -35,12 +36,7 @@ export default function ActivityComments({
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(true)
 
-  // Fetch comments
-  useEffect(() => {
-    fetchComments()
-  }, [activityId])
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const response = await fetch(`/api/activities/${activityId}/comments`)
       if (response.ok) {
@@ -52,7 +48,12 @@ export default function ActivityComments({
     } finally {
       setIsFetching(false)
     }
-  }
+  }, [activityId])
+
+  // Fetch comments
+  useEffect(() => {
+    fetchComments()
+  }, [fetchComments])
 
   const handleAddComment = async () => {
     if (!newComment.trim()) {
@@ -322,9 +323,16 @@ export default function ActivityComments({
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-300 whitespace-pre-wrap">
-                      {comment.content}
-                    </p>
+                    <p
+                      className="text-sm text-slate-300 whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(comment.content, {
+                          ALLOWED_TAGS: [],
+                          ALLOWED_ATTR: [],
+                          KEEP_CONTENT: true
+                        })
+                      }}
+                    />
                   )}
                 </div>
               </div>

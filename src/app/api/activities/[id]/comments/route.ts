@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { db } from '@/lib/db'
-import { createCommentSchema } from '@/lib/validations/comment'
+import { createCommentSchema, cuidSchema } from '@/lib/validations/comment'
 
 // GET /api/activities/[id]/comments - List all comments for an activity
 export async function GET(
@@ -16,6 +16,15 @@ export async function GET(
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
+      )
+    }
+
+    // Validate activity ID format
+    const activityIdValidation = cuidSchema.safeParse(params.id)
+    if (!activityIdValidation.success) {
+      return NextResponse.json(
+        { error: 'ID de atividade inválido' },
+        { status: 400 }
       )
     }
 
@@ -59,9 +68,11 @@ export async function GET(
 
     return NextResponse.json(comments)
   } catch (error: any) {
-    console.error('Get comments error:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Get comments error:', error)
+    }
     return NextResponse.json(
-      { error: 'Erro ao buscar comentários', details: error.message },
+      { error: 'Erro ao buscar comentários' },
       { status: 500 }
     )
   }
@@ -79,6 +90,15 @@ export async function POST(
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
+      )
+    }
+
+    // Validate activity ID format
+    const activityIdValidation = cuidSchema.safeParse(params.id)
+    if (!activityIdValidation.success) {
+      return NextResponse.json(
+        { error: 'ID de atividade inválido' },
+        { status: 400 }
       )
     }
 
@@ -143,9 +163,11 @@ export async function POST(
 
     return NextResponse.json(comment, { status: 201 })
   } catch (error: any) {
-    console.error('Create comment error:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Create comment error:', error)
+    }
     return NextResponse.json(
-      { error: 'Erro ao criar comentário', details: error.message },
+      { error: 'Erro ao criar comentário' },
       { status: 500 }
     )
   }

@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -37,11 +36,11 @@ model Activity {
   priority    Int               // 0=Alta, 1=Média, 2=Baixa
   area        String            // Marketing, Vendas, Gestão, Estratégico, Back office
   title       String            // O Quê? (What) - Título da ação
-  description String?           @db.Text // Por Quê? (Why) - Justificativa detalhada
+  description String?           // Por Quê? (Why) - Justificativa detalhada
   responsible String?           // Quem? (Who) - Responsável pela execução
   deadline    String?           // Quando? (When) - Prazo/Timeline
   location    String?           // Onde? (Where) - Local/Plataforma de execução
-  how         String?           @db.Text // Como? (How) - Método/Processo detalhado
+  how         String?           // Como? (How) - Método/Processo detalhado
   cost        String?           // Quanto? (How Much) - Investimento/Custo
   status      String            @default("pending") // pending, in_progress, completed, ok
   deletedAt   DateTime?         // Soft delete
@@ -155,7 +154,7 @@ model ActivityComment {
   userId     String
   userName   String   // Denormalizado para performance
   userEmail  String
-  content    String   @db.Text
+  content    String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

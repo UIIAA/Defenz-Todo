@@ -1,5 +1,8 @@
 import { z } from 'zod'
 
+// Schema para validar CUID (Prisma ID format)
+export const cuidSchema = z.string().cuid('ID inválido')
+
 // Schema para criar um novo comentário
 export const createCommentSchema = z.object({
   content: z
