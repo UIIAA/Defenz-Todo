@@ -77,7 +77,7 @@ export default function StatusChanged({
       </Section>
 
       <Section style={activityCard}>
-        <Text style={activityTitle}>{activityTitle}</Text>
+        <Text style={activityTitleStyle}>{activityTitle}</Text>
 
         <Hr style={hr} />
 
@@ -175,13 +175,13 @@ const activityCard = {
   marginBottom: '24px',
 }
 
-const activityTitle = {
+const activityTitleStyle = {
   color: '#f1f5f9',
   fontSize: '20px',
   fontWeight: 'bold',
   marginTop: '0',
   marginBottom: '12px',
-}
+} as const
 
 const hr = {
   borderColor: '#334155',

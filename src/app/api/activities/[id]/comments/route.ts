@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth-config'
 import { db } from '@/lib/db'
 import { createCommentSchema, cuidSchema } from '@/lib/validations/comment'
 
 // GET /api/activities/[id]/comments - List all comments for an activity
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -19,8 +19,11 @@ export async function GET(
       )
     }
 
+    // Await params (Next.js 15)
+    const { id } = await params
+
     // Validate activity ID format
-    const activityIdValidation = cuidSchema.safeParse(params.id)
+    const activityIdValidation = cuidSchema.safeParse(id)
     if (!activityIdValidation.success) {
       return NextResponse.json(
         { error: 'ID de atividade inválido' },
@@ -28,7 +31,7 @@ export async function GET(
       )
     }
 
-    const activityId = params.id
+    const activityId = id
 
     // Verificar se a atividade existe e pertence ao usuário
     const activity = await db.activity.findFirst({
@@ -81,7 +84,7 @@ export async function GET(
 // POST /api/activities/[id]/comments - Create a new comment
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -93,8 +96,11 @@ export async function POST(
       )
     }
 
+    // Await params (Next.js 15)
+    const { id } = await params
+
     // Validate activity ID format
-    const activityIdValidation = cuidSchema.safeParse(params.id)
+    const activityIdValidation = cuidSchema.safeParse(id)
     if (!activityIdValidation.success) {
       return NextResponse.json(
         { error: 'ID de atividade inválido' },
@@ -102,14 +108,14 @@ export async function POST(
       )
     }
 
-    const activityId = params.id
+    const activityId = id
     const body = await request.json()
 
     // Validar dados
     const validation = createCommentSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Dados inválidos', details: validation.error.errors },
+        { error: 'Dados inválidos', details: validation.error.issues },
         { status: 400 }
       )
     }

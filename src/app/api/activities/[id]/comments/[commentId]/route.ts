@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth-config'
 import { db } from '@/lib/db'
 import { updateCommentSchema, cuidSchema } from '@/lib/validations/comment'
 
 // PUT /api/activities/[id]/comments/[commentId] - Update a comment
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; commentId: string } }
+  { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -19,8 +19,11 @@ export async function PUT(
       )
     }
 
+    // Await params (Next.js 15)
+    const { id, commentId } = await params
+
     // Validate activity ID format
-    const activityIdValidation = cuidSchema.safeParse(params.id)
+    const activityIdValidation = cuidSchema.safeParse(id)
     if (!activityIdValidation.success) {
       return NextResponse.json(
         { error: 'ID de atividade inválido' },
@@ -29,22 +32,20 @@ export async function PUT(
     }
 
     // Validate comment ID format
-    const commentIdValidation = cuidSchema.safeParse(params.commentId)
+    const commentIdValidation = cuidSchema.safeParse(commentId)
     if (!commentIdValidation.success) {
       return NextResponse.json(
         { error: 'ID de comentário inválido' },
         { status: 400 }
       )
     }
-
-    const { commentId } = params
     const body = await request.json()
 
     // Validar dados
     const validation = updateCommentSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Dados inválidos', details: validation.error.errors },
+        { error: 'Dados inválidos', details: validation.error.issues },
         { status: 400 }
       )
     }
@@ -113,7 +114,7 @@ export async function PUT(
 // DELETE /api/activities/[id]/comments/[commentId] - Delete a comment
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; commentId: string } }
+  { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -125,8 +126,11 @@ export async function DELETE(
       )
     }
 
+    // Await params (Next.js 15)
+    const { id, commentId } = await params
+
     // Validate activity ID format
-    const activityIdValidation = cuidSchema.safeParse(params.id)
+    const activityIdValidation = cuidSchema.safeParse(id)
     if (!activityIdValidation.success) {
       return NextResponse.json(
         { error: 'ID de atividade inválido' },
@@ -135,15 +139,13 @@ export async function DELETE(
     }
 
     // Validate comment ID format
-    const commentIdValidation = cuidSchema.safeParse(params.commentId)
+    const commentIdValidation = cuidSchema.safeParse(commentId)
     if (!commentIdValidation.success) {
       return NextResponse.json(
         { error: 'ID de comentário inválido' },
         { status: 400 }
       )
     }
-
-    const { commentId } = params
 
     // Buscar usuário
     const user = await db.user.findUnique({

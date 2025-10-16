@@ -34,10 +34,10 @@ export default function ActivityAssigned({
       </Text>
 
       <Section style={activityCard}>
-        <Text style={activityTitle}>{activityTitle}</Text>
+        <Text style={activityTitleStyle}>{activityTitle}</Text>
 
         {activityDescription && (
-          <Text style={description}>{activityDescription}</Text>
+          <Text style={descriptionStyle}>{activityDescription}</Text>
         )}
 
         <Hr style={hr} />
@@ -105,20 +105,20 @@ const activityCard = {
   marginBottom: '24px',
 }
 
-const activityTitle = {
+const activityTitleStyle = {
   color: '#f1f5f9',
   fontSize: '20px',
   fontWeight: 'bold',
   marginTop: '0',
   marginBottom: '12px',
-}
+} as const
 
-const description = {
+const descriptionStyle = {
   color: '#94a3b8',
   fontSize: '14px',
   lineHeight: '20px',
   marginBottom: '16px',
-}
+} as const
 
 const hr = {
   borderColor: '#334155',

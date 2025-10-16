@@ -11,13 +11,13 @@ export async function GET(request: NextRequest) {
     }
 
     let preferences = await db.notificationPreferences.findUnique({
-      where: { userId: user.id! }
+      where: { userId: user.id }
     })
 
     // Create default preferences if they don't exist
     if (!preferences) {
       preferences = await db.notificationPreferences.create({
-        data: { userId: user.id! }
+        data: { userId: user.id }
       })
     }
 
@@ -69,7 +69,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const preferences = await db.notificationPreferences.upsert({
-      where: { userId: user.id! },
+      where: { userId: user.id },
       update: {
         activityAssigned: activityAssigned ?? undefined,
         deadlineApproaching: deadlineApproaching ?? undefined,
@@ -81,7 +81,7 @@ export async function PUT(request: NextRequest) {
         quietHoursEnd: quietHoursEnd ?? undefined
       },
       create: {
-        userId: user.id!,
+        userId: user.id,
         activityAssigned: activityAssigned ?? true,
         deadlineApproaching: deadlineApproaching ?? true,
         statusChanged: statusChanged ?? true,

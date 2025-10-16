@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import type { ReactElement } from 'react'
 import { useSession } from 'next-auth/react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -61,8 +62,8 @@ function ActivityRow({
   onView: (activity: Activity) => void
   onEdit: (activity: Activity) => void
   onDelete: (activity: Activity) => void
-  getPriorityBadge: (priority: number) => JSX.Element
-  getStatusBadge: (status: string) => JSX.Element
+  getPriorityBadge: (priority: number) => ReactElement
+  getStatusBadge: (status: string) => ReactElement
   currentUserEmail: string
 }) {
   const [isExpanded, setIsExpanded] = useState(false)

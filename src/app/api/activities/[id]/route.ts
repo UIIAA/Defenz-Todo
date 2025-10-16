@@ -4,10 +4,11 @@ import { getCurrentUser } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import { sendEmailWithChecks } from '@/lib/email'
 import StatusChanged from '@/emails/StatusChanged'
+import { findDuplicateActivity } from '@/lib/db-utils'
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -16,8 +17,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Await params (Next.js 15)
+    const { id } = await params
+
     const activity = await db.activity.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!activity) {
@@ -26,7 +30,7 @@ export async function DELETE(
 
     // Soft delete
     const deletedActivity = await db.activity.update({
-      where: { id: params.id },
+      where: { id },
       data: { deletedAt: new Date() }
     })
 
@@ -34,9 +38,9 @@ export async function DELETE(
     await createAuditLog({
       action: 'DELETE',
       entityType: 'Activity',
-      entityId: params.id,
-      userId: user.id!,
-      userEmail: user.email!,
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email || '',
       changes: {
         title: activity.title,
         area: activity.area,
@@ -48,9 +52,9 @@ export async function DELETE(
     if (user.email) {
       sendEmailWithChecks(
         {
-          userId: user.id!,
+          userId: user.id,
           emailType: 'deleted',
-          activityId: params.id,
+          activityId: id,
           to: user.email,
           subject: `Atividade Deletada: ${activity.title}`,
           react: StatusChanged({
@@ -83,7 +87,7 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -92,19 +96,44 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Await params (Next.js 15)
+    const { id } = await params
+
     const data = await request.json()
 
     // Get old activity data to check for status change
     const oldActivity = await db.activity.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!oldActivity) {
       return NextResponse.json({ error: 'Activity not found' }, { status: 404 })
     }
 
+    // Check for duplicates if title or area changed (case-insensitive)
+    if (
+      data.title !== oldActivity.title ||
+      data.area !== oldActivity.area
+    ) {
+      const duplicate = await findDuplicateActivity(
+        user.id,
+        data.title,
+        data.area,
+        id // Exclude current activity
+      )
+
+      if (duplicate) {
+        return NextResponse.json(
+          {
+            error: `Atividade duplicada! Já existe uma atividade com o título "${data.title}" na área "${data.area}"`
+          },
+          { status: 409 }
+        )
+      }
+    }
+
     const activity = await db.activity.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: data.title,
         area: data.area,
@@ -123,9 +152,9 @@ export async function PUT(
     await createAuditLog({
       action: 'UPDATE',
       entityType: 'Activity',
-      entityId: params.id,
-      userId: user.id!,
-      userEmail: user.email!,
+      entityId: id,
+      userId: user.id,
+      userEmail: user.email || '',
       changes: data
     })
 
@@ -143,7 +172,7 @@ export async function PUT(
       // Send email notification (non-blocking)
       sendEmailWithChecks(
         {
-          userId: user.id!,
+          userId: user.id,
           emailType: 'status_change',
           activityId: activity.id,
           to: user.email,

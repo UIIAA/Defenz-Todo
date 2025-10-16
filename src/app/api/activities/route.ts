@@ -5,6 +5,7 @@ import { sendEmailWithChecks } from '@/lib/email'
 import ActivityAssigned from '@/emails/ActivityAssigned'
 import { createActivitySchema } from '@/lib/validations/activity'
 import { handleApiError, createdResponse, ApiError } from '@/lib/api-helpers'
+import { findDuplicateActivity } from '@/lib/db-utils'
 
 export async function GET() {
   try {
@@ -40,22 +41,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createActivitySchema.parse(body)
 
-    // Verificação otimizada de duplicatas - busca específica ao invés de carregar tudo
-    const existingActivity = await db.activity.findFirst({
-      where: {
-        userId: user.id,
-        deletedAt: null,
-        title: {
-          equals: validatedData.title,
-          mode: 'insensitive' // Case-insensitive (funciona em PostgreSQL, não em SQLite)
-        },
-        area: {
-          equals: validatedData.area,
-          mode: 'insensitive'
-        }
-      },
-      select: { id: true } // Apenas o ID, não precisa de todos os campos
-    })
+    // Verificação de duplicatas (case-insensitive, compatível com SQLite e PostgreSQL)
+    const existingActivity = await findDuplicateActivity(
+      user.id,
+      validatedData.title,
+      validatedData.area
+    )
 
     if (existingActivity) {
       throw new ApiError(

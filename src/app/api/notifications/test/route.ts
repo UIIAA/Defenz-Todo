@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     // Send test email using ActivityAssigned template
     const result = await sendEmail({
-      userId: user.id!,
+      userId: user.id,
       emailType: 'assigned',
       to: user.email,
       subject: 'Teste de Notificação - Defenz To-Do',

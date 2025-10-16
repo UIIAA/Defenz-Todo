@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
     const validation = importActivitiesSchema.safeParse(initialActivities)
 
     if (!validation.success) {
-      throw new ApiError('Dados de importação inválidos', 400, validation.error.errors)
+      throw new ApiError('Dados de importação inválidos', 400, validation.error.issues)
     }
 
     // 5. Inserir atividades validadas com userId correto

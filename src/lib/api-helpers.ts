@@ -46,7 +46,7 @@ export function handleApiError(error: unknown): NextResponse {
       {
         success: false,
         error: 'Dados inválidos',
-        details: error.errors.map(err => ({
+        details: error.issues.map(err => ({
           field: err.path.join('.'),
           message: err.message
         }))
