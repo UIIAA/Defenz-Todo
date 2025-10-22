@@ -8,8 +8,20 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import ActivitiesTable from '@/components/ActivitiesTable'
+import { ActivityInsightCard } from '@/components/activities'
 import { toast } from 'sonner'
+import { Sparkles, Loader2 } from 'lucide-react'
 
 interface Activity {
   id: string
@@ -48,6 +60,11 @@ export default function ActivitiesPage() {
     description: ''
   })
 
+  // Estados para geração de insights IA
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false)
+  const [newActivityId, setNewActivityId] = useState<string | null>(null)
+  const [insightGenerationCancelled, setInsightGenerationCancelled] = useState(false)
+
   useEffect(() => {
     // Fetch activities from database
     const fetchActivities = async () => {
@@ -67,6 +84,88 @@ export default function ActivitiesPage() {
 
     fetchActivities()
   }, [])
+
+  // Função para gerar insights de IA
+  const generateInsights = async (activityId: string) => {
+    setIsGeneratingInsights(true)
+    setInsightGenerationCancelled(false)
+
+    const timeoutId = setTimeout(() => {
+      if (isGeneratingInsights) {
+        toast.warning('A análise está demorando mais que o esperado. Você pode cancelar se desejar.', {
+          duration: 5000
+        })
+      }
+    }, 10000)
+
+    try {
+      const response = await fetch(`/api/activities/${activityId}/insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      clearTimeout(timeoutId)
+
+      if (insightGenerationCancelled) {
+        // Usuário cancelou durante a geração
+        return
+      }
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast.error('Limite de requisições atingido', {
+            description: 'Aguarde 1 minuto e tente novamente. Rate limit: 10 análises/minuto'
+          })
+          return
+        }
+
+        if (response.status === 500) {
+          const errorData = await response.json().catch(() => ({}))
+          toast.error('Erro ao processar análise de IA', {
+            description: errorData.error || 'Erro interno do servidor'
+          })
+          return
+        }
+
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      // Calcular overall score (40% business + 60% M&A)
+      const overallScore = Math.round(data.businessScore * 0.4 + data.maScore * 0.6)
+
+      toast.success('Análise de IA gerada com sucesso!', {
+        description: `Score geral: ${overallScore}/100 • Confiança: ${Math.round(data.aiConfidence * 100)}%`,
+        icon: <Sparkles className="size-4 text-blue-500" />
+      })
+    } catch (error) {
+      if (insightGenerationCancelled) {
+        return
+      }
+      console.error('Error generating insights:', error)
+      toast.error('Erro ao gerar análise de IA')
+    } finally {
+      clearTimeout(timeoutId)
+      setIsGeneratingInsights(false)
+    }
+  }
+
+  // Handler para quando usuário confirma geração de insights
+  const handleGenerateInsights = async () => {
+    if (!newActivityId) return
+
+    setNewActivityId(null) // Fecha o dialog
+    await generateInsights(newActivityId)
+  }
+
+  // Handler para cancelar geração de insights
+  const handleCancelInsightGeneration = () => {
+    setInsightGenerationCancelled(true)
+    setIsGeneratingInsights(false)
+    setNewActivityId(null)
+    toast.info('Geração de análise cancelada')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,6 +189,22 @@ export default function ActivitiesPage() {
           toast.error('Erro ao atualizar atividade')
           return
         }
+
+        // Reset form e fecha dialog
+        setFormData({
+          title: '',
+          area: '',
+          priority: 1,
+          status: 'pending',
+          responsible: '',
+          deadline: '',
+          location: '',
+          how: '',
+          cost: '',
+          description: ''
+        })
+        setEditingActivity(null)
+        setIsDialogOpen(false)
       } else {
         // Create new activity
         const response = await fetch('/api/activities', {
@@ -102,28 +217,41 @@ export default function ActivitiesPage() {
           const newActivity = await response.json()
           setActivities(prev => [...prev, newActivity])
           toast.success('Atividade criada com sucesso!')
+
+          // Reset form
+          setFormData({
+            title: '',
+            area: '',
+            priority: 1,
+            status: 'pending',
+            responsible: '',
+            deadline: '',
+            location: '',
+            how: '',
+            cost: '',
+            description: ''
+          })
+          setEditingActivity(null)
+          setIsDialogOpen(false)
+
+          // LÓGICA DE GERAÇÃO DE INSIGHTS
+          // Se prioridade ALTA (0), auto-gerar insights
+          if (formData.priority === 0) {
+            toast.info('Gerando análise de IA para atividade de alta prioridade...', {
+              icon: <Loader2 className="size-4 animate-spin text-blue-500" />
+            })
+            await generateInsights(newActivity.id)
+          }
+          // Se prioridade MÉDIA (1) ou BAIXA (2), perguntar ao usuário
+          else {
+            setNewActivityId(newActivity.id)
+          }
         } else {
           const error = await response.json()
           toast.error(error.error || 'Erro ao criar atividade')
           return
         }
       }
-
-      // Reset form
-      setFormData({
-        title: '',
-        area: '',
-        priority: 1,
-        status: 'pending',
-        responsible: '',
-        deadline: '',
-        location: '',
-        how: '',
-        cost: '',
-        description: ''
-      })
-      setEditingActivity(null)
-      setIsDialogOpen(false)
     } catch (error) {
       console.error('Submit error:', error)
       toast.error('Erro ao salvar atividade')
@@ -471,7 +599,7 @@ export default function ActivitiesPage() {
 
       {/* Dialog para visualizar */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800 text-slate-100">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800 text-slate-100">
           {viewingActivity && (
             <>
               <DialogHeader>
@@ -481,6 +609,9 @@ export default function ActivitiesPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-6">
+                {/* AI Insights Section */}
+                <ActivityInsightCard activityId={viewingActivity.id} />
+
                 <Card className="bg-slate-800/50 border-slate-700">
                   <CardContent className="p-6 space-y-4">
                     <div>
@@ -547,6 +678,52 @@ export default function ActivitiesPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* AlertDialog para confirmação de geração de insights */}
+      <AlertDialog open={!!newActivityId && !isGeneratingInsights} onOpenChange={(open) => !open && setNewActivityId(null)}>
+        <AlertDialogContent className="bg-slate-900 border-slate-800 text-slate-100">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="rounded-full bg-blue-500/10 p-2">
+                <Sparkles className="size-6 text-blue-400" />
+              </div>
+              <AlertDialogTitle className="text-xl">Gerar Análise de IA?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-slate-400 text-base">
+              A Inteligência Artificial pode analisar esta atividade e identificar automaticamente:
+              <ul className="mt-3 space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-0.5">•</span>
+                  <span>Conexões com métricas operacionais do seu negócio</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-0.5">•</span>
+                  <span>Impactos em métricas estratégicas de M&A e valorização</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-0.5">•</span>
+                  <span>Score de relevância para o crescimento do negócio</span>
+                </li>
+              </ul>
+              <p className="mt-4 text-xs text-slate-500">
+                Powered by Google Gemini AI • Rate limit: 10 análises/minuto
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-slate-700 text-slate-300 hover:bg-slate-800">
+              Agora Não
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleGenerateInsights}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Sparkles className="size-4" />
+              Gerar Análise
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

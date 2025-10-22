@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import ActivityComments from '@/components/ActivityComments'
+import { ActivityInsightCard, InsightScoreBadge } from '@/components/activities'
 import {
   Plus,
   Download,
@@ -72,9 +73,9 @@ function ActivityRow({
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
       <div className="hover:bg-slate-800/30 transition-colors border-b border-slate-800/50 last:border-b-0">
         {/* Main Row */}
-        <div className="grid grid-cols-12 gap-4 items-center py-4 px-4">
-          {/* Task - 5 cols */}
-          <div className="col-span-5 flex items-center gap-2">
+        <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-4 items-center py-4 px-4">
+          {/* Expand Button */}
+          <div className="flex items-center">
             <CollapsibleTrigger asChild>
               <Button
                 variant="ghost"
@@ -88,35 +89,42 @@ function ActivityRow({
                 )}
               </Button>
             </CollapsibleTrigger>
-            <div>
-              <h3 className="text-sm font-medium text-slate-100 mb-1">
-                {activity.title}
-              </h3>
-              <p className="text-xs text-slate-400">
-                Assigned to: {activity.responsible || 'Não definido'}
-              </p>
-            </div>
           </div>
 
-          {/* Area - 2 cols */}
-          <div className="col-span-2">
+          {/* Task - flex grow */}
+          <div className="min-w-0">
+            <h3 className="text-sm font-medium text-slate-100 mb-1 truncate">
+              {activity.title}
+            </h3>
+            <p className="text-xs text-slate-400 truncate">
+              Assigned to: {activity.responsible || 'Não definido'}
+            </p>
+          </div>
+
+          {/* Area */}
+          <div className="shrink-0">
             <Badge variant="outline" className="bg-slate-800/50 text-slate-300 border-slate-700">
               {activity.area}
             </Badge>
           </div>
 
-          {/* Priority - 2 cols */}
-          <div className="col-span-2">
+          {/* Priority */}
+          <div className="shrink-0">
             {getPriorityBadge(activity.priority)}
           </div>
 
-          {/* Status - 2 cols */}
-          <div className="col-span-2">
+          {/* Status */}
+          <div className="shrink-0">
             {getStatusBadge(activity.status)}
           </div>
 
-          {/* Actions - 1 col */}
-          <div className="col-span-1 flex justify-end gap-1">
+          {/* AI Score */}
+          <div className="shrink-0">
+            <InsightScoreBadge activityId={activity.id} />
+          </div>
+
+          {/* Actions */}
+          <div className="shrink-0 flex justify-end gap-1">
             <Button
               variant="ghost"
               size="sm"
@@ -149,7 +157,12 @@ function ActivityRow({
 
         {/* Expanded 5W2H Details */}
         <CollapsibleContent>
-          <div className="px-4 pb-4 bg-slate-800/20">
+          <div className="px-4 pb-4 bg-slate-800/20 space-y-6">
+            {/* AI Insights Section */}
+            <div className="pt-4">
+              <ActivityInsightCard activityId={activity.id} />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               {/* Por Quê? (Why) */}
               {activity.description && (
@@ -412,32 +425,34 @@ export default function ActivitiesTable({
         </div>
 
         {/* Header da tabela */}
-        <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-slate-800/30 border-b border-slate-800/50 text-xs font-medium text-slate-400 uppercase tracking-wider">
+        <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-4 px-4 py-3 bg-slate-800/30 border-b border-slate-800/50 text-xs font-medium text-slate-400 uppercase tracking-wider">
+          <div></div>
           <button
-            className="col-span-5 text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
+            className="text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
             onClick={() => handleSort('title')}
           >
             Task {getSortIcon('title')}
           </button>
           <button
-            className="col-span-2 text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
+            className="text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
             onClick={() => handleSort('area')}
           >
             Area {getSortIcon('area')}
           </button>
           <button
-            className="col-span-2 text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
+            className="text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
             onClick={() => handleSort('priority')}
           >
             Priority {getSortIcon('priority')}
           </button>
           <button
-            className="col-span-2 text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
+            className="text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
             onClick={() => handleSort('status')}
           >
             Status {getSortIcon('status')}
           </button>
-          <div className="col-span-1"></div>
+          <div className="text-left">AI Score</div>
+          <div></div>
         </div>
 
         {/* Conteúdo das tabs */}
