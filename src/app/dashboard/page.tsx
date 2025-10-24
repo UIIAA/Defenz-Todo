@@ -49,7 +49,9 @@ export default function DashboardPage() {
       try {
         const response = await fetch('/api/activities')
         if (response.ok) {
-          const data = await response.json()
+          const result = await response.json()
+          // A API retorna { success: true, data: activities[], count: number }
+          const data = result.data || []
           setActivities(data)
 
           // Calculate statistics
