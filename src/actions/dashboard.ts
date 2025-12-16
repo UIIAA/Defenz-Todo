@@ -228,18 +228,17 @@ export async function getExecutiveMetrics() {
 
     return {
         receitaFechada: closedWonDeals._sum.value?.toNumber() || 0,
-        mrr: closedWonDeals._sum.value?.toNumber() || 0, // Using total revenue as proxy for MRR as per requirements
-        mrr: closedWonDeals._sum.value?.toNumber() || 0,
+        mrr: closedWonDeals._sum.value?.toNumber() || 0, // Using total revenue as proxy for MRR
         clientesFechados: closedWonDeals._count.id || 0,
         pipelineTotal: pipeline._sum.value?.toNumber() || 0,
         pipelineQtd: pipeline._count.id || 0,
-        reunioes: totalMeetings,
+        reunioes: meetings,
         winRate: Math.round(winRate),
         avgCycleTime: avgCycleTime,
         totalContatos: totalContacts,
-        totalAtividades: totalCalls + totalEmails, // Approx total activity
-        ligacoes: totalCalls,
-        emails: totalEmails,
+        totalAtividades: interactionsCount + activitiesCount,
+        ligacoes: interactionsCount, // Proxy: using total call/email interactions
+        emails: 0, // Will be refined if separate tracking is needed
     }
 }
 
@@ -329,8 +328,6 @@ export async function getFunnelData() {
             leadsGenerated: true,
             callsCount: true,
             emailsCount: true,
-            meetingsCount: true,
-            proposalsCount: true,
         }
     })
 
@@ -343,26 +340,22 @@ export async function getFunnelData() {
             userId: user.id,
             OR: [
                 { status: "proposal" },
-                { stage: { contains: "Proposta", mode: "insensitive" } } // Busca 'proposta' no stage
+                { stage: { contains: "Proposta" } }
             ]
         }
     })
 
-    // Combine Auto + Manual
-    const totalMeetings = meetings + (lists._sum.meetingsCount || 0)
-    const totalProposals = proposals + (lists._sum.proposalsCount || 0)
-
     // Funnel Logic: 
-    // Top: Leads (Manual Lists Leads + CRM Clients?) -> Let's stick to Lists Leads for Top of Funnel as usually Leads are cold.
+    // Top: Leads from Lists
     // Middle: Activities (Calls + Emails + Meetings)
     // Bottom: Proposals
 
     return [
-        { name: 'Contatos', value: lists._sum.leadsGenerated || 0, fill: '#3B82F6' },
-        { name: 'Ligações', value: lists._sum.callsCount || 0, fill: '#10B981' },
-        { name: 'Emails', value: lists._sum.emailsCount || 0, fill: '#F59E0B' },
-        { name: 'Reuniões', value: totalMeetings, fill: '#8B5CF6' },
-        { name: 'Propostas', value: totalProposals, fill: '#EF4444' },
+        { name: 'Contatos', value: lists._sum?.leadsGenerated || 0, fill: '#3B82F6' },
+        { name: 'Ligações', value: lists._sum?.callsCount || 0, fill: '#10B981' },
+        { name: 'Emails', value: lists._sum?.emailsCount || 0, fill: '#F59E0B' },
+        { name: 'Reuniões', value: meetings, fill: '#8B5CF6' },
+        { name: 'Propostas', value: proposals, fill: '#EF4444' },
     ]
 }
 

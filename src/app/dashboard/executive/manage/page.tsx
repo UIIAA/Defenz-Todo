@@ -166,7 +166,8 @@ export default function ExecutivePage() {
                                     <td className="p-2 font-medium">
                                         <Input
                                             value={list.name}
-                                            onChange={(e) => handleUpdateList(list.id, 'name', e.target.value)}
+                                            onChange={(e) => handleFieldChange(list.id, 'name', e.target.value)}
+                                            onBlur={() => handleSaveList(list)}
                                             className="h-8 focus:ring-1 focus:ring-primary"
                                         />
                                     </td>
@@ -174,7 +175,8 @@ export default function ExecutivePage() {
                                         <Input
                                             type="date"
                                             value={list.sentDate ? format(new Date(list.sentDate), 'yyyy-MM-dd') : ''}
-                                            onChange={(e) => handleUpdateList(list.id, 'sentDate', e.target.value)}
+                                            onChange={(e) => handleFieldChange(list.id, 'sentDate', e.target.value)}
+                                            onBlur={() => handleSaveList(list)}
                                             className="h-8 w-32 focus:ring-1 focus:ring-primary"
                                         />
                                     </td>
@@ -182,14 +184,16 @@ export default function ExecutivePage() {
                                         <Input
                                             type="number"
                                             value={list.validatedContacts}
-                                            onChange={(e) => handleUpdateList(list.id, 'validatedContacts', e.target.value)}
+                                            onChange={(e) => handleFieldChange(list.id, 'validatedContacts', e.target.value)}
+                                            onBlur={() => handleSaveList(list)}
                                             className="h-8 w-20 focus:ring-1 focus:ring-primary"
                                         />
                                     </td>
                                     <td className="p-2">
                                         <Input
                                             value={list.origin || ''}
-                                            onChange={(e) => handleUpdateList(list.id, 'origin', e.target.value)}
+                                            onChange={(e) => handleFieldChange(list.id, 'origin', e.target.value)}
+                                            onBlur={() => handleSaveList(list)}
                                             className="h-8 w-24 focus:ring-1 focus:ring-primary"
                                         />
                                     </td>
@@ -197,7 +201,8 @@ export default function ExecutivePage() {
                                         <Input
                                             type="number"
                                             value={list.callsCount}
-                                            onChange={(e) => handleUpdateList(list.id, 'callsCount', e.target.value)}
+                                            onChange={(e) => handleFieldChange(list.id, 'callsCount', e.target.value)}
+                                            onBlur={() => handleSaveList(list)}
                                             className="h-8 w-16 focus:ring-1 focus:ring-primary"
                                         />
                                     </td>
@@ -205,7 +210,8 @@ export default function ExecutivePage() {
                                         <Input
                                             type="number"
                                             value={list.emailsCount}
-                                            onChange={(e) => handleUpdateList(list.id, 'emailsCount', e.target.value)}
+                                            onChange={(e) => handleFieldChange(list.id, 'emailsCount', e.target.value)}
+                                            onBlur={() => handleSaveList(list)}
                                             className="h-8 w-16 focus:ring-1 focus:ring-primary"
                                         />
                                     </td>
@@ -213,7 +219,8 @@ export default function ExecutivePage() {
                                         <Input
                                             type="number"
                                             value={list.meetingsCount || 0}
-                                            onChange={(e) => handleUpdateList(list.id, 'meetingsCount', e.target.value)}
+                                            onChange={(e) => handleFieldChange(list.id, 'meetingsCount', e.target.value)}
+                                            onBlur={() => handleSaveList(list)}
                                             className="h-8 w-16 focus:ring-1 focus:ring-primary"
                                         />
                                     </td>
@@ -221,7 +228,8 @@ export default function ExecutivePage() {
                                         <Input
                                             type="number"
                                             value={list.proposalsCount || 0}
-                                            onChange={(e) => handleUpdateList(list.id, 'proposalsCount', e.target.value)}
+                                            onChange={(e) => handleFieldChange(list.id, 'proposalsCount', e.target.value)}
+                                            onBlur={() => handleSaveList(list)}
                                             className="h-8 w-16 focus:ring-1 focus:ring-primary"
                                         />
                                     </td>
@@ -229,23 +237,35 @@ export default function ExecutivePage() {
                                         <Input
                                             type="number"
                                             value={list.leadsGenerated}
-                                            onChange={(e) => handleUpdateList(list.id, 'leadsGenerated', e.target.value)}
+                                            onChange={(e) => handleFieldChange(list.id, 'leadsGenerated', e.target.value)}
+                                            onBlur={() => handleSaveList(list)}
                                             className="h-8 w-16 focus:ring-1 focus:ring-primary"
                                         />
                                     </td>
                                     <td className="p-2">
                                         <Input
                                             value={list.conversionRate || ''}
-                                            onChange={(e) => handleUpdateList(list.id, 'conversionRate', e.target.value)}
+                                            onChange={(e) => handleFieldChange(list.id, 'conversionRate', e.target.value)}
+                                            onBlur={() => handleSaveList(list)}
                                             className="h-8 w-20 focus:ring-1 focus:ring-primary"
                                         />
                                     </td>
-                                    <td className="p-2">
+                                    <td className="p-2 flex items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleSaveList(list)}
+                                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                            title="Salvar Lista"
+                                        >
+                                            <CheckSquare className="h-4 w-4" />
+                                        </Button>
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => handleDeleteList(list.id)}
                                             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                            title="Excluir Lista"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>

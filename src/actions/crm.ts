@@ -69,8 +69,8 @@ export async function searchOpportunities(query: string) {
         where: {
             userId: user.id,
             OR: [
-                { title: { contains: query, mode: 'insensitive' } },
-                { client: { name: { contains: query, mode: 'insensitive' } } }
+                { title: { contains: query } },
+                { client: { name: { contains: query } } }
             ]
         },
         select: {
