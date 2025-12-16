@@ -49,6 +49,10 @@ export async function PUT(request: NextRequest) {
       activityDeleted,
       dailyDigest,
       weeklyReport,
+      opportunityWon,
+      opportunityLost,
+      newLead,
+      interactionLogged,
       quietHoursStart,
       quietHoursEnd
     } = data
@@ -77,6 +81,10 @@ export async function PUT(request: NextRequest) {
         activityDeleted: activityDeleted ?? undefined,
         dailyDigest: dailyDigest ?? undefined,
         weeklyReport: weeklyReport ?? undefined,
+        opportunityWon: opportunityWon ?? undefined,
+        opportunityLost: opportunityLost ?? undefined,
+        newLead: newLead ?? undefined,
+        interactionLogged: interactionLogged ?? undefined,
         quietHoursStart: quietHoursStart ?? undefined,
         quietHoursEnd: quietHoursEnd ?? undefined
       },
@@ -88,6 +96,10 @@ export async function PUT(request: NextRequest) {
         activityDeleted: activityDeleted ?? true,
         dailyDigest: dailyDigest ?? false,
         weeklyReport: weeklyReport ?? false,
+        opportunityWon: opportunityWon ?? true,
+        opportunityLost: opportunityLost ?? false,
+        newLead: newLead ?? true,
+        interactionLogged: interactionLogged ?? false,
         quietHoursStart,
         quietHoursEnd
       }

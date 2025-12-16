@@ -21,7 +21,8 @@ import {
 import ActivitiesTable from '@/components/ActivitiesTable'
 import { ActivityInsightCard } from '@/components/activities'
 import { toast } from 'sonner'
-import { Sparkles, Loader2 } from 'lucide-react'
+import { Sparkles, Loader2, Link as LinkIcon } from 'lucide-react'
+import { OpportunitySelector } from '@/components/crm/opportunity-selector'
 
 interface Activity {
   id: string
@@ -37,6 +38,12 @@ interface Activity {
   description: string
   createdAt: string
   updatedAt: string
+  opportunities?: {
+    id: string
+    title: string
+    status: string
+    client: { name: string } | null
+  }[]
 }
 
 export default function ActivitiesPage() {
@@ -57,7 +64,8 @@ export default function ActivitiesPage() {
     location: '',
     how: '',
     cost: '',
-    description: ''
+    description: '',
+    opportunityIds: [] as string[]
   })
 
   // Estados para geração de insights IA
@@ -203,7 +211,8 @@ export default function ActivitiesPage() {
           location: '',
           how: '',
           cost: '',
-          description: ''
+          description: '',
+          opportunityIds: []
         })
         setEditingActivity(null)
         setIsDialogOpen(false)
@@ -231,7 +240,8 @@ export default function ActivitiesPage() {
             location: '',
             how: '',
             cost: '',
-            description: ''
+            description: '',
+            opportunityIds: []
           })
           setEditingActivity(null)
           setIsDialogOpen(false)
@@ -240,7 +250,7 @@ export default function ActivitiesPage() {
           // Se prioridade ALTA (0), auto-gerar insights
           if (formData.priority === 0) {
             toast.info('Gerando análise de IA para atividade de alta prioridade...', {
-              icon: <Loader2 className="size-4 animate-spin text-blue-500" />
+              icon: <Loader2 className="size-4 animate-spin text-primary" />
             })
             await generateInsights(newActivity.id)
           }
@@ -272,7 +282,8 @@ export default function ActivitiesPage() {
       location: activity.location,
       how: activity.how,
       cost: activity.cost,
-      description: activity.description
+      description: activity.description,
+      opportunityIds: activity.opportunities?.map(o => o.id) || []
     })
     setIsDialogOpen(true)
   }
@@ -316,7 +327,8 @@ export default function ActivitiesPage() {
       location: '',
       how: '',
       cost: '',
-      description: ''
+      description: '',
+      opportunityIds: []
     })
     setIsDialogOpen(true)
   }
@@ -416,7 +428,7 @@ export default function ActivitiesPage() {
   const areas = ['Marketing', 'Vendas', 'Gestão', 'Estratégico', 'Back office']
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+    <div className="min-h-screen bg-background p-6">
       <input
         ref={fileInputRef}
         type="file"
@@ -437,20 +449,20 @@ export default function ActivitiesPage() {
 
       {/* Dialog para editar/criar */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800 text-slate-100">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl">
               {editingActivity ? 'Editar Atividade' : 'Nova Atividade'}
             </DialogTitle>
-            <DialogDescription className="text-slate-400">
+            <DialogDescription>
               Preencha os detalhes da atividade estratégica (5W2H)
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-slate-200 font-semibold">
-                  O Quê? <span className="text-slate-400 font-normal">(What - Título da Ação)</span>
+                <Label htmlFor="title" className="font-semibold">
+                  O Quê? <span className="text-muted-foreground font-normal">(What - Título da Ação)</span>
                 </Label>
                 <Input
                   id="title"
@@ -458,16 +470,15 @@ export default function ActivitiesPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="Descreva a ação a ser executada"
                   required
-                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="area" className="text-slate-200 font-semibold">Área</Label>
+                <Label htmlFor="area" className="font-semibold">Área</Label>
                 <Select value={formData.area} onValueChange={(value) => setFormData(prev => ({ ...prev, area: value }))}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione uma área" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700 text-slate-100">
+                  <SelectContent>
                     {areas.map(area => (
                       <SelectItem key={area} value={area}>{area}</SelectItem>
                     ))}
@@ -477,8 +488,8 @@ export default function ActivitiesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-slate-200 font-semibold">
-                Por Quê? <span className="text-slate-400 font-normal">(Why - Justificativa)</span>
+              <Label htmlFor="description" className="font-semibold">
+                Por Quê? <span className="text-muted-foreground font-normal">(Why - Justificativa)</span>
               </Label>
               <Textarea
                 id="description"
@@ -486,18 +497,17 @@ export default function ActivitiesPage() {
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Justifique a importância e o objetivo desta ação"
                 rows={3}
-                className="bg-slate-800 border-slate-700 text-slate-100"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="priority" className="text-slate-200">Prioridade</Label>
+                <Label htmlFor="priority">Prioridade</Label>
                 <Select value={formData.priority.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: parseInt(value) }))}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700 text-slate-100">
+                  <SelectContent>
                     <SelectItem value="0">Alta</SelectItem>
                     <SelectItem value="1">Média</SelectItem>
                     <SelectItem value="2">Baixa</SelectItem>
@@ -505,12 +515,12 @@ export default function ActivitiesPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="status" className="text-slate-200">Status</Label>
+                <Label htmlFor="status">Status</Label>
                 <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700 text-slate-100">
+                  <SelectContent>
                     <SelectItem value="pending">Pendente</SelectItem>
                     <SelectItem value="in_progress">Em Andamento</SelectItem>
                     <SelectItem value="completed">Concluído</SelectItem>
@@ -521,61 +531,57 @@ export default function ActivitiesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="responsible" className="text-slate-200 font-semibold">
-                  Quem? <span className="text-slate-400 font-normal">(Who - Responsável)</span>
+                <Label htmlFor="responsible" className="font-semibold">
+                  Quem? <span className="text-muted-foreground font-normal">(Who - Responsável)</span>
                 </Label>
                 <Input
                   id="responsible"
                   value={formData.responsible}
                   onChange={(e) => setFormData(prev => ({ ...prev, responsible: e.target.value }))}
                   placeholder="Nome do responsável pela execução"
-                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="deadline" className="text-slate-200 font-semibold">
-                  Quando? <span className="text-slate-400 font-normal">(When - Prazo)</span>
+                <Label htmlFor="deadline" className="font-semibold">
+                  Quando? <span className="text-muted-foreground font-normal">(When - Prazo)</span>
                 </Label>
                 <Input
                   id="deadline"
                   value={formData.deadline}
                   onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
                   placeholder="Ex: Semana 2-4, Contínuo, 14/10-19/11"
-                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="location" className="text-slate-200 font-semibold">
-                  Onde? <span className="text-slate-400 font-normal">(Where - Local/Plataforma)</span>
+                <Label htmlFor="location" className="font-semibold">
+                  Onde? <span className="text-muted-foreground font-normal">(Where - Local/Plataforma)</span>
                 </Label>
                 <Input
                   id="location"
                   value={formData.location}
                   onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                   placeholder="Ex: Site, Google Ads, LinkedIn, Pipedrive"
-                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cost" className="text-slate-200 font-semibold">
-                  Quanto? <span className="text-slate-400 font-normal">(How Much - Custo)</span>
+                <Label htmlFor="cost" className="font-semibold">
+                  Quanto? <span className="text-muted-foreground font-normal">(How Much - Custo)</span>
                 </Label>
                 <Input
                   id="cost"
                   value={formData.cost}
                   onChange={(e) => setFormData(prev => ({ ...prev, cost: e.target.value }))}
                   placeholder="Ex: R$ 5.000, 14/10-19/11, Horas internas"
-                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="how" className="text-slate-200 font-semibold">
-                Como? <span className="text-slate-400 font-normal">(How - Método/Processo)</span>
+              <Label htmlFor="how" className="font-semibold">
+                Como? <span className="text-muted-foreground font-normal">(How - Método/Processo)</span>
               </Label>
               <Textarea
                 id="how"
@@ -583,15 +589,22 @@ export default function ActivitiesPage() {
                 onChange={(e) => setFormData(prev => ({ ...prev, how: e.target.value }))}
                 placeholder="Descreva o método, processo e etapas para execução desta ação"
                 rows={4}
-                className="bg-slate-800 border-slate-700 text-slate-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="font-semibold">Vincular CRM</Label>
+              <OpportunitySelector
+                selectedIds={formData.opportunityIds}
+                onSelect={(ids) => setFormData(prev => ({ ...prev, opportunityIds: ids }))}
               />
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="border-slate-700 text-slate-300 hover:bg-slate-800">
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 {editingActivity ? 'Atualizar' : 'Criar'} Atividade
               </Button>
             </div>
@@ -601,12 +614,12 @@ export default function ActivitiesPage() {
 
       {/* Dialog para visualizar */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800 text-slate-100">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           {viewingActivity && (
             <>
               <DialogHeader>
                 <DialogTitle className="text-2xl">{viewingActivity.title}</DialogTitle>
-                <DialogDescription className="text-slate-400">
+                <DialogDescription>
                   Detalhes completos da atividade
                 </DialogDescription>
               </DialogHeader>
@@ -614,64 +627,82 @@ export default function ActivitiesPage() {
                 {/* AI Insights Section */}
                 <ActivityInsightCard activityId={viewingActivity.id} />
 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-muted/50">
                   <CardContent className="p-6 space-y-4">
                     <div>
-                      <Label className="text-slate-400 text-sm font-semibold">
+                      <Label className="text-muted-foreground text-sm font-semibold">
                         Por Quê? <span className="font-normal">(Why - Justificativa)</span>
                       </Label>
-                      <p className="text-slate-100 mt-1 whitespace-pre-wrap">{viewingActivity.description || 'Não especificado'}</p>
+                      <p className="mt-1 whitespace-pre-wrap">{viewingActivity.description || 'Não especificado'}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-slate-400 text-sm">Área</Label>
-                        <p className="text-slate-100 mt-1">{viewingActivity.area}</p>
+                        <Label className="text-muted-foreground text-sm">Área</Label>
+                        <p className="mt-1">{viewingActivity.area}</p>
                       </div>
                       <div>
-                        <Label className="text-slate-400 text-sm">Prioridade</Label>
-                        <p className="text-slate-100 mt-1">
+                        <Label className="text-muted-foreground text-sm">Prioridade</Label>
+                        <p className="mt-1">
                           {viewingActivity.priority === 0 ? '🔴 Alta' : viewingActivity.priority === 1 ? '🟡 Média' : '🟢 Baixa'}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-slate-400 text-sm">Status</Label>
-                        <p className="text-slate-100 mt-1">
+                        <Label className="text-muted-foreground text-sm">Status</Label>
+                        <p className="mt-1">
                           {viewingActivity.status === 'pending' ? '⏳ Pendente' : viewingActivity.status === 'in_progress' ? '🔄 Em Andamento' : '✅ Concluído'}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-slate-400 text-sm">Quem? (Who - Responsável)</Label>
-                        <p className="text-slate-100 mt-1">{viewingActivity.responsible || 'Não definido'}</p>
+                        <Label className="text-muted-foreground text-sm">Quem? (Who - Responsável)</Label>
+                        <p className="mt-1">{viewingActivity.responsible || 'Não definido'}</p>
                       </div>
                       <div>
-                        <Label className="text-slate-400 text-sm">Quando? (When - Prazo)</Label>
-                        <p className="text-slate-100 mt-1">{viewingActivity.deadline || 'Não definido'}</p>
+                        <Label className="text-muted-foreground text-sm">Quando? (When - Prazo)</Label>
+                        <p className="mt-1">{viewingActivity.deadline || 'Não definido'}</p>
                       </div>
                       <div>
-                        <Label className="text-slate-400 text-sm">Onde? (Where - Local)</Label>
-                        <p className="text-slate-100 mt-1">{viewingActivity.location || 'Não definido'}</p>
+                        <Label className="text-muted-foreground text-sm">Onde? (Where - Local)</Label>
+                        <p className="mt-1">{viewingActivity.location || 'Não definido'}</p>
                       </div>
-                      <div className="col-span-2">
-                        <Label className="text-slate-400 text-sm">Quanto? (How Much - Custo)</Label>
-                        <p className="text-slate-100 mt-1">{viewingActivity.cost || 'Não definido'}</p>
-                      </div>
+
                     </div>
+                    <div className="col-span-2">
+                      <Label className="text-muted-foreground text-sm">Oportunidades Vinculadas</Label>
+                      {viewingActivity.opportunities && viewingActivity.opportunities.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {viewingActivity.opportunities.map(opp => (
+                            <div key={opp.id} className="flex items-center gap-1 bg-secondary px-2 py-1 rounded text-xs border">
+                              <LinkIcon className="size-3" />
+                              <span className="font-medium">{opp.title}</span>
+                              <span className="text-muted-foreground">({opp.client?.name || 'Sem cliente'})</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-muted-foreground">Nenhuma vinculada</p>
+                      )}
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-muted-foreground text-sm">Quanto? (How Much - Custo)</Label>
+                      <p className="mt-1">{viewingActivity.cost || 'Não definido'}</p>
+                    </div>
+
                     <div>
-                      <Label className="text-slate-400 text-sm font-semibold">
+                      <Label className="text-muted-foreground text-sm font-semibold">
                         Como? <span className="font-normal">(How - Método/Processo)</span>
                       </Label>
-                      <p className="text-slate-100 mt-1 whitespace-pre-wrap">{viewingActivity.how || 'Não especificado'}</p>
+                      <p className="mt-1 whitespace-pre-wrap">{viewingActivity.how || 'Não especificado'}</p>
                     </div>
                   </CardContent>
                 </Card>
                 <div className="flex justify-end gap-3">
-                  <Button onClick={() => setIsViewDialogOpen(false)} variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                  <Button onClick={() => setIsViewDialogOpen(false)} variant="outline">
                     Fechar
                   </Button>
                   <Button onClick={() => {
                     setIsViewDialogOpen(false)
                     handleEdit(viewingActivity)
-                  }} className="bg-blue-600 hover:bg-blue-700">
+                  }} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     Editar Atividade
                   </Button>
                 </div>
@@ -683,49 +714,49 @@ export default function ActivitiesPage() {
 
       {/* AlertDialog para confirmação de geração de insights */}
       <AlertDialog open={!!newActivityId && !isGeneratingInsights} onOpenChange={(open) => !open && setNewActivityId(null)}>
-        <AlertDialogContent className="bg-slate-900 border-slate-800 text-slate-100">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <div className="flex items-center gap-3 mb-2">
-              <div className="rounded-full bg-blue-500/10 p-2">
-                <Sparkles className="size-6 text-blue-400" />
+              <div className="rounded-full bg-primary/10 p-2">
+                <Sparkles className="size-6 text-primary" />
               </div>
               <AlertDialogTitle className="text-xl">Gerar Análise de IA?</AlertDialogTitle>
             </div>
-            <AlertDialogDescription className="text-slate-400 text-base">
+            <AlertDialogDescription className="text-base">
               A Inteligência Artificial pode analisar esta atividade e identificar automaticamente:
               <ul className="mt-3 space-y-2 text-sm">
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-400 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   <span>Conexões com métricas operacionais do seu negócio</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-400 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   <span>Impactos em métricas estratégicas de M&A e valorização</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-400 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   <span>Score de relevância para o crescimento do negócio</span>
                 </li>
               </ul>
-              <p className="mt-4 text-xs text-slate-500">
+              <p className="mt-4 text-xs text-muted-foreground">
                 Powered by Google Gemini AI • Rate limit: 10 análises/minuto
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-slate-700 text-slate-300 hover:bg-slate-800">
+            <AlertDialogCancel>
               Agora Não
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleGenerateInsights}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              <Sparkles className="size-4" />
+              <Sparkles className="size-4 mr-2" />
               Gerar Análise
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div >
   )
 }

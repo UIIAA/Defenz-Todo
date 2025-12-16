@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -35,8 +34,112 @@ model User {
   salesMetrics            SalesMetric[]
   activityInsights        ActivityInsight[]
   businessMetrics         BusinessMetric[]
+  
+  // CRM Relations
+  clients                 Client[]
+  opportunities           Opportunity[]
+  interactions            Interaction[]
+  marketingLists          MarketingList[]
 
   @@index([email])
+}
+
+// ============================================================
+// CRM CORE MODELS
+// ============================================================
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  company   String?
+  segment   String?  // Ex: Varejo, Indústria, Tecnologia
+  notes     String?
+  
+  // Campos Executivos
+  licenseCount Int?
+  invoiceValue Float?
+  status       String? // Ex: "Implementado"
+  billingDate  DateTime?
+  origin       String?
+  salesCycle   String?
+  
+  marketingList   MarketingList? @relation(fields: [marketingListId], references: [id])
+  marketingListId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  opportunities Opportunity[]
+
+  @@index([userId])
+  @@index([email])
+  @@index([company])
+}
+
+model Opportunity {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("prospecting") // prospecting, qualification, proposal, negotiation, closed_won, closed_lost
+  value       Decimal? @default(0)
+  probability Int?     @default(0) // 0-100%
+  priority    String   @default("medium") // low, medium, high
+  
+  expectedCloseDate DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Campos Executivos
+  responsibleExecutive String?
+  licenseCount         Int?
+  additionalServices   String?
+  origin               String?
+  entryDate            DateTime?
+  lastContact          DateTime?
+  nextAction           String?
+  stage                String? // Campo livre para "Proposta Enviada", "Negociação", etc.
+
+  marketingList   MarketingList? @relation(fields: [marketingListId], references: [id])
+  marketingListId String?
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  interactions Interaction[]
+  activities   Activity[]
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
+}
+
+model Interaction {
+  id        String   @id @default(cuid())
+  type      String   // call, email, whatsapp, meeting, note
+  content   String   // Resumo da interação
+  date      DateTime @default(now())
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([opportunityId])
+  @@index([date])
 }
 
 model Activity {
@@ -59,6 +162,7 @@ model Activity {
   auditLogs   AuditLog[]
   comments    ActivityComment[]
   insight     ActivityInsight? // 1:1 com AI insights
+  opportunities Opportunity[]
 
   @@index([userId])
   @@index([status])
@@ -90,12 +194,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String? 
+  access_token      String? 
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String? 
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -130,11 +234,43 @@ model NotificationPreferences {
   activityDeleted     Boolean  @default(true)
   dailyDigest         Boolean  @default(false)
   weeklyReport        Boolean  @default(false)
+  
+  // CRM Notifications
+  opportunityWon      Boolean  @default(true)
+  opportunityLost     Boolean  @default(true)
+  newLead             Boolean  @default(true)
+  interactionLogged   Boolean  @default(true)
+
   quietHoursStart     String? // e.g., "22:00"
   quietHoursEnd       String? // e.g., "08:00"
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model MarketingList {
+  id                String    @id @default(cuid())
+  name              String
+  sentDate          DateTime?
+  validatedContacts Int       @default(0)
+  origin            String?
+  callsCount        Int       @default(0)
+  emailsCount       Int       @default(0)
+  meetingsCount     Int       @default(0)
+  proposalsCount    Int       @default(0)
+  leadsGenerated    Int       @default(0)
+  conversionRate    String?   // Ex: "10%"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  opportunities Opportunity[]
+  clients       Client[]
 
   @@index([userId])
 }
@@ -182,26 +318,26 @@ model ActivityComment {
 // Exemplos: Tempo de Resposta, Produtividade, Taxa de Conversão, etc.
 model BusinessMetric {
   id     String   @id @default(cuid())
-  period DateTime @db.Date // Mês de referência
+  period DateTime  // Mês de referência
 
   // ========== CATEGORIA DA MÉTRICA ==========
   category String // "operational", "sales", "customer_service", "productivity", "quality"
 
   // ========== MÉTRICAS OPERACIONAIS ==========
   metricName  String // Nome da métrica (ex: "Tempo Médio de Resposta")
-  metricValue Decimal @db.Decimal(14, 2) // Valor da métrica
+  metricValue Decimal  // Valor da métrica
   metricUnit  String // Unidade (ex: "minutos", "horas", "%", "unidades")
-  target      Decimal? @db.Decimal(14, 2) // Meta desejada
+  target      Decimal?  // Meta desejada
 
   // ========== CONTEXTO ==========
-  description String? @db.Text // Descrição do que mede
+  description String?  // Descrição do que mede
   area        String // Marketing, Vendas, Gestão, Estratégico, Back office
 
   // ========== METADATA ==========
   userId  String
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String? @db.Text
+  notes   String? 
   version Int     @default(1)
 
   createdAt DateTime @default(now())
@@ -229,14 +365,14 @@ model ActivityInsight {
   // Métricas de NEGÓCIO identificadas pela IA
   // Ex: "Tempo de Resposta", "Produtividade", "Taxa de Conversão"
   // Estrutura: [{ name, category, impact, confidence, explanation }]
-  businessMetrics     Json @db.JsonB
+  businessMetrics     Json 
   businessMetricScore Int // Score agregado 0-100
 
   // ========== M&A METRICS (Valorização) ==========
   // Métricas de M&A identificadas pela IA
   // Ex: "ARR", "Churn", "LTV:CAC", "EBITDA", "NPS"
   // Estrutura: [{ name, type, impact, confidence, explanation }]
-  maMetrics Json @db.JsonB
+  maMetrics Json 
   maScore   Int // Score agregado 0-100
 
   // ========== SCORES AGREGADOS ==========
@@ -244,13 +380,13 @@ model ActivityInsight {
 
   // ========== AI METADATA ==========
   aiModel        String // "gemini-1.5-flash", "gemini-1.5-pro", etc.
-  aiConfidence   Decimal @db.Decimal(4, 3) // 0.000-1.000
+  aiConfidence   Decimal  // 0.000-1.000
   processingTime Int // Milissegundos para processar
   tokenCount     Int? // Tokens consumidos (custo tracking)
 
   // ========== ANALYSIS CONTEXT ==========
-  analysisPrompt  String @db.Text // Prompt enviado à IA
-  rawResponse     String @db.Text // Resposta bruta JSON da IA
+  analysisPrompt  String  // Prompt enviado à IA
+  rawResponse     String  // Resposta bruta JSON da IA
   analysisVersion String @default("1.0") // Versão do algoritmo de análise
 
   // ========== AUDIT TRAIL ==========
@@ -280,45 +416,45 @@ model ActivityInsight {
 // Métricas Financeiras Principais (snapshot mensal)
 model FinancialMetric {
   id     String   @id @default(cuid())
-  period DateTime @db.Date // Mês de referência (primeiro dia do mês)
+  period DateTime  // Mês de referência (primeiro dia do mês)
 
   // ARR (Annual Recurring Revenue) - Métrica #1 para SaaS
-  mrr            Decimal @db.Decimal(14, 2) // Monthly Recurring Revenue
-  arr            Decimal @db.Decimal(14, 2) // ARR = MRR * 12
-  newMrr         Decimal @db.Decimal(14, 2) // Novos contratos no mês
-  expansionMrr   Decimal @db.Decimal(14, 2) // Upsells/cross-sells
-  contractionMrr Decimal @db.Decimal(14, 2) // Downgrades
-  churnedMrr     Decimal @db.Decimal(14, 2) // Cancelamentos
-  netNewMrr      Decimal @db.Decimal(14, 2) // new + expansion - contraction - churn
+  mrr            Decimal  // Monthly Recurring Revenue
+  arr            Decimal  // ARR = MRR * 12
+  newMrr         Decimal  // Novos contratos no mês
+  expansionMrr   Decimal  // Upsells/cross-sells
+  contractionMrr Decimal  // Downgrades
+  churnedMrr     Decimal  // Cancelamentos
+  netNewMrr      Decimal  // new + expansion - contraction - churn
 
   // Growth Metrics
-  mrrGrowthRate Decimal @db.Decimal(6, 2) // % crescimento MoM
-  arrGrowthRate Decimal @db.Decimal(6, 2) // % crescimento YoY
+  mrrGrowthRate Decimal  // % crescimento MoM
+  arrGrowthRate Decimal  // % crescimento YoY
 
   // EBITDA (Earnings Before Interest, Taxes, Depreciation, Amortization)
-  revenue           Decimal @db.Decimal(14, 2) // Receita total do mês
-  cogs              Decimal @db.Decimal(14, 2) // Cost of Goods Sold
-  operatingExpenses Decimal @db.Decimal(14, 2) // Despesas operacionais
-  ebitda            Decimal @db.Decimal(14, 2) // revenue - cogs - opex
-  ebitdaMargin      Decimal @db.Decimal(6, 2) // EBITDA / revenue * 100
+  revenue           Decimal  // Receita total do mês
+  cogs              Decimal  // Cost of Goods Sold
+  operatingExpenses Decimal  // Despesas operacionais
+  ebitda            Decimal  // revenue - cogs - opex
+  ebitdaMargin      Decimal  // EBITDA / revenue * 100
 
   // Gross Margin
-  grossProfit Decimal @db.Decimal(14, 2) // revenue - cogs
-  grossMargin Decimal @db.Decimal(6, 2) // gross profit / revenue * 100
+  grossProfit Decimal  // revenue - cogs
+  grossMargin Decimal  // gross profit / revenue * 100
 
   // Burn Rate & Runway
-  burnRate    Decimal @db.Decimal(14, 2) // Cash queimado por mês
-  cashBalance Decimal @db.Decimal(14, 2) // Saldo em caixa
+  burnRate    Decimal  // Cash queimado por mês
+  cashBalance Decimal  // Saldo em caixa
   runway      Int // Meses de runway restantes
 
   // Rule of 40 (Growth Rate + Profit Margin >= 40%)
-  ruleOf40Score Decimal @db.Decimal(6, 2) // arrGrowthRate + ebitdaMargin
+  ruleOf40Score Decimal  // arrGrowthRate + ebitdaMargin
 
   // Audit Trail
   userId  String // Quem inseriu os dados
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String? @db.Text // Contexto/observações
+  notes   String?  // Contexto/observações
   version Int     @default(1) // Versão dos dados (permite correções)
 
   createdAt DateTime @default(now())
@@ -332,7 +468,7 @@ model FinancialMetric {
 // Métricas de Clientes (Churn, LTV, CAC)
 model CustomerMetric {
   id     String   @id @default(cuid())
-  period DateTime @db.Date // Mês de referência
+  period DateTime  // Mês de referência
 
   // Customer Counts
   activeCustomers  Int // Total de clientes ativos
@@ -341,33 +477,33 @@ model CustomerMetric {
   netNewCustomers  Int // new - churned
 
   // Churn Metrics (métrica crítica #2)
-  customerChurnRate   Decimal @db.Decimal(6, 2) // % de clientes perdidos
-  revenueChurnRate    Decimal @db.Decimal(6, 2) // % de MRR perdido (gross churn)
-  netRevenueRetention Decimal @db.Decimal(6, 2) // NRR: (MRR start + expansion - churn) / MRR start * 100
+  customerChurnRate   Decimal  // % de clientes perdidos
+  revenueChurnRate    Decimal  // % de MRR perdido (gross churn)
+  netRevenueRetention Decimal  // NRR: (MRR start + expansion - churn) / MRR start * 100
 
   // LTV:CAC Ratio (métrica crítica #3)
-  averageLtv       Decimal @db.Decimal(14, 2) // Lifetime Value médio
-  averageCac       Decimal @db.Decimal(14, 2) // Customer Acquisition Cost médio
-  ltvCacRatio      Decimal @db.Decimal(6, 2) // LTV / CAC (ideal > 3.0)
+  averageLtv       Decimal  // Lifetime Value médio
+  averageCac       Decimal  // Customer Acquisition Cost médio
+  ltvCacRatio      Decimal  // LTV / CAC (ideal > 3.0)
   cacPaybackMonths Int // Meses para recuperar CAC
 
   // ARPU (Average Revenue Per User)
-  arpu       Decimal @db.Decimal(14, 2) // MRR / activeCustomers
-  arpuGrowth Decimal @db.Decimal(6, 2) // % crescimento MoM
+  arpu       Decimal  // MRR / activeCustomers
+  arpuGrowth Decimal  // % crescimento MoM
 
   // Cohort Analysis
-  cohortMonth         DateTime? @db.Date // Mês de aquisição (para análise de cohort)
+  cohortMonth         DateTime?  // Mês de aquisição (para análise de cohort)
   cohortSize          Int? // Tamanho do cohort
-  cohortRetentionRate Decimal?  @db.Decimal(6, 2) // % ainda ativo desde cohortMonth
+  cohortRetentionRate Decimal?   // % ainda ativo desde cohortMonth
 
   // Customer Growth
-  customerGrowthRate Decimal @db.Decimal(6, 2) // % crescimento de clientes MoM
+  customerGrowthRate Decimal  // % crescimento de clientes MoM
 
   // Audit Trail
   userId  String // Quem inseriu os dados
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String? @db.Text // Contexto/observações
+  notes   String?  // Contexto/observações
   version Int     @default(1) // Versão dos dados (permite correções)
 
   createdAt DateTime @default(now())
@@ -382,37 +518,37 @@ model CustomerMetric {
 // Métricas de Engajamento (Product-Market Fit)
 model EngagementMetric {
   id     String   @id @default(cuid())
-  period DateTime @db.Date // Mês de referência
+  period DateTime  // Mês de referência
 
   // Activation & Usage
   dau         Int // Daily Active Users (média do mês)
   mau         Int // Monthly Active Users
   wau         Int // Weekly Active Users
-  dauMauRatio Decimal @db.Decimal(6, 4) // Stickiness (ideal > 0.2) - precisa 4 decimais
+  dauMauRatio Decimal  // Stickiness (ideal > 0.2) - precisa 4 decimais
 
   // Engagement Depth
-  avgSessionsPerUser   Decimal @db.Decimal(8, 2) // Média de sessões por usuário/mês
+  avgSessionsPerUser   Decimal  // Média de sessões por usuário/mês
   avgSessionDuration   Int // Minutos médios por sessão
-  avgActivitiesPerUser Decimal @db.Decimal(8, 2) // Atividades criadas por usuário
+  avgActivitiesPerUser Decimal  // Atividades criadas por usuário
 
   // Time to Value
   avgTimeToFirstValue Int // Dias até primeira atividade concluída
-  activationRate      Decimal @db.Decimal(6, 2) // % de usuários que atingiram value
+  activationRate      Decimal  // % de usuários que atingiram value
 
   // Retention
-  weeklyRetention    Decimal @db.Decimal(6, 2) // % ativos 1 semana após signup
-  monthlyRetention   Decimal @db.Decimal(6, 2) // % ativos 1 mês após signup
-  quarterlyRetention Decimal @db.Decimal(6, 2) // % ativos 3 meses após signup
+  weeklyRetention    Decimal  // % ativos 1 semana após signup
+  monthlyRetention   Decimal  // % ativos 1 mês após signup
+  quarterlyRetention Decimal  // % ativos 3 meses após signup
 
   // Feature Adoption
-  featureAdoptionRates Json?   @db.JsonB // { "feature_name": adoption_rate } - jsonb para queries
-  powerUserPercentage  Decimal @db.Decimal(6, 2) // % usando >3x por semana
+  featureAdoptionRates Json?    // { "feature_name": adoption_rate } - jsonb para queries
+  powerUserPercentage  Decimal  // % usando >3x por semana
 
   // Audit Trail
   userId  String // Quem inseriu os dados
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String? @db.Text // Contexto/observações
+  notes   String?  // Contexto/observações
   version Int     @default(1) // Versão dos dados (permite correções)
 
   createdAt DateTime @default(now())
@@ -426,12 +562,12 @@ model EngagementMetric {
 // Métricas de Saúde do Produto (NPS, CSAT, Quality)
 model ProductHealthMetric {
   id     String   @id @default(cuid())
-  period DateTime @db.Date // Mês de referência
+  period DateTime  // Mês de referência
 
   // Customer Satisfaction
-  nps  Decimal @db.Decimal(6, 2) // Net Promoter Score (-100 a 100)
-  csat Decimal @db.Decimal(6, 2) // Customer Satisfaction (0-100)
-  ces  Decimal @db.Decimal(6, 2) // Customer Effort Score (1-7)
+  nps  Decimal  // Net Promoter Score (-100 a 100)
+  csat Decimal  // Customer Satisfaction (0-100)
+  ces  Decimal  // Customer Effort Score (1-7)
 
   // Product Quality
   bugCount             Int // Bugs reportados no mês
@@ -444,21 +580,21 @@ model ProductHealthMetric {
   featureRequestBacklog Int // Requests acumulados
 
   // Technical Health
-  uptime             Decimal @db.Decimal(6, 4) // % uptime (target 99.9900%)
+  uptime             Decimal  // % uptime (target 99.9900%)
   avgApiResponseTime Int // Milissegundos
-  errorRate          Decimal @db.Decimal(6, 4) // % de erros (precisa precisão)
+  errorRate          Decimal  // % de erros (precisa precisão)
 
   // Support Quality
   avgSupportResponseTime   Int // Minutos para primeira resposta
   avgSupportResolutionTime Int // Horas para resolução
   supportTicketCount       Int // Total de tickets no mês
-  firstContactResolution   Decimal @db.Decimal(6, 2) // % resolvido no primeiro contato
+  firstContactResolution   Decimal  // % resolvido no primeiro contato
 
   // Audit Trail
   userId  String // Quem inseriu os dados
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String? @db.Text // Contexto/observações
+  notes   String?  // Contexto/observações
   version Int     @default(1) // Versão dos dados (permite correções)
 
   createdAt DateTime @default(now())
@@ -472,7 +608,7 @@ model ProductHealthMetric {
 // Métricas de Vendas & Marketing (CAC, Funnel)
 model SalesMetric {
   id     String   @id @default(cuid())
-  period DateTime @db.Date // Mês de referência
+  period DateTime  // Mês de referência
 
   // Sales Performance
   leads          Int // Leads gerados
@@ -482,31 +618,31 @@ model SalesMetric {
   closedLost     Int // Deals perdidos
 
   // Conversion Rates
-  leadToSqlRate         Decimal @db.Decimal(6, 2) // % conversão lead -> SQL
-  sqlToOpportunityRate  Decimal @db.Decimal(6, 2) // % conversão SQL -> Opp
-  opportunityToWinRate  Decimal @db.Decimal(6, 2) // % conversão Opp -> Win
-  overallConversionRate Decimal @db.Decimal(6, 2) // % conversão lead -> Win
+  leadToSqlRate         Decimal  // % conversão lead -> SQL
+  sqlToOpportunityRate  Decimal  // % conversão SQL -> Opp
+  opportunityToWinRate  Decimal  // % conversão Opp -> Win
+  overallConversionRate Decimal  // % conversão lead -> Win
 
   // CAC Breakdown
-  marketingSpend Decimal @db.Decimal(14, 2) // Gasto com marketing
-  salesSpend     Decimal @db.Decimal(14, 2) // Gasto com vendas
-  totalCacSpend  Decimal @db.Decimal(14, 2) // marketing + sales
-  blendedCac     Decimal @db.Decimal(14, 2) // CAC total / newCustomers
+  marketingSpend Decimal  // Gasto com marketing
+  salesSpend     Decimal  // Gasto com vendas
+  totalCacSpend  Decimal  // marketing + sales
+  blendedCac     Decimal  // CAC total / newCustomers
 
   // Sales Cycle
   avgSalesCycleLength Int // Dias médios do ciclo de vendas
-  avgDealSize         Decimal @db.Decimal(14, 2) // Tamanho médio do contrato
+  avgDealSize         Decimal  // Tamanho médio do contrato
 
   // Pipeline Health
-  pipelineValue    Decimal @db.Decimal(14, 2) // Valor total do pipeline
-  pipelineCoverage Decimal @db.Decimal(6, 2) // Pipeline / quota ratio
-  leadVelocityRate Decimal @db.Decimal(6, 2) // % crescimento de leads MoM
+  pipelineValue    Decimal  // Valor total do pipeline
+  pipelineCoverage Decimal  // Pipeline / quota ratio
+  leadVelocityRate Decimal  // % crescimento de leads MoM
 
   // Audit Trail
   userId  String // Quem inseriu os dados
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String? @db.Text // Contexto/observações
+  notes   String?  // Contexto/observações
   version Int     @default(1) // Versão dos dados (permite correções)
 
   createdAt DateTime @default(now())

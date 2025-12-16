@@ -15,6 +15,18 @@ export async function GET() {
       },
       orderBy: {
         createdAt: 'desc'
+      },
+      include: {
+        opportunities: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            client: {
+              select: { name: true }
+            }
+          }
+        }
       }
     })
 
@@ -58,7 +70,10 @@ export async function POST(request: NextRequest) {
     const activity = await db.activity.create({
       data: {
         ...validatedData,
-        userId: user.id
+        userId: user.id,
+        opportunities: validatedData.opportunityIds ? {
+          connect: validatedData.opportunityIds.map(id => ({ id }))
+        } : undefined
       }
     })
 

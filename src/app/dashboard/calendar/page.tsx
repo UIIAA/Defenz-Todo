@@ -9,82 +9,69 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Users,
   Target,
-  AlertCircle,
-  CheckCircle,
-  MapPin,
-  DollarSign,
-  Filter
+  Briefcase,
+  Phone,
+  MessageCircle,
+  Mail,
+  FileText
 } from 'lucide-react'
-
-interface Activity {
-  id: string
-  title: string
-  area: string
-  priority: number
-  status: string
-  responsible: string
-  deadline: string
-  location: string
-  cost: string
-  description: string
-  createdAt: string
-  updatedAt: string
-}
+import { getCalendarEvents, CalendarEvent } from '@/actions/calendar'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 export default function CalendarPage() {
-  const [activities, setActivities] = useState<Activity[]>([])
+  const [events, setEvents] = useState<CalendarEvent[]>([])
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month')
-  const [filterArea, setFilterArea] = useState('all')
+  const [filterType, setFilterType] = useState('all')
 
   useEffect(() => {
-    // Fetch activities from database
-    const fetchActivities = async () => {
+    const fetchEvents = async () => {
       try {
-        const response = await fetch('/api/activities')
-        if (response.ok) {
-          const result = await response.json()
-          // A API retorna { success: true, data: activities[], count: number }
-          const data = result.data || []
-          setActivities(data)
-        }
+        const data = await getCalendarEvents()
+        // Converter strings de data de volta para objetos Date
+        const parsedEvents = data.map(event => ({
+          ...event,
+          date: new Date(event.date)
+        }))
+        setEvents(parsedEvents)
       } catch (error) {
-        console.error('Error fetching activities:', error)
+        console.error('Error fetching calendar events:', error)
       }
     }
 
-    fetchActivities()
+    fetchEvents()
   }, [])
 
-  // Cores dark theme para prioridade
-  const getPriorityColor = (priority: number) => {
-    switch (priority) {
-      case 0: return 'bg-red-500/20 text-red-400 border-red-500/50'
-      case 1: return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
-      case 2: return 'bg-green-500/20 text-green-400 border-green-500/50'
-      default: return 'bg-slate-500/20 text-slate-400 border-slate-500/50'
+  const getEventColor = (event: CalendarEvent) => {
+    if (event.type === 'activity') {
+      switch (event.priority) {
+        case 0: return 'bg-primary/10 text-primary border-primary/20' // High - Red
+        case 1: return 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20' // Medium - Orange
+        case 2: return 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20' // Low - Green
+        default: return 'bg-muted text-muted-foreground border-border'
+      }
+    } else if (event.type === 'opportunity') {
+      return 'bg-secondary/10 text-secondary-foreground border-secondary/20' // Navy
+    } else {
+      return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' // Interaction - Blue
     }
   }
 
-  const getPriorityLabel = (priority: number) => {
-    switch (priority) {
-      case 0: return 'Alta'
-      case 1: return 'Média'
-      case 2: return 'Baixa'
-      default: return 'Não definida'
-    }
-  }
-
-  // Ícones de status com cores dark theme
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <CheckCircle className="h-3 w-3 text-green-400" />
-      case 'in_progress': return <Clock className="h-3 w-3 text-blue-400" />
-      case 'pending': return <AlertCircle className="h-3 w-3 text-yellow-400" />
-      default: return <AlertCircle className="h-3 w-3 text-slate-400" />
+  const getEventIcon = (event: CalendarEvent) => {
+    if (event.type === 'activity') {
+      return <Target className="h-3 w-3" />
+    } else if (event.type === 'opportunity') {
+      return <Briefcase className="h-3 w-3" />
+    } else {
+      switch (event.meta?.interactionType) {
+        case 'call': return <Phone className="h-3 w-3" />
+        case 'email': return <Mail className="h-3 w-3" />
+        case 'whatsapp': return <MessageCircle className="h-3 w-3" />
+        default: return <FileText className="h-3 w-3" />
+      }
     }
   }
 
@@ -107,11 +94,10 @@ export default function CalendarPage() {
     return days
   }
 
-  const getActivitiesForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0]
-    return activities.filter(activity => {
-      if (filterArea !== 'all' && activity.area !== filterArea) return false
-      return activity.deadline === dateStr
+  const getEventsForDate = (date: Date) => {
+    return events.filter(event => {
+      if (filterType !== 'all' && event.type !== filterType) return false
+      return event.date.toDateString() === date.toDateString()
     })
   }
 
@@ -134,272 +120,196 @@ export default function CalendarPage() {
 
   const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
-  const areas = ['Marketing', 'Vendas', 'Gestão', 'Estratégico', 'Back office']
-
-  const filteredActivities = filterArea === 'all'
-    ? activities
-    : activities.filter(a => a.area === filterArea)
-
-  const upcomingDeadlines = activities
-    .filter(a => a.status !== 'completed')
-    .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
+  const upcomingEvents = events
+    .filter(e => e.date >= new Date())
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 5)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-100">Calendário de Atividades</h1>
-            <p className="text-slate-400 mt-2">Visualize e gerencie os prazos das atividades estratégicas</p>
-          </div>
-          <div className="flex gap-2">
-            <select
-              value={filterArea}
-              onChange={(e) => setFilterArea(e.target.value)}
-              className="px-3 py-2 bg-slate-900/50 border border-slate-800/50 rounded-lg text-sm text-slate-100 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-            >
-              <option value="all">Todas as áreas</option>
-              {areas.map(area => (
-                <option key={area} value={area}>{area}</option>
-              ))}
-            </select>
-            <Button
-              variant={viewMode === 'month' ? 'default' : 'outline'}
-              onClick={() => setViewMode('month')}
-              className={viewMode === 'month'
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-slate-900/50 border-slate-800/50 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100'
-              }
-            >
-              Mês
-            </Button>
-            <Button
-              variant={viewMode === 'week' ? 'default' : 'outline'}
-              onClick={() => setViewMode('week')}
-              className={viewMode === 'week'
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-slate-900/50 border-slate-800/50 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100'
-              }
-            >
-              Semana
-            </Button>
-          </div>
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Calendário Unificado</h1>
+          <p className="text-muted-foreground mt-2">Atividades, Oportunidades e Interações</p>
+        </div>
+        <div className="flex gap-2">
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-3 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            <option value="all">Todos os eventos</option>
+            <option value="activity">Atividades</option>
+            <option value="opportunity">Oportunidades</option>
+            <option value="interaction">Interações</option>
+          </select>
+          <Button
+            variant={viewMode === 'month' ? 'default' : 'outline'}
+            onClick={() => setViewMode('month')}
+          >
+            Mês
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Calendar */}
+        <div className="lg:col-span-3">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarIcon className="h-5 w-5 text-primary" />
+                  {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigateMonth('prev')}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigateMonth('next')}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-7 gap-1">
+                {/* Week days */}
+                {weekDays.map(day => (
+                  <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+                    {day}
+                  </div>
+                ))}
+
+                {/* Calendar days */}
+                {getDaysInMonth(currentDate).map((date, index) => {
+                  if (!date) {
+                    return <div key={`empty-${index}`} className="h-20"></div>
+                  }
+
+                  const dayEvents = getEventsForDate(date)
+                  const isToday = date.toDateString() === new Date().toDateString()
+                  const isSelected = selectedDate?.toDateString() === date.toDateString()
+
+                  return (
+                    <div
+                      key={date.toISOString()}
+                      className={`h-24 border rounded-lg p-2 cursor-pointer transition-all overflow-hidden ${isToday
+                        ? 'bg-primary/5 border-primary/20'
+                        : 'bg-card border-border hover:bg-muted/50'
+                        } ${isSelected
+                          ? 'ring-2 ring-primary'
+                          : ''
+                        }`}
+                      onClick={() => setSelectedDate(date)}
+                    >
+                      <div className="text-sm font-medium mb-1">{date.getDate()}</div>
+                      <div className="space-y-1">
+                        {dayEvents.slice(0, 3).map(event => (
+                          <div
+                            key={event.id}
+                            className={`text-[10px] p-1 rounded truncate border flex items-center gap-1 ${getEventColor(event)}`}
+                          >
+                            {getEventIcon(event)}
+                            <span>{event.title}</span>
+                          </div>
+                        ))}
+                        {dayEvents.length > 3 && (
+                          <div className="text-xs text-muted-foreground text-center">
+                            +{dayEvents.length - 3} mais
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Calendar */}
-          <div className="lg:col-span-3">
-            <Card className="bg-slate-900/50 border-slate-800/50 backdrop-blur-sm">
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Selected Date Details */}
+          {selectedDate && (
+            <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="flex items-center gap-2 text-slate-100">
-                    <CalendarIcon className="h-5 w-5 text-blue-400" />
-                    {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                  </CardTitle>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigateMonth('prev')}
-                      className="bg-slate-900/50 border-slate-800/50 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigateMonth('next')}
-                      className="bg-slate-900/50 border-slate-800/50 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+                <CardTitle className="text-lg">
+                  {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                </CardTitle>
+                <CardDescription>Eventos para esta data</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-7 gap-1">
-                  {/* Week days */}
-                  {weekDays.map(day => (
-                    <div key={day} className="text-center text-sm font-medium text-slate-400 py-2">
-                      {day}
-                    </div>
-                  ))}
-
-                  {/* Calendar days */}
-                  {getDaysInMonth(currentDate).map((date, index) => {
-                    if (!date) {
-                      return <div key={`empty-${index}`} className="h-20"></div>
-                    }
-
-                    const dayActivities = getActivitiesForDate(date)
-                    const isToday = date.toDateString() === new Date().toDateString()
-                    const isSelected = selectedDate?.toDateString() === date.toDateString()
-
-                    return (
-                      <div
-                        key={date.toISOString()}
-                        className={`h-20 border rounded-lg p-2 cursor-pointer transition-all ${
-                          isToday
-                            ? 'bg-blue-500/10 border-blue-500/50'
-                            : 'bg-slate-800/30 border-slate-800/50'
-                        } ${
-                          isSelected
-                            ? 'ring-2 ring-blue-500/50'
-                            : ''
-                        } hover:bg-slate-700/30 hover:border-slate-700/50`}
-                        onClick={() => setSelectedDate(date)}
-                      >
-                        <div className="text-sm font-medium mb-1 text-slate-100">{date.getDate()}</div>
-                        <div className="space-y-1">
-                          {dayActivities.slice(0, 2).map(activity => (
-                            <div
-                              key={activity.id}
-                              className={`text-xs p-1 rounded truncate border ${getPriorityColor(activity.priority)}`}
-                            >
-                              {activity.title}
-                            </div>
-                          ))}
-                          {dayActivities.length > 2 && (
-                            <div className="text-xs text-slate-400">
-                              +{dayActivities.length - 2} mais
-                            </div>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {getEventsForDate(selectedDate).length > 0 ? (
+                    getEventsForDate(selectedDate).map(event => (
+                      <div key={event.id} className="p-3 bg-muted/30 border rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`p-1 rounded-full ${getEventColor(event).split(' ')[0]}`}>
+                            {getEventIcon(event)}
+                          </div>
+                          <h4 className="font-medium text-sm">{event.title}</h4>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">{event.description}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-xs">
+                            {event.type === 'activity' ? 'Atividade' :
+                              event.type === 'opportunity' ? 'Oportunidade' : 'Interação'}
+                          </Badge>
+                          {event.status && (
+                            <Badge variant="secondary" className="text-xs">
+                              {event.status}
+                            </Badge>
                           )}
                         </div>
                       </div>
-                    )
-                  })}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nenhum evento para esta data
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
-          </div>
+          )}
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Selected Date Details */}
-            {selectedDate && (
-              <Card className="bg-slate-900/50 border-slate-800/50 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg text-slate-100">
-                    {selectedDate.toLocaleDateString('pt-BR', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">Atividades para esta data</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {getActivitiesForDate(selectedDate).length > 0 ? (
-                      getActivitiesForDate(selectedDate).map(activity => (
-                        <div key={activity.id} className="p-3 bg-slate-800/30 border border-slate-700/50 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            {getStatusIcon(activity.status)}
-                            <h4 className="font-medium text-sm text-slate-100">{activity.title}</h4>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <Badge className={getPriorityColor(activity.priority)}>
-                              {getPriorityLabel(activity.priority)}
-                            </Badge>
-                            <Badge className="bg-slate-700/50 text-slate-300 border-slate-600/50">
-                              {activity.area}
-                            </Badge>
-                          </div>
-                          <div className="text-xs text-slate-400 space-y-1">
-                            <div className="flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              {activity.responsible}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {activity.location}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3" />
-                              {activity.cost}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-slate-400 text-center py-4">
-                        Nenhuma atividade para esta data
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Upcoming Deadlines */}
-            <Card className="bg-slate-900/50 border-slate-800/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-slate-100">
-                  <Clock className="h-5 w-5 text-orange-400" />
-                  Próximos Prazos
-                </CardTitle>
-                <CardDescription className="text-slate-400">Atividades com vencimento em breve</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {upcomingDeadlines.map(activity => (
-                    <div key={activity.id} className="flex items-center justify-between p-2 bg-slate-800/30 border border-slate-700/50 rounded-lg">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          {getStatusIcon(activity.status)}
-                          <h4 className="font-medium text-sm text-slate-100 truncate">{activity.title}</h4>
-                        </div>
-                        <div className="text-xs text-slate-400">
-                          {new Date(activity.deadline).toLocaleDateString('pt-BR')}
-                        </div>
+          {/* Upcoming Events */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                Próximos Eventos
+              </CardTitle>
+              <CardDescription>Agenda futura</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {upcomingEvents.map(event => (
+                  <div key={event.id} className="flex items-center justify-between p-2 bg-muted/30 border rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {getEventIcon(event)}
+                        <h4 className="font-medium text-sm truncate">{event.title}</h4>
                       </div>
-                      <Badge className={`${getPriorityColor(activity.priority)} ml-2 shrink-0`}>
-                        {getPriorityLabel(activity.priority)}
-                      </Badge>
+                      <div className="text-xs text-muted-foreground">
+                        {format(event.date, "dd/MM/yyyy", { locale: ptBR })}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Statistics */}
-            <Card className="bg-slate-900/50 border-slate-800/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-slate-100">
-                  <Target className="h-5 w-5 text-blue-400" />
-                  Estatísticas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-400">Total de Atividades</span>
-                    <span className="font-medium text-slate-100">{filteredActivities.length}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-400">Pendentes</span>
-                    <span className="font-medium text-yellow-400">
-                      {filteredActivities.filter(a => a.status === 'pending').length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-400">Em Andamento</span>
-                    <span className="font-medium text-blue-400">
-                      {filteredActivities.filter(a => a.status === 'in_progress').length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-400">Concluídas</span>
-                    <span className="font-medium text-green-400">
-                      {filteredActivities.filter(a => a.status === 'completed').length}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

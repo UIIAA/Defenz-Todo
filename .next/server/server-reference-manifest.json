@@ -1,1 +1,390 @@
-{"node":{},"edge":{},"encryptionKey":"rpGabwu0EfKSSyFgzb/22eslkQeRckhBdFUaSaS8zR8="}
+{
+  "node": {
+    "00382c935a39ebfe400f90d3de078e2de9d86eb45f": {
+      "workers": {
+        "app/dashboard/executive/manage/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fexecutive.ts%22%2C%5B%7B%22id%22%3A%2200382c935a39ebfe400f90d3de078e2de9d86eb45f%22%2C%22exportedName%22%3A%22getExecutiveData%22%7D%2C%7B%22id%22%3A%2240690a9beb3ca4b94e2d24a98f770e8ab35888d7ce%22%2C%22exportedName%22%3A%22deleteMarketingList%22%7D%2C%7B%22id%22%3A%2240b77eb794372b2c02c9f05e5e1c85e93c9c843ab9%22%2C%22exportedName%22%3A%22upsertMarketingList%22%7D%2C%7B%22id%22%3A%2260008d54f3cd56330a1bf46ea4d201d1fe655db914%22%2C%22exportedName%22%3A%22updateClientExecutiveFields%22%7D%2C%7B%22id%22%3A%2260631e0b415580ab34b27a1f7aa228f53412abd353%22%2C%22exportedName%22%3A%22updateOpportunityExecutiveFields%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/executive/manage/page": "action-browser"
+      }
+    },
+    "40690a9beb3ca4b94e2d24a98f770e8ab35888d7ce": {
+      "workers": {
+        "app/dashboard/executive/manage/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fexecutive.ts%22%2C%5B%7B%22id%22%3A%2200382c935a39ebfe400f90d3de078e2de9d86eb45f%22%2C%22exportedName%22%3A%22getExecutiveData%22%7D%2C%7B%22id%22%3A%2240690a9beb3ca4b94e2d24a98f770e8ab35888d7ce%22%2C%22exportedName%22%3A%22deleteMarketingList%22%7D%2C%7B%22id%22%3A%2240b77eb794372b2c02c9f05e5e1c85e93c9c843ab9%22%2C%22exportedName%22%3A%22upsertMarketingList%22%7D%2C%7B%22id%22%3A%2260008d54f3cd56330a1bf46ea4d201d1fe655db914%22%2C%22exportedName%22%3A%22updateClientExecutiveFields%22%7D%2C%7B%22id%22%3A%2260631e0b415580ab34b27a1f7aa228f53412abd353%22%2C%22exportedName%22%3A%22updateOpportunityExecutiveFields%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/executive/manage/page": "action-browser"
+      }
+    },
+    "40b77eb794372b2c02c9f05e5e1c85e93c9c843ab9": {
+      "workers": {
+        "app/dashboard/executive/manage/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fexecutive.ts%22%2C%5B%7B%22id%22%3A%2200382c935a39ebfe400f90d3de078e2de9d86eb45f%22%2C%22exportedName%22%3A%22getExecutiveData%22%7D%2C%7B%22id%22%3A%2240690a9beb3ca4b94e2d24a98f770e8ab35888d7ce%22%2C%22exportedName%22%3A%22deleteMarketingList%22%7D%2C%7B%22id%22%3A%2240b77eb794372b2c02c9f05e5e1c85e93c9c843ab9%22%2C%22exportedName%22%3A%22upsertMarketingList%22%7D%2C%7B%22id%22%3A%2260008d54f3cd56330a1bf46ea4d201d1fe655db914%22%2C%22exportedName%22%3A%22updateClientExecutiveFields%22%7D%2C%7B%22id%22%3A%2260631e0b415580ab34b27a1f7aa228f53412abd353%22%2C%22exportedName%22%3A%22updateOpportunityExecutiveFields%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/executive/manage/page": "action-browser"
+      }
+    },
+    "60008d54f3cd56330a1bf46ea4d201d1fe655db914": {
+      "workers": {
+        "app/dashboard/executive/manage/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fexecutive.ts%22%2C%5B%7B%22id%22%3A%2200382c935a39ebfe400f90d3de078e2de9d86eb45f%22%2C%22exportedName%22%3A%22getExecutiveData%22%7D%2C%7B%22id%22%3A%2240690a9beb3ca4b94e2d24a98f770e8ab35888d7ce%22%2C%22exportedName%22%3A%22deleteMarketingList%22%7D%2C%7B%22id%22%3A%2240b77eb794372b2c02c9f05e5e1c85e93c9c843ab9%22%2C%22exportedName%22%3A%22upsertMarketingList%22%7D%2C%7B%22id%22%3A%2260008d54f3cd56330a1bf46ea4d201d1fe655db914%22%2C%22exportedName%22%3A%22updateClientExecutiveFields%22%7D%2C%7B%22id%22%3A%2260631e0b415580ab34b27a1f7aa228f53412abd353%22%2C%22exportedName%22%3A%22updateOpportunityExecutiveFields%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/executive/manage/page": "action-browser"
+      }
+    },
+    "60631e0b415580ab34b27a1f7aa228f53412abd353": {
+      "workers": {
+        "app/dashboard/executive/manage/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fexecutive.ts%22%2C%5B%7B%22id%22%3A%2200382c935a39ebfe400f90d3de078e2de9d86eb45f%22%2C%22exportedName%22%3A%22getExecutiveData%22%7D%2C%7B%22id%22%3A%2240690a9beb3ca4b94e2d24a98f770e8ab35888d7ce%22%2C%22exportedName%22%3A%22deleteMarketingList%22%7D%2C%7B%22id%22%3A%2240b77eb794372b2c02c9f05e5e1c85e93c9c843ab9%22%2C%22exportedName%22%3A%22upsertMarketingList%22%7D%2C%7B%22id%22%3A%2260008d54f3cd56330a1bf46ea4d201d1fe655db914%22%2C%22exportedName%22%3A%22updateClientExecutiveFields%22%7D%2C%7B%22id%22%3A%2260631e0b415580ab34b27a1f7aa228f53412abd353%22%2C%22exportedName%22%3A%22updateOpportunityExecutiveFields%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/executive/manage/page": "action-browser"
+      }
+    },
+    "00074a271fe68a9dc3e4d26432971be49ff7194893": {
+      "workers": {
+        "app/dashboard/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/dashboard/executive/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/page": "action-browser",
+        "app/dashboard/executive/page": "rsc"
+      }
+    },
+    "00337bc6778fc0fb12102baa004206b83d71fbddea": {
+      "workers": {
+        "app/dashboard/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/dashboard/executive/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/page": "action-browser",
+        "app/dashboard/executive/page": "rsc"
+      }
+    },
+    "004af5f435b60477cd2a2bd2d50d646a00839ab425": {
+      "workers": {
+        "app/dashboard/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/dashboard/executive/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/page": "action-browser",
+        "app/dashboard/executive/page": "rsc"
+      }
+    },
+    "005b1b8a8d633d706add79f985ae4fe307ad13c85d": {
+      "workers": {
+        "app/dashboard/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/dashboard/executive/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/page": "action-browser",
+        "app/dashboard/executive/page": "rsc"
+      }
+    },
+    "007957b16640c15ff4bb2e89b20f63af9a101e6987": {
+      "workers": {
+        "app/dashboard/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/dashboard/executive/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/page": "action-browser",
+        "app/dashboard/executive/page": "rsc"
+      }
+    },
+    "009a05bfc15d318b1ad2cec4660c92d1b3cbded683": {
+      "workers": {
+        "app/dashboard/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/dashboard/executive/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/page": "action-browser",
+        "app/dashboard/executive/page": "rsc"
+      }
+    },
+    "00b5212a277551d225f113215cbbd759a47eddd634": {
+      "workers": {
+        "app/dashboard/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/dashboard/executive/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/page": "action-browser",
+        "app/dashboard/executive/page": "rsc"
+      }
+    },
+    "00e027bf558e105924657beb9366906d964ac0cd70": {
+      "workers": {
+        "app/dashboard/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/dashboard/executive/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fdashboard.ts%22%2C%5B%7B%22id%22%3A%2200074a271fe68a9dc3e4d26432971be49ff7194893%22%2C%22exportedName%22%3A%22getPipelineByStage%22%7D%2C%7B%22id%22%3A%2200337bc6778fc0fb12102baa004206b83d71fbddea%22%2C%22exportedName%22%3A%22getFunnelData%22%7D%2C%7B%22id%22%3A%22004af5f435b60477cd2a2bd2d50d646a00839ab425%22%2C%22exportedName%22%3A%22getTopOpportunities%22%7D%2C%7B%22id%22%3A%22005b1b8a8d633d706add79f985ae4fe307ad13c85d%22%2C%22exportedName%22%3A%22getListsPerformance%22%7D%2C%7B%22id%22%3A%22007957b16640c15ff4bb2e89b20f63af9a101e6987%22%2C%22exportedName%22%3A%22getClosedClients%22%7D%2C%7B%22id%22%3A%22009a05bfc15d318b1ad2cec4660c92d1b3cbded683%22%2C%22exportedName%22%3A%22getExecutiveMetrics%22%7D%2C%7B%22id%22%3A%2200b5212a277551d225f113215cbbd759a47eddd634%22%2C%22exportedName%22%3A%22getDashboardMetrics%22%7D%2C%7B%22id%22%3A%2200e027bf558e105924657beb9366906d964ac0cd70%22%2C%22exportedName%22%3A%22getMrrEvolution%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/page": "action-browser",
+        "app/dashboard/executive/page": "rsc"
+      }
+    },
+    "00b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4": {
+      "workers": {
+        "app/dashboard/crm/pipeline/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/opportunities/[id]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/clients/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/crm/pipeline/page": "rsc",
+        "app/dashboard/crm/opportunities/[id]/page": "rsc",
+        "app/dashboard/crm/clients/page": "rsc"
+      }
+    },
+    "00f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2": {
+      "workers": {
+        "app/dashboard/crm/pipeline/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/opportunities/[id]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/clients/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/crm/pipeline/page": "rsc",
+        "app/dashboard/crm/opportunities/[id]/page": "rsc",
+        "app/dashboard/crm/clients/page": "rsc"
+      }
+    },
+    "40043cec99b255c2900b4c5001d083a6131977f140": {
+      "workers": {
+        "app/dashboard/crm/pipeline/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/opportunities/[id]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/clients/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/crm/pipeline/page": "rsc",
+        "app/dashboard/crm/opportunities/[id]/page": "rsc",
+        "app/dashboard/crm/clients/page": "rsc"
+      }
+    },
+    "40122c3cafb8d5637e35029a80d8aff88e58b5a831": {
+      "workers": {
+        "app/dashboard/crm/pipeline/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/opportunities/[id]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/clients/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/crm/pipeline/page": "rsc",
+        "app/dashboard/crm/opportunities/[id]/page": "rsc",
+        "app/dashboard/crm/clients/page": "rsc"
+      }
+    },
+    "4018559e2df645d21ddfab41137c797d4ff77c0828": {
+      "workers": {
+        "app/dashboard/crm/pipeline/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/opportunities/[id]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/clients/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/crm/pipeline/page": "rsc",
+        "app/dashboard/crm/opportunities/[id]/page": "rsc",
+        "app/dashboard/crm/clients/page": "rsc"
+      }
+    },
+    "40621b91de84d860c0bd151ebdff183670f5e57ede": {
+      "workers": {
+        "app/dashboard/crm/pipeline/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/opportunities/[id]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/clients/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/crm/pipeline/page": "rsc",
+        "app/dashboard/crm/opportunities/[id]/page": "rsc",
+        "app/dashboard/crm/clients/page": "rsc"
+      }
+    },
+    "4085e70d3663d945027c8a64703cc37db0a308903f": {
+      "workers": {
+        "app/dashboard/crm/pipeline/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/opportunities/[id]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/clients/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/crm/pipeline/page": "rsc",
+        "app/dashboard/crm/opportunities/[id]/page": "rsc",
+        "app/dashboard/crm/clients/page": "rsc"
+      }
+    },
+    "60b857c19766476100f504af55198a9fe948e90de5": {
+      "workers": {
+        "app/dashboard/crm/pipeline/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/opportunities/[id]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/dashboard/crm/clients/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm.ts%22%2C%5B%7B%22id%22%3A%2200b8d196da14c13106f9a47ca1eccad1f4a9eaa1f4%22%2C%22exportedName%22%3A%22getOpportunities%22%7D%2C%7B%22id%22%3A%2200f96386a2ebfd1ed084cfd40542ebafbb1a89b5f2%22%2C%22exportedName%22%3A%22getClients%22%7D%2C%7B%22id%22%3A%2240043cec99b255c2900b4c5001d083a6131977f140%22%2C%22exportedName%22%3A%22searchOpportunities%22%7D%2C%7B%22id%22%3A%2240122c3cafb8d5637e35029a80d8aff88e58b5a831%22%2C%22exportedName%22%3A%22createInteraction%22%7D%2C%7B%22id%22%3A%224018559e2df645d21ddfab41137c797d4ff77c0828%22%2C%22exportedName%22%3A%22createClient%22%7D%2C%7B%22id%22%3A%2240621b91de84d860c0bd151ebdff183670f5e57ede%22%2C%22exportedName%22%3A%22getOpportunityById%22%7D%2C%7B%22id%22%3A%224085e70d3663d945027c8a64703cc37db0a308903f%22%2C%22exportedName%22%3A%22createOpportunity%22%7D%2C%7B%22id%22%3A%2260b857c19766476100f504af55198a9fe948e90de5%22%2C%22exportedName%22%3A%22updateOpportunityStatus%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/crm/pipeline/page": "rsc",
+        "app/dashboard/crm/opportunities/[id]/page": "rsc",
+        "app/dashboard/crm/clients/page": "rsc"
+      }
+    },
+    "00f90f8f294389a49bac482cc66500000bdc0e71c3": {
+      "workers": {
+        "app/dashboard/reports/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Freports.ts%22%2C%5B%7B%22id%22%3A%2200f90f8f294389a49bac482cc66500000bdc0e71c3%22%2C%22exportedName%22%3A%22getInteractionStats%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/reports/page": "action-browser"
+      }
+    },
+    "4016cf027ab786f31a6c251e6223edd708310b6be6": {
+      "workers": {
+        "app/dashboard/crm/import/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm-import.ts%22%2C%5B%7B%22id%22%3A%224016cf027ab786f31a6c251e6223edd708310b6be6%22%2C%22exportedName%22%3A%22saveImportedData%22%7D%2C%7B%22id%22%3A%2240f98afe0c7ede61257d2547e4561df42437af2fd1%22%2C%22exportedName%22%3A%22mapImportData%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/crm/import/page": "action-browser"
+      }
+    },
+    "40f98afe0c7ede61257d2547e4561df42437af2fd1": {
+      "workers": {
+        "app/dashboard/crm/import/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fmarcoscruz%2FDocuments%2FProjetos%2FDefenz%2FDefenz%20-%20To-Do%2Fsrc%2Factions%2Fcrm-import.ts%22%2C%5B%7B%22id%22%3A%224016cf027ab786f31a6c251e6223edd708310b6be6%22%2C%22exportedName%22%3A%22saveImportedData%22%7D%2C%7B%22id%22%3A%2240f98afe0c7ede61257d2547e4561df42437af2fd1%22%2C%22exportedName%22%3A%22mapImportData%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/crm/import/page": "action-browser"
+      }
+    }
+  },
+  "edge": {},
+  "encryptionKey": "fsnyPyKPyBX6RkMRlBTu9yKVuJrNYKESbURndRL5Cow="
+}

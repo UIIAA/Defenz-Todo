@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Bell, Mail, Save, TestTube } from 'lucide-react'
+import { Bell, Mail, Save, TestTube, Briefcase } from 'lucide-react'
 
 interface NotificationPreferences {
   activityAssigned: boolean
@@ -16,6 +16,10 @@ interface NotificationPreferences {
   activityDeleted: boolean
   dailyDigest: boolean
   weeklyReport: boolean
+  opportunityWon: boolean
+  opportunityLost: boolean
+  newLead: boolean
+  interactionLogged: boolean
   quietHoursStart: string | null
   quietHoursEnd: string | null
 }
@@ -28,6 +32,10 @@ export default function NotificationsSettingsPage() {
     activityDeleted: true,
     dailyDigest: false,
     weeklyReport: false,
+    opportunityWon: true,
+    opportunityLost: false,
+    newLead: true,
+    interactionLogged: false,
     quietHoursStart: null,
     quietHoursEnd: null
   })
@@ -239,6 +247,88 @@ export default function NotificationsSettingsPage() {
                   setPreferences({ ...preferences, weeklyReport: checked })
                 }
               />
+            </div>
+
+            {/* CRM Notifications */}
+            <div className="pt-6 border-t border-slate-800/50">
+              <h3 className="text-lg font-medium text-slate-100 mb-4 flex items-center gap-2">
+                <Briefcase className="h-4 w-4 text-blue-400" />
+                Notificações do CRM
+              </h3>
+
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="opportunityWon" className="text-slate-200">
+                      Oportunidade Ganha
+                    </Label>
+                    <p className="text-sm text-slate-400">
+                      Receber email quando um negócio for fechado com sucesso
+                    </p>
+                  </div>
+                  <Switch
+                    id="opportunityWon"
+                    checked={preferences.opportunityWon}
+                    onCheckedChange={(checked) =>
+                      setPreferences({ ...preferences, opportunityWon: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="opportunityLost" className="text-slate-200">
+                      Oportunidade Perdida
+                    </Label>
+                    <p className="text-sm text-slate-400">
+                      Receber email quando um negócio for perdido
+                    </p>
+                  </div>
+                  <Switch
+                    id="opportunityLost"
+                    checked={preferences.opportunityLost}
+                    onCheckedChange={(checked) =>
+                      setPreferences({ ...preferences, opportunityLost: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="newLead" className="text-slate-200">
+                      Novo Cliente
+                    </Label>
+                    <p className="text-sm text-slate-400">
+                      Receber email quando um novo cliente for cadastrado
+                    </p>
+                  </div>
+                  <Switch
+                    id="newLead"
+                    checked={preferences.newLead}
+                    onCheckedChange={(checked) =>
+                      setPreferences({ ...preferences, newLead: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="interactionLogged" className="text-slate-200">
+                      Nova Interação
+                    </Label>
+                    <p className="text-sm text-slate-400">
+                      Receber email quando uma interação for registrada
+                    </p>
+                  </div>
+                  <Switch
+                    id="interactionLogged"
+                    checked={preferences.interactionLogged}
+                    onCheckedChange={(checked) =>
+                      setPreferences({ ...preferences, interactionLogged: checked })
+                    }
+                  />
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

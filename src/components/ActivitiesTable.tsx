@@ -71,7 +71,7 @@ function ActivityRow({
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <div className="hover:bg-slate-800/30 transition-colors border-b border-slate-800/50 last:border-b-0">
+      <div className="hover:bg-muted/50 transition-colors border-b border-border last:border-b-0">
         {/* Main Row */}
         <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-4 items-center py-4 px-4">
           {/* Expand Button */}
@@ -83,9 +83,9 @@ function ActivityRow({
                 className="p-0 h-auto hover:bg-transparent"
               >
                 {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-slate-400" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-slate-400" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 )}
               </Button>
             </CollapsibleTrigger>
@@ -93,17 +93,17 @@ function ActivityRow({
 
           {/* Task - flex grow */}
           <div className="min-w-0">
-            <h3 className="text-sm font-medium text-slate-100 mb-1 truncate">
+            <h3 className="text-sm font-medium text-foreground mb-1 truncate">
               {activity.title}
             </h3>
-            <p className="text-xs text-slate-400 truncate">
+            <p className="text-xs text-muted-foreground truncate">
               Assigned to: {activity.responsible || 'Não definido'}
             </p>
           </div>
 
           {/* Area */}
           <div className="shrink-0">
-            <Badge variant="outline" className="bg-slate-800/50 text-slate-300 border-slate-700">
+            <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
               {activity.area}
             </Badge>
           </div>
@@ -128,7 +128,7 @@ function ActivityRow({
             <Button
               variant="ghost"
               size="sm"
-              className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 p-2 h-auto"
+              className="text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 p-2 h-auto"
               onClick={() => onView(activity)}
               title="View"
             >
@@ -137,7 +137,7 @@ function ActivityRow({
             <Button
               variant="ghost"
               size="sm"
-              className="text-green-400 hover:text-green-300 hover:bg-green-500/10 p-2 h-auto"
+              className="text-green-500 hover:text-green-600 hover:bg-green-500/10 p-2 h-auto"
               onClick={() => onEdit(activity)}
               title="Edit"
             >
@@ -146,7 +146,7 @@ function ActivityRow({
             <Button
               variant="ghost"
               size="sm"
-              className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 h-auto"
+              className="text-red-500 hover:text-red-600 hover:bg-red-500/10 p-2 h-auto"
               onClick={() => onDelete(activity)}
               title="Delete"
             >
@@ -157,7 +157,7 @@ function ActivityRow({
 
         {/* Expanded 5W2H Details */}
         <CollapsibleContent>
-          <div className="px-4 pb-4 bg-slate-800/20 space-y-6">
+          <div className="px-4 pb-4 bg-muted/30 space-y-6">
             {/* AI Insights Section */}
             <div className="pt-4">
               <ActivityInsightCard activityId={activity.id} />
@@ -167,50 +167,50 @@ function ActivityRow({
               {/* Por Quê? (Why) */}
               {activity.description && (
                 <div className="md:col-span-2 border-l-2 border-blue-500/50 pl-3">
-                  <p className="text-xs font-semibold text-blue-400 mb-1">
-                    Por Quê? <span className="text-slate-500 font-normal">(Why - Justificativa)</span>
+                  <p className="text-xs font-semibold text-blue-500 mb-1">
+                    Por Quê? <span className="text-muted-foreground font-normal">(Why - Justificativa)</span>
                   </p>
-                  <p className="text-slate-300 whitespace-pre-wrap">{activity.description}</p>
+                  <p className="text-foreground whitespace-pre-wrap">{activity.description}</p>
                 </div>
               )}
 
               {/* Quando? (When) */}
               {activity.deadline && (
                 <div className="border-l-2 border-purple-500/50 pl-3">
-                  <p className="text-xs font-semibold text-purple-400 mb-1">
-                    Quando? <span className="text-slate-500 font-normal">(When - Prazo)</span>
+                  <p className="text-xs font-semibold text-purple-500 mb-1">
+                    Quando? <span className="text-muted-foreground font-normal">(When - Prazo)</span>
                   </p>
-                  <p className="text-slate-300">{activity.deadline}</p>
+                  <p className="text-foreground">{activity.deadline}</p>
                 </div>
               )}
 
               {/* Onde? (Where) */}
               {activity.location && (
                 <div className="border-l-2 border-green-500/50 pl-3">
-                  <p className="text-xs font-semibold text-green-400 mb-1">
-                    Onde? <span className="text-slate-500 font-normal">(Where - Local)</span>
+                  <p className="text-xs font-semibold text-green-500 mb-1">
+                    Onde? <span className="text-muted-foreground font-normal">(Where - Local)</span>
                   </p>
-                  <p className="text-slate-300">{activity.location}</p>
+                  <p className="text-foreground">{activity.location}</p>
                 </div>
               )}
 
               {/* Como? (How) */}
               {activity.how && (
                 <div className="md:col-span-2 border-l-2 border-yellow-500/50 pl-3">
-                  <p className="text-xs font-semibold text-yellow-400 mb-1">
-                    Como? <span className="text-slate-500 font-normal">(How - Método)</span>
+                  <p className="text-xs font-semibold text-yellow-500 mb-1">
+                    Como? <span className="text-muted-foreground font-normal">(How - Método)</span>
                   </p>
-                  <p className="text-slate-300 whitespace-pre-wrap">{activity.how}</p>
+                  <p className="text-foreground whitespace-pre-wrap">{activity.how}</p>
                 </div>
               )}
 
               {/* Quanto? (How Much) */}
               {activity.cost && (
                 <div className="border-l-2 border-orange-500/50 pl-3">
-                  <p className="text-xs font-semibold text-orange-400 mb-1">
-                    Quanto? <span className="text-slate-500 font-normal">(How Much - Custo)</span>
+                  <p className="text-xs font-semibold text-orange-500 mb-1">
+                    Quanto? <span className="text-muted-foreground font-normal">(How Much - Custo)</span>
                   </p>
-                  <p className="text-slate-300">{activity.cost}</p>
+                  <p className="text-foreground">{activity.cost}</p>
                 </div>
               )}
             </div>
@@ -292,25 +292,25 @@ export default function ActivitiesTable({
     switch (priority) {
       case 0:
         return (
-          <Badge className="bg-red-500/20 text-red-400 border-red-500/50 hover:bg-red-500/30">
+          <Badge className="bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/50 hover:bg-red-500/30">
             Alta
           </Badge>
         )
       case 1:
         return (
-          <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/50 hover:bg-orange-500/30">
+          <Badge className="bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/50 hover:bg-orange-500/30">
             Média
           </Badge>
         )
       case 2:
         return (
-          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/50 hover:bg-blue-500/30">
+          <Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/50 hover:bg-blue-500/30">
             Baixa
           </Badge>
         )
       default:
         return (
-          <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/50">
+          <Badge variant="outline">
             -
           </Badge>
         )
@@ -321,20 +321,20 @@ export default function ActivitiesTable({
     switch (status) {
       case 'in_progress':
         return (
-          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/50 hover:bg-blue-500/30">
+          <Badge className="bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/50 hover:bg-blue-500/30">
             Em Andamento
           </Badge>
         )
       case 'completed':
         return (
-          <Badge className="bg-green-500/20 text-green-400 border-green-500/50 hover:bg-green-500/30">
+          <Badge className="bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/50 hover:bg-green-500/30">
             Concluído
           </Badge>
         )
       case 'pending':
       default:
         return (
-          <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/50 hover:bg-gray-500/30">
+          <Badge className="bg-muted text-muted-foreground border-border hover:bg-muted/80">
             Pendente
           </Badge>
         )
@@ -347,48 +347,48 @@ export default function ActivitiesTable({
       return <ArrowUpDown className="h-3 w-3 ml-1 inline opacity-50" />
     }
     return sortDirection === 'asc' ? (
-      <ArrowUp className="h-3 w-3 ml-1 inline text-blue-400" />
+      <ArrowUp className="h-3 w-3 ml-1 inline text-primary" />
     ) : (
-      <ArrowDown className="h-3 w-3 ml-1 inline text-blue-400" />
+      <ArrowDown className="h-3 w-3 ml-1 inline text-primary" />
     )
   }
 
   return (
     <div className="space-y-6">
       {/* Header com estatísticas */}
-      <div className="bg-slate-900/50 border border-slate-800/50 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-slate-100 text-center mb-6">
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h2 className="text-xl font-semibold text-foreground text-center mb-6">
           Total Tasks Overview
         </h2>
         <div className="grid grid-cols-4 gap-6">
           <div className="text-center">
-            <p className="text-sm text-slate-400 mb-2">Total</p>
-            <p className="text-4xl font-bold text-blue-400">{stats.total}</p>
+            <p className="text-sm text-muted-foreground mb-2">Total</p>
+            <p className="text-4xl font-bold text-blue-500">{stats.total}</p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-slate-400 mb-2">Completed</p>
-            <p className="text-4xl font-bold text-green-400">{stats.completed}</p>
+            <p className="text-sm text-muted-foreground mb-2">Completed</p>
+            <p className="text-4xl font-bold text-green-500">{stats.completed}</p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-slate-400 mb-2">In Progress</p>
+            <p className="text-sm text-muted-foreground mb-2">In Progress</p>
             <p className="text-4xl font-bold text-blue-500">{stats.inProgress}</p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-slate-400 mb-2">Pending</p>
-            <p className="text-4xl font-bold text-slate-400">{stats.pending}</p>
+            <p className="text-sm text-muted-foreground mb-2">Pending</p>
+            <p className="text-4xl font-bold text-muted-foreground">{stats.pending}</p>
           </div>
         </div>
       </div>
 
       {/* Tabs e Ações */}
-      <div className="bg-slate-900/50 border border-slate-800/50 rounded-lg overflow-hidden">
-        <div className="flex justify-between items-center p-4 border-b border-slate-800/50">
+      <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="flex justify-between items-center p-4 border-b border-border">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-            <TabsList className="bg-slate-800/30 border-slate-700">
-              <TabsTrigger value="active" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-slate-100">
+            <TabsList className="bg-muted border-border">
+              <TabsTrigger value="active" className="text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">
                 Active Tasks ({activeActivities.length})
               </TabsTrigger>
-              <TabsTrigger value="completed" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-slate-100">
+              <TabsTrigger value="completed" className="text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">
                 Completed ({completedActivities.length})
               </TabsTrigger>
             </TabsList>
@@ -399,7 +399,7 @@ export default function ActivitiesTable({
               variant="outline"
               size="sm"
               onClick={onUpload}
-              className="bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700"
+              className="bg-background border-border text-muted-foreground hover:bg-muted"
             >
               <Upload className="h-4 w-4 mr-2" />
               Upload Excel
@@ -408,7 +408,7 @@ export default function ActivitiesTable({
               variant="outline"
               size="sm"
               onClick={onDownload}
-              className="bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700"
+              className="bg-background border-border text-muted-foreground hover:bg-muted"
             >
               <Download className="h-4 w-4 mr-2" />
               Export Excel
@@ -416,7 +416,7 @@ export default function ActivitiesTable({
             <Button
               size="sm"
               onClick={onAddNew}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add New Task
@@ -425,28 +425,28 @@ export default function ActivitiesTable({
         </div>
 
         {/* Header da tabela */}
-        <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-4 px-4 py-3 bg-slate-800/30 border-b border-slate-800/50 text-xs font-medium text-slate-400 uppercase tracking-wider">
+        <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-4 px-4 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
           <div></div>
           <button
-            className="text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
+            className="text-left hover:text-foreground transition-colors cursor-pointer flex items-center"
             onClick={() => handleSort('title')}
           >
             Task {getSortIcon('title')}
           </button>
           <button
-            className="text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
+            className="text-left hover:text-foreground transition-colors cursor-pointer flex items-center"
             onClick={() => handleSort('area')}
           >
             Area {getSortIcon('area')}
           </button>
           <button
-            className="text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
+            className="text-left hover:text-foreground transition-colors cursor-pointer flex items-center"
             onClick={() => handleSort('priority')}
           >
             Priority {getSortIcon('priority')}
           </button>
           <button
-            className="text-left hover:text-slate-200 transition-colors cursor-pointer flex items-center"
+            className="text-left hover:text-foreground transition-colors cursor-pointer flex items-center"
             onClick={() => handleSort('status')}
           >
             Status {getSortIcon('status')}
@@ -458,7 +458,7 @@ export default function ActivitiesTable({
         {/* Conteúdo das tabs */}
         <div className="min-h-[400px]">
           {activeTab === 'active' ? (
-            <div className="divide-y divide-slate-800/50">
+            <div className="divide-y divide-border">
               {activeActivities.length > 0 ? (
                 activeActivities.map(activity => (
                   <ActivityRow
@@ -474,12 +474,12 @@ export default function ActivitiesTable({
                 ))
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-slate-400">Nenhuma atividade ativa</p>
+                  <p className="text-muted-foreground">Nenhuma atividade ativa</p>
                 </div>
               )}
             </div>
           ) : (
-            <div className="divide-y divide-slate-800/50">
+            <div className="divide-y divide-border">
               {completedActivities.length > 0 ? (
                 completedActivities.map(activity => (
                   <ActivityRow
@@ -495,7 +495,7 @@ export default function ActivitiesTable({
                 ))
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-slate-400">Nenhuma atividade concluída</p>
+                  <p className="text-muted-foreground">Nenhuma atividade concluída</p>
                 </div>
               )}
             </div>

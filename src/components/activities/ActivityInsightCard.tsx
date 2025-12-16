@@ -115,17 +115,17 @@ export const ActivityInsightCard: React.FC<ActivityInsightCardProps> = ({ activi
   // Loading state
   if (isLoading) {
     return (
-      <Card className={cn('bg-slate-800/50 border-slate-700', className)}>
+      <Card className={cn('bg-muted/50 border-border', className)}>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Sparkles className="size-5 text-blue-400" />
-            <Skeleton className="h-6 w-48 bg-slate-700" />
+            <Sparkles className="size-5 text-primary" />
+            <Skeleton className="h-6 w-48" />
           </div>
-          <Skeleton className="h-4 w-full bg-slate-700" />
+          <Skeleton className="h-4 w-full" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-24 w-full bg-slate-700" />
-          <Skeleton className="h-32 w-full bg-slate-700" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-32 w-full" />
         </CardContent>
       </Card>
     );
@@ -134,16 +134,16 @@ export const ActivityInsightCard: React.FC<ActivityInsightCardProps> = ({ activi
   // Error state
   if (error) {
     return (
-      <Card className={cn('bg-slate-800/50 border-red-500/30', className)}>
+      <Card className={cn('bg-muted/50 border-destructive/30', className)}>
         <CardContent className="py-8">
           <div className="flex flex-col items-center gap-3 text-center">
-            <AlertCircle className="size-12 text-red-400" />
-            <p className="text-red-400 font-medium">{error}</p>
+            <AlertCircle className="size-12 text-destructive" />
+            <p className="text-destructive font-medium">{error}</p>
             <Button
               onClick={fetchInsight}
               variant="outline"
               size="sm"
-              className="border-slate-600"
+              className="border-border"
             >
               <RefreshCw className="size-4" />
               Tentar Novamente
@@ -157,17 +157,17 @@ export const ActivityInsightCard: React.FC<ActivityInsightCardProps> = ({ activi
   // Empty state (sem insight)
   if (!insight) {
     return (
-      <Card className={cn('bg-slate-800/50 border-slate-700', className)}>
+      <Card className={cn('bg-muted/50 border-border', className)}>
         <CardContent className="py-12">
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="rounded-full bg-blue-500/10 p-4">
-              <Sparkles className="size-12 text-blue-400" />
+            <div className="rounded-full bg-primary/10 p-4">
+              <Sparkles className="size-12 text-primary" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-slate-200">
+              <h3 className="text-lg font-semibold text-foreground">
                 Análise de IA Não Disponível
               </h3>
-              <p className="text-sm text-slate-400 max-w-md">
+              <p className="text-sm text-muted-foreground max-w-md">
                 Gere uma análise inteligente para descobrir como esta atividade impacta
                 métricas operacionais e estratégicas do seu negócio.
               </p>
@@ -187,28 +187,28 @@ export const ActivityInsightCard: React.FC<ActivityInsightCardProps> = ({ activi
   const overallScore = calculateOverallScore(insight.businessScore, insight.maScore);
 
   return (
-    <Card className={cn('bg-slate-800/50 border-slate-700', className)}>
+    <Card className={cn('bg-muted/50 border-border', className)}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Sparkles className="size-5 text-blue-400" />
-              <CardTitle className="text-xl text-slate-100">Análise de IA</CardTitle>
+              <Sparkles className="size-5 text-primary" />
+              <CardTitle className="text-xl text-foreground">Análise de IA</CardTitle>
               <Badge
                 variant="outline"
                 className={cn(
                   'ml-2',
                   overallScore >= 70
-                    ? 'border-green-500/50 bg-green-500/10 text-green-400'
+                    ? 'border-green-500/50 bg-green-500/10 text-green-600 dark:text-green-400'
                     : overallScore >= 40
-                    ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400'
-                    : 'border-red-500/50 bg-red-500/10 text-red-400'
+                      ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+                      : 'border-red-500/50 bg-red-500/10 text-red-600 dark:text-red-400'
                 )}
               >
                 {overallScore}/100
               </Badge>
             </div>
-            <CardDescription className="text-slate-400">
+            <CardDescription className="text-muted-foreground">
               Análise gerada por Google Gemini AI
             </CardDescription>
           </div>
@@ -218,7 +218,7 @@ export const ActivityInsightCard: React.FC<ActivityInsightCardProps> = ({ activi
               onClick={fetchInsight}
               variant="ghost"
               size="icon"
-              className="text-slate-400 hover:text-slate-200"
+              className="text-muted-foreground hover:text-foreground"
               aria-label="Recarregar análise"
             >
               <RefreshCw className="size-4" />
@@ -227,7 +227,7 @@ export const ActivityInsightCard: React.FC<ActivityInsightCardProps> = ({ activi
               onClick={handleDelete}
               variant="ghost"
               size="icon"
-              className="text-slate-400 hover:text-red-400"
+              className="text-muted-foreground hover:text-destructive"
               aria-label="Remover análise"
             >
               <Trash2 className="size-4" />
@@ -253,25 +253,25 @@ export const ActivityInsightCard: React.FC<ActivityInsightCardProps> = ({ activi
               <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-4 h-auto hover:bg-slate-700/50"
+                  className="w-full justify-between p-4 h-auto hover:bg-muted"
                 >
                   <div className="flex items-center gap-3">
                     <div className="rounded-lg bg-indigo-500/10 p-2">
-                      <TrendingUp className="size-5 text-indigo-400" />
+                      <TrendingUp className="size-5 text-indigo-500" />
                     </div>
                     <div className="text-left">
-                      <p className="font-semibold text-slate-200">
+                      <p className="font-semibold text-foreground">
                         Métricas Operacionais
                       </p>
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-muted-foreground">
                         {insight.businessIndicators.length} indicador{insight.businessIndicators.length > 1 ? 'es' : ''} identificado{insight.businessIndicators.length > 1 ? 's' : ''}
                       </p>
                     </div>
                   </div>
                   {isBusinessExpanded ? (
-                    <ChevronUp className="size-5 text-slate-400" />
+                    <ChevronUp className="size-5 text-muted-foreground" />
                   ) : (
-                    <ChevronDown className="size-5 text-slate-400" />
+                    <ChevronDown className="size-5 text-muted-foreground" />
                   )}
                 </Button>
               </CollapsibleTrigger>
@@ -298,25 +298,25 @@ export const ActivityInsightCard: React.FC<ActivityInsightCardProps> = ({ activi
               <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-between p-4 h-auto hover:bg-slate-700/50"
+                  className="w-full justify-between p-4 h-auto hover:bg-muted"
                 >
                   <div className="flex items-center gap-3">
                     <div className="rounded-lg bg-green-500/10 p-2">
-                      <DollarSign className="size-5 text-green-400" />
+                      <DollarSign className="size-5 text-green-500" />
                     </div>
                     <div className="text-left">
-                      <p className="font-semibold text-slate-200">
+                      <p className="font-semibold text-foreground">
                         Métricas Estratégicas (M&A)
                       </p>
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-muted-foreground">
                         {insight.maMetrics.length} métrica{insight.maMetrics.length > 1 ? 's' : ''} de valorização
                       </p>
                     </div>
                   </div>
                   {isMaExpanded ? (
-                    <ChevronUp className="size-5 text-slate-400" />
+                    <ChevronUp className="size-5 text-muted-foreground" />
                   ) : (
-                    <ChevronDown className="size-5 text-slate-400" />
+                    <ChevronDown className="size-5 text-muted-foreground" />
                   )}
                 </Button>
               </CollapsibleTrigger>
@@ -337,7 +337,7 @@ export const ActivityInsightCard: React.FC<ActivityInsightCardProps> = ({ activi
         )}
 
         {/* AI Metadata */}
-        <div className="flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-700/50">
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
           <div className="flex items-center gap-4">
             <span>Modelo: {insight.aiModel}</span>
             <span>•</span>

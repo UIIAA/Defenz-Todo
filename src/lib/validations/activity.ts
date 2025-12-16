@@ -61,6 +61,8 @@ export const createActivitySchema = z.object({
     .transform(val => val?.trim())
     .optional()
     .nullable(),
+
+  opportunityIds: z.array(z.string()).optional(),
 });
 
 /**
