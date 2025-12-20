@@ -9,6 +9,13 @@ import {
     getClosedClients,
     getMrrEvolution
 } from "@/actions/dashboard"
+import {
+    getActivityHistory,
+    getActivityEvolution,
+    getTodayVsYesterdayComparison,
+    getThisWeekVsLastWeekComparison,
+    getThisMonthVsLastMonthComparison,
+} from "@/actions/daily-activities"
 import { ExecutiveDashboardClient } from "@/components/dashboard/executive-dashboard-client"
 import { Button } from "@/components/ui/button"
 import { Settings2 } from "lucide-react"
@@ -27,7 +34,12 @@ export default async function ExecutiveDashboardPage() {
         listsPerformance,
         topOpportunities,
         closedClients,
-        mrrEvolution
+        mrrEvolution,
+        activityHistory,
+        activityEvolution,
+        todayVsYesterday,
+        weekVsLastWeek,
+        monthVsLastMonth,
     ] = await Promise.all([
         getExecutiveMetrics().catch(() => null),
         getFunnelData().catch(() => []),
@@ -35,7 +47,12 @@ export default async function ExecutiveDashboardPage() {
         getListsPerformance().catch(() => []),
         getTopOpportunities().catch(() => []),
         getClosedClients().catch(() => []),
-        getMrrEvolution().catch(() => [])
+        getMrrEvolution().catch(() => []),
+        getActivityHistory(7).catch(() => []),
+        getActivityEvolution(30).catch(() => []),
+        getTodayVsYesterdayComparison().catch(() => null),
+        getThisWeekVsLastWeekComparison().catch(() => null),
+        getThisMonthVsLastMonthComparison().catch(() => null),
     ])
 
     // Placeholder para métricas vazias se falhar
@@ -82,6 +99,11 @@ export default async function ExecutiveDashboardPage() {
                     topOpportunities={topOpportunities}
                     closedClients={closedClients}
                     mrrEvolution={mrrEvolution}
+                    activityHistory={activityHistory}
+                    activityEvolution={activityEvolution}
+                    todayVsYesterday={todayVsYesterday}
+                    weekVsLastWeek={weekVsLastWeek}
+                    monthVsLastMonth={monthVsLastMonth}
                 />
             </Suspense>
         </div>

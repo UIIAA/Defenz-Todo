@@ -40,6 +40,7 @@ model User {
   opportunities           Opportunity[]
   interactions            Interaction[]
   marketingLists          MarketingList[]
+  dailyActivityLogs       DailyActivityLog[]
 
   @@index([email])
 }
@@ -114,8 +115,9 @@ model Opportunity {
   clientId    String
   client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   
-  interactions Interaction[]
-  activities   Activity[]
+  interactions      Interaction[]
+  activities        Activity[]
+  dailyActivityLogs DailyActivityLog[]
 
   @@index([userId])
   @@index([clientId])
@@ -269,8 +271,9 @@ model MarketingList {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
-  opportunities Opportunity[]
-  clients       Client[]
+  opportunities     Opportunity[]
+  clients           Client[]
+  dailyActivityLogs DailyActivityLog[]
 
   @@index([userId])
 }
@@ -651,4 +654,45 @@ model SalesMetric {
   @@unique([period, version])
   @@index([period(sort: Desc)])
   @@index([userId])
+}
+
+// ============================================================
+// DAILY ACTIVITY LOG (Registro Diário de Atividades)
+// ============================================================
+
+// Rastreamento diário de atividades operacionais
+// Permite registro rápido de ligações, emails, reuniões e propostas do dia
+model DailyActivityLog {
+  id   String   @id @default(cuid())
+  date DateTime // Data das atividades (sem hora)
+
+  // Contadores de atividades do dia
+  calls     Int @default(0) // Ligações realizadas
+  emails    Int @default(0) // Emails enviados
+  meetings  Int @default(0) // Reuniões realizadas/agendadas
+  proposals Int @default(0) // Propostas enviadas
+
+  // Vinculação opcional (contexto)
+  marketingListId String? // Opcional: associar a uma lista
+  opportunityId   String? // Opcional: associar a uma oportunidade
+
+  // Observações
+  notes String? // Notas/contexto do dia
+
+  // Metadata
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  marketingList MarketingList?  @relation(fields: [marketingListId], references: [id], onDelete: SetNull)
+  opportunity   Opportunity?    @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+
+  // Indexes para performance
+  @@index([userId, date(sort: Desc)]) // Buscar atividades por usuário e data
+  @@index([date(sort: Desc)]) // Ordenação por data
+  @@index([marketingListId]) // Busca por lista
+  @@index([opportunityId]) // Busca por oportunidade
+  @@map("daily_activity_logs")
 }

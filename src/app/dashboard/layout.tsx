@@ -96,7 +96,7 @@ export default function DashboardLayout({
                 >
                   <div className="flex items-center gap-3">
                     <Target className="h-5 w-5" />
-                    {sidebarOpen && <span>Gestão de Atividades</span>}
+                    {sidebarOpen && <span>Atividades Estratégicas</span>}
                   </div>
                   {sidebarOpen && (
                     <ChevronDown className={`h-4 w-4 transition-transform ${activitiesOpen ? 'rotate-180' : ''}`} />

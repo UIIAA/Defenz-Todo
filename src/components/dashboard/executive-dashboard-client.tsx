@@ -3,10 +3,18 @@
 import React, { useState } from 'react';
 import { ConversionFunnelChart, PipelineStageChart, ListsActivityChart } from './executive-charts';
 import { MrrEvolutionChart } from './mrr-evolution-chart';
+import { DailyActivityModal } from './daily-activity-modal';
+import { DailySummaryCard } from './daily-summary-card';
+import { ActivityHistoryTable } from './activity-history-table';
+import { ActivityEvolutionChart } from './activity-evolution-chart';
+import { PeriodComparisonCards } from './period-comparison-cards';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, DollarSign, Users, Briefcase, Clock, Target } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { TrendingUp, DollarSign, Users, Briefcase, Clock, Target, FileText, Plus } from "lucide-react"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -26,13 +34,25 @@ interface DashboardProps {
         totalAtividades: number;
         ligacoes: number;
         emails: number;
+        todayActivities?: {
+            calls: number;
+            emails: number;
+            meetings: number;
+            proposals: number;
+            total: number;
+        };
     };
-    funnelData: any[]; // Tipar melhor se possível
+    funnelData: any[];
     pipelineByStage: any[];
     listsPerformance: any[];
     topOpportunities: any[];
     closedClients: any[];
     mrrEvolution: any[];
+    activityHistory?: any[];
+    activityEvolution?: any[];
+    todayVsYesterday?: any;
+    weekVsLastWeek?: any;
+    monthVsLastMonth?: any;
 }
 
 export function ExecutiveDashboardClient({
@@ -42,11 +62,41 @@ export function ExecutiveDashboardClient({
     listsPerformance,
     topOpportunities,
     closedClients,
-    mrrEvolution
+    mrrEvolution,
+    activityHistory = [],
+    activityEvolution = [],
+    todayVsYesterday,
+    weekVsLastWeek,
+    monthVsLastMonth,
 }: DashboardProps) {
+    const router = useRouter()
+    const [isModalOpen, setIsModalOpen] = useState(false)
+
+    const handleModalSuccess = () => {
+        toast.success("Produtividade registrada!")
+        router.refresh() // Atualizar dados
+    }
 
     return (
         <div className="space-y-6">
+            {/* Botão flutuante de registro rápido */}
+            <div className="fixed bottom-6 right-6 z-50">
+                <Button
+                    onClick={() => setIsModalOpen(true)}
+                    size="lg"
+                    className="rounded-full shadow-lg hover:shadow-xl transition-all gap-2 h-14 px-6"
+                >
+                    <Plus className="h-5 w-5" />
+                    Registrar Produtividade
+                </Button>
+            </div>
+
+            {/* Modal de Registro */}
+            <DailyActivityModal
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                onSuccess={handleModalSuccess}
+            />
             {/* Header com KPI Cards */}
             {/* Header com KPI Cards (Ideal Layout: MRR, Pipeline, Reuniões, Win Rate, Ciclo) */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -145,6 +195,7 @@ export function ExecutiveDashboardClient({
             <Tabs defaultValue="overview" className="space-y-4">
                 <TabsList className="bg-muted text-muted-foreground border border-border">
                     <TabsTrigger value="overview" className="data-[state=active]:bg-background data-[state=active]:text-foreground">Visão Geral</TabsTrigger>
+                    <TabsTrigger value="atividades" className="data-[state=active]:bg-background data-[state=active]:text-foreground">Produtividade Diária</TabsTrigger>
                     <TabsTrigger value="pipeline" className="data-[state=active]:bg-background data-[state=active]:text-foreground">Pipeline</TabsTrigger>
                     <TabsTrigger value="listas" className="data-[state=active]:bg-background data-[state=active]:text-foreground">Listas</TabsTrigger>
                 </TabsList>
@@ -224,6 +275,30 @@ export function ExecutiveDashboardClient({
                             </CardContent>
                         </Card>
                     </div>
+                </TabsContent>
+
+                {/* === TAB: ATIVIDADES DIÁRIAS === */}
+                <TabsContent value="atividades" className="space-y-6">
+                    {/* Card de Resumo de Hoje */}
+                    {metrics.todayActivities && (
+                        <DailySummaryCard
+                            todayActivities={metrics.todayActivities}
+                            comparison={todayVsYesterday?.percentageChange}
+                        />
+                    )}
+
+                    {/* Cards de Comparação de Períodos */}
+                    <PeriodComparisonCards
+                        todayVsYesterday={todayVsYesterday}
+                        weekVsLastWeek={weekVsLastWeek}
+                        monthVsLastMonth={monthVsLastMonth}
+                    />
+
+                    {/* Gráfico de Evolução */}
+                    <ActivityEvolutionChart data={activityEvolution} />
+
+                    {/* Histórico dos Últimos 7 Dias */}
+                    <ActivityHistoryTable activities={activityHistory} />
                 </TabsContent>
 
                 {/* === TAB: PIPELINE === */}

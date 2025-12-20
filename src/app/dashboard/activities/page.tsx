@@ -452,7 +452,7 @@ export default function ActivitiesPage() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl">
-              {editingActivity ? 'Editar Atividade' : 'Nova Atividade'}
+              {editingActivity ? 'Editar Atividade Estratégica' : 'Nova Atividade Estratégica'}
             </DialogTitle>
             <DialogDescription>
               Preencha os detalhes da atividade estratégica (5W2H)
@@ -605,7 +605,7 @@ export default function ActivitiesPage() {
                 Cancelar
               </Button>
               <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                {editingActivity ? 'Atualizar' : 'Criar'} Atividade
+                {editingActivity ? 'Atualizar' : 'Criar'} Atividade Estratégica
               </Button>
             </div>
           </form>

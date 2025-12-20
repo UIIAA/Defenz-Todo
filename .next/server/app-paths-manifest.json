@@ -1,11 +1,9 @@
 {
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/activities/[id]/insights/route": "app/api/activities/[id]/insights/route.js",
+  "/api/activities/[id]/comments/route": "app/api/activities/[id]/comments/route.js",
+  "/page": "app/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/reports/page": "app/dashboard/reports/page.js",
   "/dashboard/executive/page": "app/dashboard/executive/page.js",
-  "/dashboard/executive/manage/page": "app/dashboard/executive/manage/page.js",
-  "/dashboard/crm/clients/page": "app/dashboard/crm/clients/page.js",
-  "/dashboard/crm/opportunities/[id]/page": "app/dashboard/crm/opportunities/[id]/page.js",
-  "/dashboard/crm/pipeline/page": "app/dashboard/crm/pipeline/page.js",
-  "/dashboard/crm/import/page": "app/dashboard/crm/import/page.js"
+  "/dashboard/activities/page": "app/dashboard/activities/page.js"
 }

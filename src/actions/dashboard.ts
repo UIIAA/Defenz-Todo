@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
+import { getTodayStats } from "./daily-activities"
 
 // --- NOVAS ACTIONS EXECUTIVAS (Sua implementação) ---
 
@@ -226,6 +227,15 @@ export async function getExecutiveMetrics() {
 
     const avgCycleTime = wonDealsWithDates.length > 0 ? Math.round(totalCycleDays / wonDealsWithDates.length) : 0;
 
+    // 8. Atividades de Hoje (DailyActivityLog)
+    const todayStats = await getTodayStats().catch(() => ({
+        calls: 0,
+        emails: 0,
+        meetings: 0,
+        proposals: 0,
+        total: 0
+    }))
+
     return {
         receitaFechada: closedWonDeals._sum.value?.toNumber() || 0,
         mrr: closedWonDeals._sum.value?.toNumber() || 0, // Using total revenue as proxy for MRR
@@ -239,6 +249,9 @@ export async function getExecutiveMetrics() {
         totalAtividades: interactionsCount + activitiesCount,
         ligacoes: interactionsCount, // Proxy: using total call/email interactions
         emails: 0, // Will be refined if separate tracking is needed
+
+        // Atividades de Hoje
+        todayActivities: todayStats,
     }
 }
 
@@ -516,7 +529,20 @@ export async function getDashboardMetrics() {
             statusCounts,
             priorityCounts
         },
-        actionableItems,
-        recentInteractions
+        actionableItems: actionableItems.map(item => ({
+            ...item,
+            value: item.value?.toNumber() || 0,
+            client: item.client ? {
+                ...item.client,
+                // Add other client Decimal conversions here if necessary, assuming none for now based on context
+            } : null
+        })),
+        recentInteractions: recentInteractions.map(interaction => ({
+            ...interaction,
+            opportunity: interaction.opportunity ? {
+                ...interaction.opportunity,
+                value: interaction.opportunity.value?.toNumber() || 0
+            } : null
+        }))
     }
 }
