@@ -23,6 +23,18 @@ import {
   Users,
   Filter,
 } from 'lucide-react'
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
 
 import { toDateStr, todayStr } from '../helpers'
 
@@ -41,10 +53,10 @@ interface Demanda {
 }
 
 const ORIGINS = [
-  { id: 'fernando', label: 'Fernando', color: 'bg-blue-500' },
-  { id: 'securisoft', label: 'SecuriSoft', color: 'bg-amber-500' },
-  { id: 'autogerada', label: 'Autogerada', color: 'bg-green-500' },
-  { id: 'outra', label: 'Outra', color: 'bg-slate-500' },
+  { id: 'fernando', label: 'Fernando', color: 'bg-blue-500', hex: '#3b82f6' },
+  { id: 'securisoft', label: 'SecuriSoft', color: 'bg-amber-500', hex: '#f59e0b' },
+  { id: 'autogerada', label: 'Autogerada', color: 'bg-green-500', hex: '#22c55e' },
+  { id: 'outra', label: 'Outra', color: 'bg-slate-500', hex: '#64748b' },
 ]
 
 export default function DemandasAnalisesPage() {
@@ -129,17 +141,17 @@ export default function DemandasAnalisesPage() {
   }))
 
   const statusData = [
-    { name: 'Solicitada', value: solicitadas, color: 'bg-amber-500' },
-    { name: 'Selecionada', value: selecionadas, color: 'bg-violet-500' },
-    { name: 'Em Andamento', value: emAndamento, color: 'bg-blue-500' },
-    { name: 'Concluida', value: concluidas, color: 'bg-green-500' },
-    { name: 'Bloqueada', value: bloqueadas, color: 'bg-red-500' },
+    { name: 'Solicitada', value: solicitadas, color: 'bg-amber-500', hex: '#f59e0b' },
+    { name: 'Selecionada', value: selecionadas, color: 'bg-violet-500', hex: '#8b5cf6' },
+    { name: 'Em Andamento', value: emAndamento, color: 'bg-blue-500', hex: '#3b82f6' },
+    { name: 'Concluida', value: concluidas, color: 'bg-green-500', hex: '#22c55e' },
+    { name: 'Bloqueada', value: bloqueadas, color: 'bg-red-500', hex: '#ef4444' },
   ]
 
   const priorityData = [
-    { name: 'Alta', value: altaPrio, color: 'bg-red-500' },
-    { name: 'Media', value: mediaPrio, color: 'bg-amber-500' },
-    { name: 'Baixa', value: baixaPrio, color: 'bg-blue-500' },
+    { name: 'Alta', value: altaPrio, color: 'bg-red-500', hex: '#ef4444' },
+    { name: 'Media', value: mediaPrio, color: 'bg-amber-500', hex: '#f59e0b' },
+    { name: 'Baixa', value: baixaPrio, color: 'bg-blue-500', hex: '#3b82f6' },
   ]
 
   // Performance por pessoa
@@ -390,7 +402,7 @@ export default function DemandasAnalisesPage() {
           </CardContent>
         </Card>
 
-        {/* Status */}
+        {/* Status - PieChart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -400,29 +412,51 @@ export default function DemandasAnalisesPage() {
             <CardDescription>Visao geral do fluxo Kanban</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            {total > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={statusData.filter((s) => s.value > 0)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={90}
+                    paddingAngle={3}
+                    dataKey="value"
+                    nameKey="name"
+                    stroke="none"
+                  >
+                    {statusData.filter((s) => s.value > 0).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.hex} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255,255,255,0.95)',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                    }}
+                    formatter={(value: number, name: string) => [`${value} demanda(s)`, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>
+            )}
+            <div className="flex flex-wrap gap-3 mt-2 justify-center">
               {statusData.map((s) => (
-                <div key={s.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full ${s.color}`} />
-                    <span className="text-sm font-medium">{s.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 bg-muted rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${s.color}`}
-                        style={{ width: `${total > 0 ? (s.value / total) * 100 : 0}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-bold w-8 text-right">{s.value}</span>
-                  </div>
+                <div key={s.name} className="flex items-center gap-1.5 text-xs">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.hex }} />
+                  <span className="text-slate-600 dark:text-slate-300">{s.name}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100">{s.value}</span>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Prioridade */}
+        {/* Prioridade - BarChart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -432,29 +466,35 @@ export default function DemandasAnalisesPage() {
             <CardDescription>Urgencia das demandas</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {priorityData.map((p) => (
-                <div key={p.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full ${p.color}`} />
-                    <span className="text-sm font-medium">{p.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 bg-muted rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${p.color}`}
-                        style={{ width: `${total > 0 ? (p.value / total) * 100 : 0}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-bold w-8 text-right">{p.value}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {total > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={priorityData} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f044" />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: '#94a3b8' }} width={60} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255,255,255,0.95)',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                    }}
+                    formatter={(value: number) => [`${value} demanda(s)`, 'Quantidade']}
+                  />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={28}>
+                    {priorityData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.hex} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>
+            )}
           </CardContent>
         </Card>
 
-        {/* Por Origem */}
+        {/* Por Origem - BarChart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -464,24 +504,35 @@ export default function DemandasAnalisesPage() {
             <CardDescription>Volume e conclusao por fonte</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {originData.map((o) => (
-                <div key={o.id} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">{o.label}</span>
-                    <span className="text-muted-foreground">
-                      {o.concluidas}/{o.total} concluidas
-                    </span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${o.color}`}
-                      style={{ width: `${o.total > 0 ? (o.concluidas / o.total) * 100 : 0}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            {total > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={originData} layout="vertical" margin={{ left: 20, right: 20, top: 5, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f044" />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                  <YAxis type="category" dataKey="label" tick={{ fontSize: 13, fill: '#94a3b8' }} width={80} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255,255,255,0.95)',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                    }}
+                    formatter={(value: number, name: string) => [
+                      `${value} demanda(s)`,
+                      name === 'total' ? 'Total' : 'Concluidas',
+                    ]}
+                  />
+                  <Bar dataKey="total" fill="#94a3b8" radius={[0, 4, 4, 0]} barSize={20} name="total" />
+                  <Bar dataKey="concluidas" radius={[0, 4, 4, 0]} barSize={20} name="concluidas">
+                    {originData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.hex} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>
+            )}
           </CardContent>
         </Card>
 

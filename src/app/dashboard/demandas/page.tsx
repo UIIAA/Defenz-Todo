@@ -18,10 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Trash2, Loader2, Upload, FileSpreadsheet, ListPlus, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, Loader2, Upload, FileSpreadsheet, ListPlus, ChevronDown, LayoutGrid, List, ArrowUp, ArrowDown, ClipboardList } from 'lucide-react'
 import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
 
+import { StatusBadge } from '@/components/status-badge'
+import { EmptyState } from '@/components/empty-state'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   ORIGINS,
   STATUSES,
@@ -830,6 +833,164 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
   )
 }
 
+// ─── List View Table ────────────────────────────────────────
+
+type SortableField = 'title' | 'status' | 'priority' | 'deadline' | 'origin' | 'assignee'
+
+const STATUS_ORDER: Record<string, number> = {
+  solicitada: 0,
+  selecionada: 1,
+  em_andamento: 2,
+  concluida: 3,
+  bloqueada: 4,
+}
+
+const PRIORITY_ORDER: Record<string, number> = {
+  alta: 0,
+  media: 1,
+  baixa: 2,
+}
+
+function SortIcon({ field, sortField, sortDir }: { field: SortableField; sortField: SortableField; sortDir: 'asc' | 'desc' }) {
+  if (field !== sortField) return <ArrowUp className="h-3 w-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+  return sortDir === 'asc'
+    ? <ArrowUp className="h-3 w-3 text-blue-500" />
+    : <ArrowDown className="h-3 w-3 text-blue-500" />
+}
+
+function ListViewTable({
+  demandas,
+  onClickRow,
+  sortField,
+  sortDir,
+  onSort,
+}: {
+  demandas: Demanda[]
+  onClickRow: (d: Demanda) => void
+  sortField: SortableField
+  sortDir: 'asc' | 'desc'
+  onSort: (field: SortableField) => void
+}) {
+  const sorted = [...demandas].sort((a, b) => {
+    let cmp = 0
+    switch (sortField) {
+      case 'title':
+        cmp = a.title.localeCompare(b.title, 'pt-BR')
+        break
+      case 'status':
+        cmp = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99)
+        break
+      case 'priority':
+        cmp = (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99)
+        break
+      case 'deadline':
+        cmp = (a.deadline || '9999').localeCompare(b.deadline || '9999')
+        break
+      case 'origin':
+        cmp = a.origin.localeCompare(b.origin, 'pt-BR')
+        break
+      case 'assignee':
+        cmp = (a.assignee || 'zzz').localeCompare(b.assignee || 'zzz', 'pt-BR')
+        break
+    }
+    return sortDir === 'asc' ? cmp : -cmp
+  })
+
+  const originMap = Object.fromEntries(ORIGINS.map((o) => [o.id, o]))
+  const prioMap = Object.fromEntries(PRIORITIES.map((p) => [p.id, p]))
+  const today = todayStr()
+
+  const columns: { key: SortableField; label: string }[] = [
+    { key: 'title', label: 'Titulo' },
+    { key: 'origin', label: 'Origem' },
+    { key: 'priority', label: 'Prioridade' },
+    { key: 'status', label: 'Status' },
+    { key: 'assignee', label: 'Responsavel' },
+    { key: 'deadline', label: 'Prazo' },
+  ]
+
+  return (
+    <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-slate-100 dark:bg-slate-800">
+                {columns.map((col) => (
+                  <th
+                    key={col.key}
+                    onClick={() => onSort(col.key)}
+                    className="group cursor-pointer px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {col.label}
+                      <SortIcon field={col.key} sortField={sortField} sortDir={sortDir} />
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8 text-sm text-slate-400">
+                    Nenhuma demanda encontrada
+                  </td>
+                </tr>
+              ) : (
+                sorted.map((d, i) => {
+                  const origin = originMap[d.origin]
+                  const prio = prioMap[d.priority]
+                  const isOverdue = d.deadline && d.status !== 'concluida' && toDateStr(d.deadline) < today
+                  return (
+                    <tr
+                      key={d.id}
+                      onClick={() => onClickRow(d)}
+                      className={`cursor-pointer transition-colors hover:bg-blue-50 dark:hover:bg-slate-700/30 border-b border-slate-100 dark:border-slate-700/50 ${
+                        i % 2 === 1 ? 'bg-slate-50 dark:bg-slate-800/30' : ''
+                      }`}
+                    >
+                      <td className="px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100 max-w-[300px] truncate">
+                        {d.title}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className="font-semibold" style={{ color: origin?.color }}>
+                          {origin?.label || d.origin}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className="font-semibold" style={{ color: prio?.color }}>
+                          {prio?.label || d.priority}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={d.status} />
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        {d.assignee || <span className="text-slate-400 italic">--</span>}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {d.deadline ? (
+                          <span className={isOverdue ? 'text-red-500 font-semibold' : 'text-slate-600 dark:text-slate-300'}>
+                            {isOverdue && '! '}
+                            {new Date(d.deadline).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 italic">--</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 // ─── Main Page ───────────────────────────────────────────────
 
 export default function DemandasPage() {
@@ -840,8 +1001,11 @@ export default function DemandasPage() {
   const [editingDemanda, setEditingDemanda] = useState<Demanda | null>(null)
   const [filterOrigin, setFilterOrigin] = useState('all')
   const [timeRange, setTimeRange] = useState<TimeRange>('weeks')
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
   const [kanbanOpen, setKanbanOpen] = useState(true)
   const [timelineOpen, setTimelineOpen] = useState(true)
+  const [sortField, setSortField] = useState<'title' | 'status' | 'priority' | 'deadline' | 'origin' | 'assignee'>('title')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
   const fetchDemandas = useCallback(async () => {
     try {
@@ -918,10 +1082,69 @@ export default function DemandasPage() {
     concluidas: demandas.filter((d) => d.status === 'concluida').length,
   }
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (modalOpen || importModalOpen) return
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (e.key === 'n') { e.preventDefault(); openNew() }
+      if (e.key === 'i') { e.preventDefault(); setImportModalOpen(true) }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [modalOpen, importModalOpen])
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+      <div className="p-6 space-y-5 max-w-full overflow-hidden">
+        <div className="flex justify-between items-center">
+          <div>
+            <Skeleton className="h-7 w-40 mb-2" />
+            <Skeleton className="h-4 w-56" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-24 rounded-md" />
+            <Skeleton className="h-9 w-32 rounded-md" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-xl" />
+          ))}
+        </div>
+        <div className="flex gap-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-24 rounded-full" />
+          ))}
+        </div>
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+    )
+  }
+
+  if (demandas.length === 0) {
+    return (
+      <div className="p-6 max-w-full overflow-hidden">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Demandas</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Kanban e timeline de demandas</p>
+          </div>
+        </div>
+        <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] border border-slate-200 dark:border-slate-700">
+          <CardContent>
+            <EmptyState
+              icon={<ClipboardList />}
+              title="Nenhuma demanda ainda"
+              description="Crie sua primeira demanda ou importe de uma planilha"
+              action={{ label: 'Nova Demanda', onClick: openNew }}
+              secondaryAction={{ label: 'Importar', onClick: () => setImportModalOpen(true) }}
+            />
+          </CardContent>
+        </Card>
+        <DemandaModal demanda={editingDemanda} open={modalOpen} onOpenChange={(open) => { setModalOpen(open); if (!open) setEditingDemanda(null) }} onSave={handleSave} onDelete={handleDelete} />
+        <ImportModal open={importModalOpen} onOpenChange={setImportModalOpen} onImported={fetchDemandas} />
       </div>
     )
   }
@@ -938,7 +1161,32 @@ export default function DemandasPage() {
             Kanban e timeline de demandas
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {/* View Toggle */}
+          <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`p-2 transition-colors ${
+                viewMode === 'kanban'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
+              }`}
+              title="Kanban"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white dark:bg-slate-800 text-slate-500 border-l border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+              }`}
+              title="Lista"
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
           <Button
             variant="outline"
             onClick={() => setImportModalOpen(true)}
@@ -946,10 +1194,12 @@ export default function DemandasPage() {
           >
             <Upload className="h-4 w-4 mr-1.5" />
             Importar
+            <kbd className="ml-1.5 text-[10px] bg-slate-200 dark:bg-slate-600 px-1 py-0.5 rounded text-slate-500 dark:text-slate-300 hidden sm:inline">I</kbd>
           </Button>
           <Button onClick={openNew} className="bg-blue-600 hover:bg-blue-700 text-white">
             <Plus className="h-4 w-4 mr-1.5" />
             Nova Demanda
+            <kbd className="ml-1.5 text-[10px] bg-white/20 px-1 py-0.5 rounded hidden sm:inline">N</kbd>
           </Button>
         </div>
       </div>
@@ -1013,35 +1263,52 @@ export default function DemandasPage() {
         ))}
       </div>
 
-      {/* Kanban */}
-      <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-        <CardContent className="p-4">
-          <button
-            onClick={() => setKanbanOpen(!kanbanOpen)}
-            className="flex items-center gap-2 mb-4 cursor-pointer group"
-          >
-            <ChevronDown className={`h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-transform duration-200 ${kanbanOpen ? '' : '-rotate-90'}`} />
-            <span className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-              Kanban
-            </span>
-            <span className="text-xs text-slate-400 font-medium">
-              {filtered.length} demanda{filtered.length !== 1 ? 's' : ''}
-            </span>
-          </button>
-          {kanbanOpen && (
-            <div className="flex gap-3 overflow-x-auto">
-              {STATUSES.map((s) => (
-                <KanbanColumn
-                  key={s.id}
-                  status={s}
-                  items={filtered.filter((d) => d.status === s.id)}
-                  onClickCard={openEdit}
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Kanban / List View */}
+      {viewMode === 'kanban' ? (
+        <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+          <CardContent className="p-4">
+            <button
+              onClick={() => setKanbanOpen(!kanbanOpen)}
+              className="flex items-center gap-2 mb-4 cursor-pointer group"
+            >
+              <ChevronDown className={`h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-transform duration-200 ${kanbanOpen ? '' : '-rotate-90'}`} />
+              <span className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                Kanban
+              </span>
+              <span className="text-xs text-slate-400 font-medium">
+                {filtered.length} demanda{filtered.length !== 1 ? 's' : ''}
+              </span>
+            </button>
+            {kanbanOpen && (
+              <div className="flex gap-3 overflow-x-auto">
+                {STATUSES.map((s) => (
+                  <KanbanColumn
+                    key={s.id}
+                    status={s}
+                    items={filtered.filter((d) => d.status === s.id)}
+                    onClickCard={openEdit}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <ListViewTable
+          demandas={filtered}
+          onClickRow={openEdit}
+          sortField={sortField}
+          sortDir={sortDir}
+          onSort={(field) => {
+            if (field === sortField) {
+              setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+            } else {
+              setSortField(field)
+              setSortDir('asc')
+            }
+          }}
+        />
+      )}
 
       {/* Gantt */}
       <Card className="bg-blue-50 dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">

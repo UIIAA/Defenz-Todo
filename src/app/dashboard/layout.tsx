@@ -1,12 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User } from 'lucide-react'
+import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { DefenzLogoIcon } from '@/components/defenz-logo'
+import { UserAvatar } from '@/components/user-avatar'
+import { SearchCommand } from '@/components/search-command'
+import type { Demanda } from '@/app/dashboard/demandas/helpers'
 import Image from 'next/image'
 
 export default function DashboardLayout({
@@ -17,6 +20,8 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [demandasOpen, setDemandasOpen] = useState(true)
   const [configOpen, setConfigOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchDemandas, setSearchDemandas] = useState<Demanda[]>([])
   const router = useRouter()
   const pathname = usePathname()
   const { data: session, status } = useSession()
@@ -29,6 +34,39 @@ export default function DashboardLayout({
       router.push('/')
     }
   }, [status, router])
+
+  // Fetch demandas when search opens
+  const fetchSearchDemandas = useCallback(async () => {
+    try {
+      const res = await fetch('/api/demandas')
+      const json = await res.json()
+      if (json.success) {
+        setSearchDemandas(json.data)
+      }
+    } catch {
+      // silently fail
+    }
+  }, [])
+
+  useEffect(() => {
+    if (searchOpen && searchDemandas.length === 0) {
+      fetchSearchDemandas()
+    }
+  }, [searchOpen, searchDemandas.length, fetchSearchDemandas])
+
+  const handleSearchSelectDemanda = useCallback(
+    (_d: Demanda) => {
+      router.push('/dashboard/demandas')
+    },
+    [router]
+  )
+
+  const handleSearchNavigate = useCallback(
+    (path: string) => {
+      router.push(path)
+    },
+    [router]
+  )
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -145,9 +183,7 @@ export default function DashboardLayout({
             {sidebarOpen && (
               <div className="p-4 border-t border-white/10">
                 <div className="flex items-center gap-3 px-2 mb-3">
-                  <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <User className="h-4 w-4 text-blue-400" />
-                  </div>
+                  <UserAvatar name={session?.user?.name || session?.user?.email} size="md" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">
                       {session?.user?.name || session?.user?.email}
@@ -187,6 +223,16 @@ export default function DashboardLayout({
                 </div>
 
                 <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setSearchOpen(true)}
+                    className="bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-1.5 text-sm text-slate-500 flex items-center gap-2 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <Search className="h-4 w-4" />
+                    <span className="hidden sm:inline">Buscar...</span>
+                    <kbd className="hidden sm:inline-block text-[10px] bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded font-mono">
+                      ⌘K
+                    </kbd>
+                  </button>
                   <ThemeToggle />
                   <span className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block font-medium">
                     {session?.user?.name || session?.user?.email}
@@ -211,6 +257,14 @@ export default function DashboardLayout({
           </main>
         </div>
       </div>
+
+      <SearchCommand
+        demandas={searchDemandas}
+        onSelectDemanda={handleSearchSelectDemanda}
+        onNavigate={handleSearchNavigate}
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+      />
     </div>
   )
 }
