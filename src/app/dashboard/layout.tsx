@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search } from 'lucide-react'
+import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { DefenzLogoIcon } from '@/components/defenz-logo'
 import { UserAvatar } from '@/components/user-avatar'
@@ -168,6 +168,10 @@ export default function DashboardLayout({
                       <a href="/dashboard/logs" className={navItemClass('/dashboard/logs')}>
                         <FileText className="h-4 w-4" />
                         <span>Logs</span>
+                      </a>
+                      <a href="/dashboard/configuracoes/usuarios" className={navItemClass('/dashboard/configuracoes/usuarios')}>
+                        <Users className="h-4 w-4" />
+                        <span>Usuarios</span>
                       </a>
                       <a href="/dashboard/configuracoes/perfil" className={navItemClass('/dashboard/configuracoes/perfil')}>
                         <User className="h-4 w-4" />

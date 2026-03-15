@@ -17,6 +17,7 @@ model User {
   name                    String?
   password                String
   role                    String                   @default("user")
+  position                String?                  // Cargo/funcao
   emailVerified           DateTime?
   image                   String?
   createdAt               DateTime                 @default(now())
@@ -43,6 +44,7 @@ model User {
   marketingLists          MarketingList[]
   dailyActivityLogs       DailyActivityLog[]
   demandas                Demanda[]
+  inviteTokens            InviteToken[]
 
   @@index([email])
 }
@@ -728,4 +730,23 @@ model Demanda {
   @@index([deadline])
   @@index([assignee])
   @@map("demandas")
+}
+
+// ============================================================
+// CONVITES (Registro por convite apenas)
+// ============================================================
+
+model InviteToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  email     String?   // Email pre-definido (opcional)
+  role      String    @default("user")
+  usedAt    DateTime? // null = nao usado
+  expiresAt DateTime
+  createdBy String
+  creator   User      @relation(fields: [createdBy], references: [id])
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([createdBy])
 }

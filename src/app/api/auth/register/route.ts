@@ -17,20 +17,61 @@ export async function OPTIONS(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, name } = body
+    const { email, password, name, token, position } = body
 
-    console.log('Registration attempt:', { email, hasPassword: !!password, name })
+    console.log('Registration attempt:', { email, hasPassword: !!password, name, hasToken: !!token })
+
+    // Invite token is required
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Registro apenas por convite' },
+        { status: 403 }
+      )
+    }
+
+    // Look up the invite token
+    const invite = await db.inviteToken.findUnique({
+      where: { token },
+    })
+
+    if (!invite) {
+      return NextResponse.json(
+        { error: 'Convite invalido' },
+        { status: 403 }
+      )
+    }
+
+    if (invite.usedAt) {
+      return NextResponse.json(
+        { error: 'Convite ja utilizado' },
+        { status: 403 }
+      )
+    }
+
+    if (invite.expiresAt < new Date()) {
+      return NextResponse.json(
+        { error: 'Convite expirado' },
+        { status: 403 }
+      )
+    }
+
+    if (invite.email && invite.email.toLowerCase() !== email?.toLowerCase()) {
+      return NextResponse.json(
+        { error: 'Email nao corresponde ao convite' },
+        { status: 403 }
+      )
+    }
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email e senha são obrigatórios' },
+        { error: 'Email e senha sao obrigatorios' },
         { status: 400 }
       )
     }
 
     if (password.length < 6) {
       return NextResponse.json(
-        { error: 'A senha deve ter no mínimo 6 caracteres' },
+        { error: 'A senha deve ter no minimo 6 caracteres' },
         { status: 400 }
       )
     }
@@ -42,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Este email já está cadastrado' },
+        { error: 'Este email ja esta cadastrado' },
         { status: 400 }
       )
     }
@@ -50,14 +91,21 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Create user
+    // Create user with role from invite
     const user = await db.user.create({
       data: {
         email,
         password: hashedPassword,
         name: name || email.split('@')[0],
-        role: 'user'
+        role: invite.role || 'user',
+        position: position || null,
       }
+    })
+
+    // Mark token as used
+    await db.inviteToken.update({
+      where: { id: invite.id },
+      data: { usedAt: new Date() },
     })
 
     console.log('User created successfully:', user.id)
@@ -70,21 +118,21 @@ export async function POST(request: NextRequest) {
         name: user.name
       }
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Registration error:', error)
 
     // Error detail for debugging
-    if (error.code === 'P2002') {
+    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
       return NextResponse.json(
-        { error: 'Este email já está cadastrado' },
+        { error: 'Este email ja esta cadastrado' },
         { status: 400 }
       )
     }
 
     return NextResponse.json(
       {
-        error: 'Erro ao criar usuário. Tente novamente.',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Erro ao criar usuario. Tente novamente.',
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : undefined) : undefined
       },
       { status: 500 }
     )

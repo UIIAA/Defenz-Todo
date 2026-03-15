@@ -90,3 +90,4 @@ pids
 .pnp.*
 *.backup*
 .vercel
+.claude/worktrees/

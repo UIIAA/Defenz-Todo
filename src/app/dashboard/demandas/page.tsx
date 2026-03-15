@@ -375,7 +375,17 @@ function DemandaModal({
   onDelete: (id: string) => void
 }) {
   const [form, setForm] = useState<DemandaForm>(emptyForm())
+  const [modalUsers, setModalUsers] = useState<{ id: string; name: string | null; email: string }[]>([])
   const isNew = !demanda
+
+  useEffect(() => {
+    if (open) {
+      fetch('/api/users')
+        .then((r) => r.json())
+        .then((d) => { if (d.success) setModalUsers(d.data) })
+        .catch(() => {})
+    }
+  }, [open])
 
   useEffect(() => {
     if (demanda) {
@@ -462,12 +472,21 @@ function DemandaModal({
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Responsavel
             </label>
-            <Input
-              value={form.assignee || ''}
-              onChange={(e) => upd('assignee', e.target.value || null)}
-              placeholder="Nome da pessoa responsavel"
-              className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
-            />
+            <Select value={form.assignee || '__none__'} onValueChange={(v) => upd('assignee', v === '__none__' ? null : v)}>
+              <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
+                <SelectValue placeholder="Sem responsavel" />
+              </SelectTrigger>
+              <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
+                <SelectItem value="__none__" className="text-slate-500 dark:text-slate-400">
+                  Sem responsavel
+                </SelectItem>
+                {modalUsers.map((u) => (
+                  <SelectItem key={u.id} value={u.name || u.email} className="text-slate-800 dark:text-slate-200">
+                    {u.name || u.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
