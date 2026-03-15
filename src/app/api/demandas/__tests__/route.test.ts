@@ -31,8 +31,8 @@ describe('GET /api/demandas', () => {
     expect(body.data).toHaveLength(demandaList.length)
     expect(body.data[0].id).toBe(demandaList[0].id)
     expect(mockDb.demanda.findMany).toHaveBeenCalledWith({
-      where: { userId: 'user-test-123' },
       orderBy: { createdAt: 'desc' },
+      include: { user: { select: { name: true, email: true } } },
     })
   })
 })
@@ -141,7 +141,7 @@ describe('PUT /api/demandas', () => {
     })
     await PUT(req)
     const where = mockDb.demanda.update.mock.calls[0][0].where
-    expect(where).toEqual({ id: 'dem-001', userId: 'user-test-123' })
+    expect(where).toEqual({ id: 'dem-001' })
   })
 
   it('returns 400 without id', async () => {
@@ -266,6 +266,6 @@ describe('DELETE /api/demandas', () => {
     })
     await DELETE(req)
     const where = mockDb.demanda.delete.mock.calls[0][0].where
-    expect(where).toEqual({ id: 'dem-001', userId: 'user-test-123' })
+    expect(where).toEqual({ id: 'dem-001' })
   })
 })

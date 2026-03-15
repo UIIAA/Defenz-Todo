@@ -12,9 +12,12 @@ export async function GET() {
     const user = await getCurrentUser()
     if (!user) throw new ApiError('Nao autorizado', 401)
 
+    // Board compartilhado — retorna todas as demandas da equipe
     const demandas = await db.demanda.findMany({
-      where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { name: true, email: true } },
+      },
     })
 
     return successResponse(demandas)
@@ -69,8 +72,9 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { id, updatedAt, ...data } = updateDemandaSchema.parse(body)
 
+    // Board colaborativo — qualquer usuario pode editar qualquer demanda
     const current = await db.demanda.findUnique({
-      where: { id, userId: user.id },
+      where: { id },
     })
 
     if (!current) throw new ApiError('Recurso nao encontrado', 404)
@@ -89,7 +93,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const demanda = await db.demanda.update({
-      where: { id, userId: user.id },
+      where: { id },
       data: {
         ...(data.title !== undefined && { title: data.title }),
         ...(data.description !== undefined && { description: data.description }),
@@ -136,14 +140,15 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id')
     if (!id) throw new ApiError('ID e obrigatorio', 400)
 
+    // Board colaborativo — qualquer usuario pode excluir
     const demanda = await db.demanda.findUnique({
-      where: { id, userId: user.id },
+      where: { id },
     })
 
     if (!demanda) throw new ApiError('Recurso nao encontrado', 404)
 
     await db.demanda.delete({
-      where: { id, userId: user.id },
+      where: { id },
     })
 
     await createAuditLog({

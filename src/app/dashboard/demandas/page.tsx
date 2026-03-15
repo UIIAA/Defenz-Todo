@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -994,12 +995,14 @@ function ListViewTable({
 // ─── Main Page ───────────────────────────────────────────────
 
 export default function DemandasPage() {
+  const { data: session } = useSession()
   const [demandas, setDemandas] = useState<Demanda[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [importModalOpen, setImportModalOpen] = useState(false)
   const [editingDemanda, setEditingDemanda] = useState<Demanda | null>(null)
   const [filterOrigin, setFilterOrigin] = useState('all')
+  const [filterAssignee, setFilterAssignee] = useState('all')
   const [timeRange, setTimeRange] = useState<TimeRange>('weeks')
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
   const [kanbanOpen, setKanbanOpen] = useState(true)
@@ -1023,6 +1026,9 @@ export default function DemandasPage() {
 
   useEffect(() => {
     fetchDemandas()
+    // Auto-refresh a cada 30s para modo TV/board compartilhado
+    const interval = setInterval(fetchDemandas, 30000)
+    return () => clearInterval(interval)
   }, [fetchDemandas])
 
   const handleSave = async (form: DemandaForm) => {
@@ -1068,8 +1074,22 @@ export default function DemandasPage() {
     setModalOpen(true)
   }
 
-  const filtered =
-    filterOrigin === 'all' ? demandas : demandas.filter((d) => d.origin === filterOrigin)
+  // Lista unica de responsaveis
+  const assignees = useMemo(() => {
+    const set = new Set<string>()
+    demandas.forEach((d) => { if (d.assignee) set.add(d.assignee) })
+    return Array.from(set).sort()
+  }, [demandas])
+
+  const userName = session?.user?.name || ''
+
+  const filtered = demandas
+    .filter((d) => filterOrigin === 'all' || d.origin === filterOrigin)
+    .filter((d) => {
+      if (filterAssignee === 'all') return true
+      if (filterAssignee === '__mine__') return d.assignee === userName
+      return d.assignee === filterAssignee
+    })
 
   const stats = {
     total: demandas.length,
@@ -1232,35 +1252,73 @@ export default function DemandasPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex gap-2 flex-wrap">
-        <button
-          onClick={() => setFilterOrigin('all')}
-          className={`rounded-full px-4 py-2 text-sm transition-colors ${
-            filterOrigin === 'all'
-              ? 'bg-blue-500 text-white shadow-sm font-semibold'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
-          }`}
-        >
-          Todas
-        </button>
-        {ORIGINS.map((o) => (
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Origem */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 mr-1">Origem:</span>
           <button
-            key={o.id}
-            onClick={() => setFilterOrigin(o.id)}
-            className={`rounded-full px-4 py-2 text-sm transition-colors ${
-              filterOrigin === o.id
-                ? 'shadow-sm font-semibold'
+            onClick={() => setFilterOrigin('all')}
+            className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
+              filterOrigin === 'all'
+                ? 'bg-blue-500 text-white shadow-sm font-semibold'
                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
             }`}
-            style={
-              filterOrigin === o.id
-                ? { background: o.color, color: 'white' }
-                : undefined
-            }
           >
-            {o.label}
+            Todas
           </button>
-        ))}
+          {ORIGINS.map((o) => (
+            <button
+              key={o.id}
+              onClick={() => setFilterOrigin(o.id)}
+              className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
+                filterOrigin === o.id
+                  ? 'shadow-sm font-semibold'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
+              }`}
+              style={filterOrigin === o.id ? { background: o.color, color: 'white' } : undefined}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Responsavel */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 mr-1">Responsavel:</span>
+          <button
+            onClick={() => setFilterAssignee('all')}
+            className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
+              filterAssignee === 'all'
+                ? 'bg-blue-500 text-white shadow-sm font-semibold'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
+            }`}
+          >
+            Todos
+          </button>
+          <button
+            onClick={() => setFilterAssignee('__mine__')}
+            className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
+              filterAssignee === '__mine__'
+                ? 'bg-blue-500 text-white shadow-sm font-semibold'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
+            }`}
+          >
+            Minhas
+          </button>
+          {assignees.map((name) => (
+            <button
+              key={name}
+              onClick={() => setFilterAssignee(name)}
+              className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
+                filterAssignee === name
+                  ? 'bg-slate-700 text-white shadow-sm font-semibold dark:bg-slate-300 dark:text-slate-900'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Kanban / List View */}
