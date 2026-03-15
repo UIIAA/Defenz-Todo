@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Trash2, Loader2, Upload, FileSpreadsheet, ListPlus } from 'lucide-react'
+import { Plus, Trash2, Loader2, Upload, FileSpreadsheet, ListPlus, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
 
@@ -631,7 +631,7 @@ function KanbanColumn({
           {items.length}
         </span>
       </div>
-      <div className="flex flex-col gap-2 min-h-[60px]">
+      <div className="flex flex-col gap-2 min-h-[60px] max-h-[55vh] overflow-y-auto pr-1">
         {items.map((d) => (
           <KanbanCard key={d.id} d={d} onClick={onClickCard} />
         ))}
@@ -840,6 +840,8 @@ export default function DemandasPage() {
   const [editingDemanda, setEditingDemanda] = useState<Demanda | null>(null)
   const [filterOrigin, setFilterOrigin] = useState('all')
   const [timeRange, setTimeRange] = useState<TimeRange>('weeks')
+  const [kanbanOpen, setKanbanOpen] = useState(true)
+  const [timelineOpen, setTimelineOpen] = useState(true)
 
   const fetchDemandas = useCallback(async () => {
     try {
@@ -1014,21 +1016,30 @@ export default function DemandasPage() {
       {/* Kanban */}
       <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => setKanbanOpen(!kanbanOpen)}
+            className="flex items-center gap-2 mb-4 cursor-pointer group"
+          >
+            <ChevronDown className={`h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-transform duration-200 ${kanbanOpen ? '' : '-rotate-90'}`} />
             <span className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Kanban
             </span>
-          </div>
-          <div className="flex gap-3 overflow-x-auto">
-            {STATUSES.map((s) => (
-              <KanbanColumn
-                key={s.id}
-                status={s}
-                items={filtered.filter((d) => d.status === s.id)}
-                onClickCard={openEdit}
-              />
-            ))}
-          </div>
+            <span className="text-xs text-slate-400 font-medium">
+              {filtered.length} demanda{filtered.length !== 1 ? 's' : ''}
+            </span>
+          </button>
+          {kanbanOpen && (
+            <div className="flex gap-3 overflow-x-auto">
+              {STATUSES.map((s) => (
+                <KanbanColumn
+                  key={s.id}
+                  status={s}
+                  items={filtered.filter((d) => d.status === s.id)}
+                  onClickCard={openEdit}
+                />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -1036,29 +1047,39 @@ export default function DemandasPage() {
       <Card className="bg-blue-50 dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
+            <button
+              onClick={() => setTimelineOpen(!timelineOpen)}
+              className="flex items-center gap-2 cursor-pointer group"
+            >
+              <ChevronDown className={`h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-transform duration-200 ${timelineOpen ? '' : '-rotate-90'}`} />
               <span className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Timeline
               </span>
               <span className="text-[11px] text-slate-500">— demandas ativas</span>
-            </div>
-            <div className="flex gap-1">
-              {(['hours', 'days', 'weeks', 'months'] as TimeRange[]).map((range) => (
-                <button
-                  key={range}
-                  onClick={() => setTimeRange(range)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                    timeRange === range
-                      ? 'bg-blue-50 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-500/30'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent'
-                  }`}
-                >
-                  {TIME_RANGE_CONFIG[range].label}
-                </button>
-              ))}
-            </div>
+            </button>
+            {timelineOpen && (
+              <div className="flex gap-1">
+                {(['hours', 'days', 'weeks', 'months'] as TimeRange[]).map((range) => (
+                  <button
+                    key={range}
+                    onClick={() => setTimeRange(range)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                      timeRange === range
+                        ? 'bg-white/80 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-500/30'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-white/5 border border-transparent'
+                    }`}
+                  >
+                    {TIME_RANGE_CONFIG[range].label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <GanttChart demandas={filtered} timeRange={timeRange} />
+          {timelineOpen && (
+            <div className="max-h-[50vh] overflow-y-auto">
+              <GanttChart demandas={filtered} timeRange={timeRange} />
+            </div>
+          )}
         </CardContent>
       </Card>
 
