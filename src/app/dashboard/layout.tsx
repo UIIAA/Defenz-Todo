@@ -35,7 +35,7 @@ export default function DashboardLayout({
   }
 
   if (status === 'loading') {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-gradient-to-br from-white via-sky-50 to-blue-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center">
       <div className="flex items-center gap-3">
         <div className="h-5 w-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
         <span className="text-muted-foreground font-medium">Carregando...</span>
@@ -52,18 +52,18 @@ export default function DashboardLayout({
   const navItemClass = (path: string) =>
     `flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm cursor-pointer ${
       isActive(path)
-        ? 'bg-blue-50 dark:bg-blue-600/15 text-blue-700 dark:text-blue-400 font-semibold shadow-sm shadow-blue-500/5'
-        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
+        ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 font-semibold'
+        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-white/5'
     }`
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] dark:bg-[#0a1628] transition-colors">
+    <div className="min-h-screen bg-gradient-to-br from-white via-sky-50/80 to-blue-100/60 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 transition-colors">
       <div className="flex">
         {/* Sidebar */}
-        <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'} transition-all duration-300 bg-white dark:bg-[#0d1929] border-r border-slate-200/80 dark:border-blue-900/20 min-h-screen`}>
+        <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'} transition-all duration-300 bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border-r border-white/40 dark:border-slate-700/30 min-h-screen`}>
           <div className="flex flex-col h-full">
             {/* Logo */}
-            <div className="p-5 border-b border-slate-200/80 dark:border-blue-900/20">
+            <div className="p-5 border-b border-slate-200/40 dark:border-slate-700/30">
               <div className="flex items-center gap-2.5">
                 <DefenzLogoIcon size={30} className="shrink-0" />
                 {sidebarOpen && (
@@ -81,11 +81,10 @@ export default function DashboardLayout({
 
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2">
-              {/* Demandas Dropdown */}
               <div className="space-y-1">
                 <button
                   onClick={() => setDemandasOpen(!demandasOpen)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/15 hover:text-slate-800 dark:hover:text-blue-300 cursor-pointer"
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-slate-100 cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <ClipboardList className="h-5 w-5" />
@@ -124,7 +123,7 @@ export default function DashboardLayout({
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <header className="bg-white/80 dark:bg-[#0d1929]/80 border-b border-slate-200/80 dark:border-blue-900/20 backdrop-blur-xl transition-colors">
+          <header className="bg-white/60 dark:bg-slate-900/40 border-b border-white/40 dark:border-slate-700/30 backdrop-blur-xl transition-colors">
             <div className="px-6">
               <div className="flex justify-between items-center h-16">
                 <div className="flex items-center gap-4">
@@ -132,7 +131,7 @@ export default function DashboardLayout({
                     variant="ghost"
                     size="sm"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/15 cursor-pointer"
+                    className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-white/5 cursor-pointer"
                   >
                     <Menu className="h-5 w-5" />
                   </Button>
@@ -147,7 +146,7 @@ export default function DashboardLayout({
                     variant="outline"
                     size="sm"
                     onClick={handleLogout}
-                    className="flex items-center gap-2 bg-white dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30 text-slate-500 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-slate-800 dark:hover:text-blue-300 cursor-pointer"
+                    className="flex items-center gap-2 bg-white/50 dark:bg-white/5 border-slate-200/50 dark:border-slate-700/30 text-slate-500 dark:text-slate-400 hover:bg-white/80 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />
                     <span className="hidden sm:inline">Sair</span>

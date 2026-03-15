@@ -183,7 +183,7 @@ export default function DemandasAnalisesPage() {
       </div>
 
       {/* Filters */}
-      <Card className="bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-slate-800/30 backdrop-blur-sm border-white/50 dark:border-slate-700/20 shadow-sm shadow-blue-900/5">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-slate-500" />
@@ -207,10 +207,10 @@ export default function DemandasAnalisesPage() {
                 Responsavel
               </label>
               <Select value={filterAssignee} onValueChange={setFilterAssignee}>
-                <SelectTrigger className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 h-9 text-sm">
+                <SelectTrigger className="bg-white dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-900 dark:text-slate-100 h-9 text-sm">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                <SelectContent className="bg-white dark:bg-slate-800/60 backdrop-blur-sm border-white/50 dark:border-slate-700/30">
                   <SelectItem value="all" className="text-slate-900 dark:text-slate-100">Todos</SelectItem>
                   <SelectItem value="_unassigned" className="text-slate-900 dark:text-slate-100">Sem responsavel</SelectItem>
                   {assignees.map((a) => (
@@ -226,10 +226,10 @@ export default function DemandasAnalisesPage() {
                 Origem
               </label>
               <Select value={filterOrigin} onValueChange={setFilterOrigin}>
-                <SelectTrigger className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 h-9 text-sm">
+                <SelectTrigger className="bg-white dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-900 dark:text-slate-100 h-9 text-sm">
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                <SelectContent className="bg-white dark:bg-slate-800/60 backdrop-blur-sm border-white/50 dark:border-slate-700/30">
                   <SelectItem value="all" className="text-slate-900 dark:text-slate-100">Todas</SelectItem>
                   {ORIGINS.map((o) => (
                     <SelectItem key={o.id} value={o.id} className="text-slate-900 dark:text-slate-100">
@@ -244,10 +244,10 @@ export default function DemandasAnalisesPage() {
                 Prioridade
               </label>
               <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 h-9 text-sm">
+                <SelectTrigger className="bg-white dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-900 dark:text-slate-100 h-9 text-sm">
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                <SelectContent className="bg-white dark:bg-slate-800/60 backdrop-blur-sm border-white/50 dark:border-slate-700/30">
                   <SelectItem value="all" className="text-slate-900 dark:text-slate-100">Todas</SelectItem>
                   <SelectItem value="alta" className="text-slate-900 dark:text-slate-100">Alta</SelectItem>
                   <SelectItem value="media" className="text-slate-900 dark:text-slate-100">Media</SelectItem>

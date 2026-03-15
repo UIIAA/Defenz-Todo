@@ -124,10 +124,10 @@ export default function LogsPage() {
       {/* Filters */}
       <div className="flex gap-3 items-center">
         <Select value={filterAction} onValueChange={(v) => { setFilterAction(v); setPage(1) }}>
-          <SelectTrigger className="w-[180px] bg-white dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30">
+          <SelectTrigger className="w-[180px] bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/30">
             <SelectValue placeholder="Filtrar por acao" />
           </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30">
+          <SelectContent className="bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/30">
             <SelectItem value="all">Todas as acoes</SelectItem>
             <SelectItem value="CREATE">Criacao</SelectItem>
             <SelectItem value="UPDATE">Edicao</SelectItem>
@@ -144,7 +144,7 @@ export default function LogsPage() {
       </div>
 
       {/* Logs Table */}
-      <Card className="bg-white dark:bg-[#111d2e]/60 border-slate-200/80 dark:border-blue-900/20">
+      <Card className="bg-white/70 dark:bg-slate-800/30 backdrop-blur-sm border-white/50 dark:border-slate-700/20 shadow-sm shadow-blue-900/5">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm font-extrabold uppercase tracking-wider">
             <FileText className="h-4 w-4" />
@@ -164,7 +164,7 @@ export default function LogsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-blue-900/20">
+                  <tr className="border-b border-slate-200 dark:border-slate-700/20">
                     <th className="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Data</th>
                     <th className="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Acao</th>
                     <th className="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo</th>
@@ -177,7 +177,7 @@ export default function LogsPage() {
                     const actionInfo = ACTION_LABELS[log.action] || { label: log.action, color: 'text-slate-500 bg-slate-50', icon: FileText }
                     const Icon = actionInfo.icon
                     return (
-                      <tr key={log.id} className="border-b border-slate-100 dark:border-blue-900/10 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors">
+                      <tr key={log.id} className="border-b border-slate-100 dark:border-blue-900/10 hover:bg-blue-50/30 dark:hover:bg-white/5 transition-colors">
                         <td className="py-3 px-3 whitespace-nowrap text-xs text-muted-foreground font-mono">
                           {new Date(log.createdAt).toLocaleDateString('pt-BR', {
                             day: '2-digit', month: '2-digit', year: '2-digit',
@@ -207,7 +207,7 @@ export default function LogsPage() {
 
           {/* Pagination */}
           {pagination && pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-blue-900/20">
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/20">
               <Button
                 variant="outline"
                 size="sm"

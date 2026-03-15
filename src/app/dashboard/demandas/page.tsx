@@ -218,7 +218,7 @@ function ImportModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] bg-white dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
+      <DialogContent className="sm:max-w-[520px] bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
         <DialogHeader>
           <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
             Importar Demandas
@@ -232,7 +232,7 @@ function ImportModal({
             className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
               mode === 'text'
                 ? 'bg-blue-600/20 text-blue-400 border border-blue-500'
-                : 'bg-slate-100 dark:bg-[#1a2744] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-blue-900/30'
+                : 'bg-slate-100 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/30'
             }`}
           >
             <ListPlus className="h-4 w-4" />
@@ -243,7 +243,7 @@ function ImportModal({
             className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
               mode === 'excel'
                 ? 'bg-blue-600/20 text-blue-400 border border-blue-500'
-                : 'bg-slate-100 dark:bg-[#1a2744] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-blue-900/30'
+                : 'bg-slate-100 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/30'
             }`}
           >
             <FileSpreadsheet className="h-4 w-4" />
@@ -258,10 +258,10 @@ function ImportModal({
               Origem padrao
             </label>
             <Select value={selectedOrigin} onValueChange={setSelectedOrigin}>
-              <SelectTrigger className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
+              <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-50 dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30">
+              <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
                 {ORIGINS.map((o) => (
                   <SelectItem key={o.id} value={o.id} className="text-slate-100">
                     {o.label}
@@ -275,10 +275,10 @@ function ImportModal({
               Prioridade padrao
             </label>
             <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-              <SelectTrigger className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
+              <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-50 dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30">
+              <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
                 {PRIORITIES.map((p) => (
                   <SelectItem key={p.id} value={p.id} className="text-slate-100">
                     {p.label}
@@ -299,7 +299,7 @@ function ImportModal({
               onChange={(e) => setTextInput(e.target.value)}
               placeholder={`Proposta cliente XPTO\nRevisao contrato ABC\nDashboard metricas\nRelatorio semanal`}
               rows={8}
-              className="mt-1.5 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-600 resize-y font-mono text-sm"
+              className="mt-1.5 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-600 resize-y font-mono text-sm"
             />
             <p className="text-[11px] text-slate-500 mt-1.5">
               {textInput.split('\n').filter((l) => l.trim()).length} itens detectados — serao criados na coluna <strong>Solicitada</strong>
@@ -320,11 +320,11 @@ function ImportModal({
         ) : (
           <div>
             <div
-              className="border-2 border-dashed border-slate-700 rounded-lg p-8 text-center hover:border-blue-500/50 transition-colors cursor-pointer"
+              className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-8 text-center hover:border-blue-500/50 transition-colors cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
               <FileSpreadsheet className="h-10 w-10 text-slate-500 mx-auto mb-3" />
-              <p className="text-sm text-slate-300 font-medium">
+              <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
                 Clique ou arraste um arquivo .xlsx / .csv
               </p>
               <p className="text-xs text-slate-500 mt-1.5">
@@ -397,7 +397,7 @@ function DemandaModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] bg-white dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
+      <DialogContent className="sm:max-w-[480px] bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
         <DialogHeader>
           <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
             {isNew ? 'Nova Demanda' : 'Editar Demanda'}
@@ -413,7 +413,7 @@ function DemandaModal({
               value={form.title}
               onChange={(e) => upd('title', e.target.value)}
               placeholder="Ex: Proposta cliente X"
-              className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
+              className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
             />
           </div>
 
@@ -423,10 +423,10 @@ function DemandaModal({
                 Origem
               </label>
               <Select value={form.origin} onValueChange={(v) => upd('origin', v)}>
-                <SelectTrigger className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
+                <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-50 dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30">
+                <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
                   {ORIGINS.map((o) => (
                     <SelectItem key={o.id} value={o.id} className="text-slate-100">
                       {o.label}
@@ -440,10 +440,10 @@ function DemandaModal({
                 Prioridade
               </label>
               <Select value={form.priority} onValueChange={(v) => upd('priority', v)}>
-                <SelectTrigger className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
+                <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-50 dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30">
+                <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
                   {PRIORITIES.map((p) => (
                     <SelectItem key={p.id} value={p.id} className="text-slate-100">
                       {p.label}
@@ -462,7 +462,7 @@ function DemandaModal({
               value={form.assignee || ''}
               onChange={(e) => upd('assignee', e.target.value || null)}
               placeholder="Nome da pessoa responsavel"
-              className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
+              className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
             />
           </div>
 
@@ -482,7 +482,7 @@ function DemandaModal({
                   className={`flex-1 py-2 px-0.5 rounded-md border text-[10px] font-medium transition-colors ${
                     form.status === s.id
                       ? 'border-blue-500 bg-blue-500/10 text-blue-500 dark:text-blue-400'
-                      : 'border-slate-200 dark:border-blue-900/30 bg-white dark:bg-[#0a1628] text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-blue-800/40'
+                      : 'border-slate-200/60 dark:border-slate-700/30 bg-white/60 dark:bg-slate-800/30 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600/40'
                   }`}
                 >
                   {s.icon} {s.label}
@@ -500,7 +500,7 @@ function DemandaModal({
                 type="date"
                 value={form.dateIn}
                 onChange={(e) => upd('dateIn', e.target.value)}
-                className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100"
+                className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100"
               />
             </div>
             <div>
@@ -511,7 +511,7 @@ function DemandaModal({
                 type="date"
                 value={form.deadline || ''}
                 onChange={(e) => upd('deadline', e.target.value || null)}
-                className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100"
+                className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100"
               />
             </div>
           </div>
@@ -525,7 +525,7 @@ function DemandaModal({
               onChange={(e) => upd('description', e.target.value)}
               placeholder="Detalhes, contexto, proximo passo..."
               rows={3}
-              className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500 resize-y"
+              className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500 resize-y"
             />
           </div>
         </div>
@@ -573,8 +573,8 @@ function KanbanCard({ d, onClick }: { d: Demanda; onClick: (d: Demanda) => void 
   return (
     <div
       onClick={() => onClick(d)}
-      className={`group bg-white dark:bg-[#0d1929] rounded-xl p-3 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-900/5 border ${
-        isOverdue ? 'border-red-400/40 dark:border-red-500/40' : 'border-slate-200 dark:border-blue-900/20 hover:border-blue-300 dark:hover:border-blue-800/40'
+      className={`group bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-xl p-3 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-900/5 border ${
+        isOverdue ? 'border-red-400/40 dark:border-red-500/40' : 'border-white/60 dark:border-slate-700/20 hover:border-blue-300/60 dark:hover:border-slate-600/40'
       }`}
       style={{ borderLeftWidth: 3, borderLeftColor: origin?.color || '#8899aa' }}
     >
@@ -950,7 +950,7 @@ export default function DemandasPage() {
         ].map((s) => (
           <Card
             key={s.label}
-            className="bg-white dark:bg-[#111d2e]/80 border-slate-200/80 dark:border-blue-900/20"
+            className="bg-white/70 dark:bg-slate-800/30 backdrop-blur-sm border-white/50 dark:border-slate-700/20 shadow-sm shadow-blue-900/5"
             style={{ borderLeftWidth: 3, borderLeftColor: s.color }}
           >
             <CardContent className="p-3">
@@ -972,7 +972,7 @@ export default function DemandasPage() {
           className={`px-3.5 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
             filterOrigin === 'all'
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
-              : 'border-slate-200 dark:border-blue-900/20 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              : 'border-slate-200 dark:border-slate-700/20 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
           Todas
@@ -994,7 +994,7 @@ export default function DemandasPage() {
       </div>
 
       {/* Kanban */}
-      <Card className="bg-white dark:bg-[#111d2e]/60 border-slate-200/80 dark:border-blue-900/20">
+      <Card className="bg-white/70 dark:bg-slate-800/30 backdrop-blur-sm border-white/50 dark:border-slate-700/20 shadow-sm shadow-blue-900/5">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-blue-600 dark:text-blue-400 text-sm font-extrabold uppercase tracking-wider">
@@ -1015,7 +1015,7 @@ export default function DemandasPage() {
       </Card>
 
       {/* Gantt */}
-      <Card className="bg-white dark:bg-[#111d2e]/60 border-slate-200/80 dark:border-blue-900/20">
+      <Card className="bg-white/70 dark:bg-slate-800/30 backdrop-blur-sm border-white/50 dark:border-slate-700/20 shadow-sm shadow-blue-900/5">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -1032,7 +1032,7 @@ export default function DemandasPage() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                     timeRange === range
                       ? 'bg-blue-50 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-500/30'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-blue-900/10 border border-transparent'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent'
                   }`}
                 >
                   {TIME_RANGE_CONFIG[range].label}
