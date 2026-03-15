@@ -77,7 +77,7 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-5">
-            <DefenzLogoIcon size={56} className="text-blue-600 drop-shadow-lg" />
+            <DefenzLogoIcon size={64} />
           </div>
 
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-1">

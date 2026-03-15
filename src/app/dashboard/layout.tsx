@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { DefenzLogoIcon } from '@/components/defenz-logo'
+import Image from 'next/image'
 
 export default function DashboardLayout({
   children,
@@ -62,13 +63,18 @@ export default function DashboardLayout({
         <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'} transition-all duration-300 bg-white dark:bg-[#0d1929] border-r border-slate-200/80 dark:border-blue-900/20 min-h-screen`}>
           <div className="flex flex-col h-full">
             {/* Logo */}
-            <div className="p-6 border-b border-slate-200/80 dark:border-blue-900/20">
-              <div className="flex items-center gap-3">
-                <DefenzLogoIcon size={36} className="text-blue-600 dark:text-blue-400 shrink-0" />
+            <div className="p-5 border-b border-slate-200/80 dark:border-blue-900/20">
+              <div className="flex items-center gap-2.5">
+                <DefenzLogoIcon size={30} className="shrink-0" />
                 {sidebarOpen && (
-                  <h1 className="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">
-                    DEFENZ<span className="text-blue-600">.</span>
-                  </h1>
+                  <Image
+                    src="/defenz-text-blue.png"
+                    alt="DEFENZ"
+                    width={100}
+                    height={19}
+                    className="dark:brightness-200 dark:contrast-75"
+                    priority
+                  />
                 )}
               </div>
             </div>
