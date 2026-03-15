@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users } from 'lucide-react'
+import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users, Home } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { DefenzLogoIcon } from '@/components/defenz-logo'
 import { UserAvatar } from '@/components/user-avatar'
@@ -120,6 +120,14 @@ export default function DashboardLayout({
 
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2">
+              {/* Home */}
+              {sidebarOpen && (
+                <a href="/dashboard" className={navItemClass('/dashboard')}>
+                  <Home className="h-5 w-5" />
+                  <span className="font-medium">Home</span>
+                </a>
+              )}
+
               {/* Demandas dropdown */}
               <div className="space-y-1">
                 <button

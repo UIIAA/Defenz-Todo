@@ -120,3 +120,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Page entrance animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main > * {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, [role="button"] {
+  transition: all 0.2s ease;
+}
+
+/* Card hover transitions */
+[class*="rounded-xl"] {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
