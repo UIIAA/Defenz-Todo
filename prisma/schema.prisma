@@ -230,6 +230,8 @@ model VerificationToken {
 model NotificationPreferences {
   id                  String   @id @default(cuid())
   userId              String   @unique
+  notificationEmail   String?  // Email alternativo para notificacoes (null = usa email de login)
+  emailEnabled        Boolean  @default(true) // Master toggle para notificacoes
   activityAssigned    Boolean  @default(true)
   deadlineApproaching Boolean  @default(true)
   statusChanged       Boolean  @default(true)
