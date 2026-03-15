@@ -573,13 +573,11 @@ function KanbanCard({ d, onClick }: { d: Demanda; onClick: (d: Demanda) => void 
   return (
     <div
       onClick={() => onClick(d)}
-      className={`group bg-white dark:bg-slate-800/40 rounded-xl p-3 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-900/[0.06] border ${
-        isOverdue ? 'border-red-400/40 dark:border-red-500/40' : 'border-slate-200/80 dark:border-slate-700/25 hover:border-blue-300 dark:hover:border-slate-600/40'
-      }`}
+      className={`group bg-white dark:bg-slate-800 rounded-xl p-3 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md border border-slate-200 dark:border-slate-700 shadow-sm`}
       style={{ borderLeftWidth: 3, borderLeftColor: origin?.color || '#8899aa' }}
     >
       <div className="flex justify-between items-start gap-2 mb-1.5">
-        <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 leading-tight flex-1">
+        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-tight flex-1">
           {d.title}
         </span>
         {prio && (
@@ -730,7 +728,7 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
     <div className="overflow-x-auto relative w-full">
       <div className="relative min-w-[500px]">
         {/* Tick headers */}
-        <div className="flex border-b border-slate-300/60 dark:border-slate-700/40 mb-1">
+        <div className="flex border-b border-blue-100/60 dark:border-slate-700/30 mb-1">
           <div className="w-[200px] shrink-0 p-1.5" />
           <div className="flex-1 relative h-7">
             {ticks.map((t, i) => {
@@ -738,7 +736,7 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
               return (
                 <span
                   key={i}
-                  className="absolute text-[10px] text-slate-600 dark:text-slate-400 font-semibold whitespace-nowrap"
+                  className="absolute text-[10px] text-slate-600 dark:text-slate-400 font-semibold whitespace-nowrap" /* tick labels */
                   style={{ left: `${pos}%`, top: 6 }}
                 >
                   {t.toLocaleDateString('pt-BR', config.tickFormat)}
@@ -754,7 +752,7 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
           return (
             <div
               key={`grid-${i}`}
-              className="absolute top-8 bottom-0 w-px bg-slate-200/60 dark:bg-slate-700/25 pointer-events-none"
+              className="absolute top-8 bottom-0 w-px bg-blue-200/40 dark:bg-slate-600/30 pointer-events-none"
               style={{ left: `calc(200px + (100% - 200px) * ${pos} / 100)` }}
             />
           )
@@ -787,7 +785,7 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
           const barColor = origin?.color || '#8899aa'
 
           return (
-            <div key={dem.id} className="flex items-center h-9 border-b border-slate-200/40 dark:border-slate-700/15">
+            <div key={dem.id} className="flex items-center h-9 border-b border-blue-100/60 dark:border-slate-700/30">
               <div
                 className="w-[200px] shrink-0 px-2 text-[13px] text-slate-800 dark:text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap"
                 title={dem.title}
@@ -955,7 +953,7 @@ export default function DemandasPage() {
       </div>
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
           { label: 'Total', value: stats.total, color: '#94a3b8' },
           { label: 'Solicitadas', value: stats.pendentes, color: '#f59e0b' },
@@ -966,14 +964,14 @@ export default function DemandasPage() {
         ].map((s) => (
           <Card
             key={s.label}
-            className="bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/25 shadow-sm shadow-slate-900/[0.04]"
-            style={{ borderLeftWidth: 3, borderLeftColor: s.color }}
+            className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700"
+            style={{ borderTopWidth: 3, borderTopColor: s.color }}
           >
             <CardContent className="p-3">
-              <div className="text-2xl font-extrabold tracking-tight" style={{ color: s.color }}>
+              <div className="text-2xl font-bold" style={{ color: s.color }}>
                 {s.value}
               </div>
-              <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-0.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mt-0.5">
                 {s.label}
               </div>
             </CardContent>
@@ -982,13 +980,13 @@ export default function DemandasPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex gap-1.5">
+      <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setFilterOrigin('all')}
-          className={`px-3.5 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
+          className={`rounded-full px-4 py-2 text-sm transition-colors ${
             filterOrigin === 'all'
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
-              : 'border-slate-200 dark:border-slate-700/20 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              ? 'bg-blue-500 text-white shadow-sm font-semibold'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
           }`}
         >
           Todas
@@ -997,12 +995,16 @@ export default function DemandasPage() {
           <button
             key={o.id}
             onClick={() => setFilterOrigin(o.id)}
-            className="px-3.5 py-1.5 rounded-md border text-xs font-semibold transition-colors"
-            style={{
-              borderColor: filterOrigin === o.id ? o.color : undefined,
-              background: filterOrigin === o.id ? o.color + '15' : undefined,
-              color: filterOrigin === o.id ? o.color : undefined,
-            }}
+            className={`rounded-full px-4 py-2 text-sm transition-colors ${
+              filterOrigin === o.id
+                ? 'shadow-sm font-semibold'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
+            }`}
+            style={
+              filterOrigin === o.id
+                ? { background: o.color, color: 'white' }
+                : undefined
+            }
           >
             {o.label}
           </button>
@@ -1010,10 +1012,10 @@ export default function DemandasPage() {
       </div>
 
       {/* Kanban */}
-      <Card className="bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/25 shadow-sm shadow-slate-900/[0.04]">
+      <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-blue-600 dark:text-blue-400 text-sm font-extrabold uppercase tracking-wider">
+            <span className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Kanban
             </span>
           </div>
@@ -1031,11 +1033,11 @@ export default function DemandasPage() {
       </Card>
 
       {/* Gantt */}
-      <Card className="bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/25 shadow-sm shadow-slate-900/[0.04]">
+      <Card className="bg-blue-50 dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-blue-600 dark:text-blue-400 text-sm font-extrabold uppercase tracking-wider">
+              <span className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Timeline
               </span>
               <span className="text-[11px] text-slate-500">— demandas ativas</span>
