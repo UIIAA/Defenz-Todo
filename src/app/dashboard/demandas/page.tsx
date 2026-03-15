@@ -644,7 +644,16 @@ function KanbanColumn({
 
 // ─── Gantt Chart ─────────────────────────────────────────────
 
-function GanttChart({ demandas }: { demandas: Demanda[] }) {
+type TimeRange = 'hours' | 'days' | 'weeks' | 'months'
+
+const TIME_RANGE_CONFIG: Record<TimeRange, { label: string; daysSpan: number; tickInterval: number; tickFormat: Intl.DateTimeFormatOptions }> = {
+  hours: { label: 'Horas', daysSpan: 1, tickInterval: 1 / 24, tickFormat: { hour: '2-digit', minute: '2-digit' } },
+  days: { label: 'Dias', daysSpan: 14, tickInterval: 1, tickFormat: { day: '2-digit', month: 'short' } },
+  weeks: { label: 'Semanas', daysSpan: 60, tickInterval: 7, tickFormat: { day: '2-digit', month: 'short' } },
+  months: { label: 'Meses', daysSpan: 180, tickInterval: 30, tickFormat: { month: 'short', year: '2-digit' } },
+}
+
+function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: TimeRange }) {
   const activeDemandas = demandas.filter((d) => d.status !== 'concluida')
 
   if (activeDemandas.length === 0) {
@@ -655,43 +664,80 @@ function GanttChart({ demandas }: { demandas: Demanda[] }) {
     )
   }
 
-  const allDates = activeDemandas.flatMap((d) =>
-    [d.dateIn, d.deadline].filter(Boolean).map((dt) => new Date(dt!).getTime())
-  )
-  if (allDates.length === 0) return null
-
+  const config = TIME_RANGE_CONFIG[timeRange]
   const DAY_MS = 86400000
-  const minDate = new Date(Math.min(...allDates) - DAY_MS * 2)
-  const maxDate = new Date(Math.max(...allDates) + DAY_MS * 3)
-  const totalDays = Math.ceil((maxDate.getTime() - minDate.getTime()) / DAY_MS) || 14
+  const now = Date.now()
 
-  const todayPos = ((Date.now() - minDate.getTime()) / DAY_MS / totalDays) * 100
+  // Window: center on today, span based on timeRange
+  const halfSpan = (config.daysSpan / 2) * DAY_MS
+  const minDate = new Date(now - halfSpan)
+  const maxDate = new Date(now + halfSpan)
+  const totalMs = maxDate.getTime() - minDate.getTime()
 
-  const weeks: Date[] = []
-  const d = new Date(minDate)
-  while (d <= maxDate) {
-    if (d.getDay() === 1 || weeks.length === 0) {
-      weeks.push(new Date(d))
-    }
-    d.setDate(d.getDate() + 1)
+  const todayPos = ((now - minDate.getTime()) / totalMs) * 100
+
+  // Generate tick marks
+  const ticks: Date[] = []
+  const tickMs = config.tickInterval * DAY_MS
+  const firstTick = new Date(minDate)
+  if (timeRange === 'hours') {
+    firstTick.setMinutes(0, 0, 0)
+  } else if (timeRange === 'months') {
+    firstTick.setDate(1)
+  } else if (timeRange === 'weeks') {
+    // Align to Monday
+    const day = firstTick.getDay()
+    const diff = day === 0 ? -6 : 1 - day
+    firstTick.setDate(firstTick.getDate() + diff)
   }
+
+  const cursor = new Date(firstTick)
+  while (cursor <= maxDate) {
+    if (cursor >= minDate) {
+      ticks.push(new Date(cursor))
+    }
+    if (timeRange === 'hours') {
+      cursor.setHours(cursor.getHours() + 1)
+    } else if (timeRange === 'months') {
+      cursor.setMonth(cursor.getMonth() + 1)
+    } else {
+      cursor.setTime(cursor.getTime() + tickMs)
+    }
+  }
+
+  // Filter demandas that overlap with visible window
+  const visibleDemandas = activeDemandas.filter((dem) => {
+    const start = new Date(dem.dateIn).getTime()
+    const end = dem.deadline ? new Date(dem.deadline).getTime() : start + DAY_MS * 7
+    return end >= minDate.getTime() && start <= maxDate.getTime()
+  })
+
+  if (visibleDemandas.length === 0) {
+    return (
+      <div className="text-slate-500 text-sm text-center py-5">
+        Nenhuma demanda neste periodo
+      </div>
+    )
+  }
+
+  const chartWidth = timeRange === 'hours' ? 1200 : timeRange === 'months' ? Math.max(800, config.daysSpan * 8) : Math.max(600, config.daysSpan * 32)
 
   return (
     <div className="overflow-x-auto relative">
-      <div className="relative" style={{ minWidth: Math.max(600, totalDays * 32) }}>
-        {/* Week headers */}
-        <div className="flex border-b border-slate-800 mb-1">
+      <div className="relative" style={{ minWidth: chartWidth }}>
+        {/* Tick headers */}
+        <div className="flex border-b border-slate-200 dark:border-slate-800 mb-1">
           <div className="w-[180px] shrink-0 p-1.5" />
           <div className="flex-1 relative h-7">
-            {weeks.map((w, i) => {
-              const pos = ((w.getTime() - minDate.getTime()) / DAY_MS / totalDays) * 100
+            {ticks.map((t, i) => {
+              const pos = ((t.getTime() - minDate.getTime()) / totalMs) * 100
               return (
                 <span
                   key={i}
                   className="absolute text-[10px] text-slate-500 font-semibold whitespace-nowrap"
                   style={{ left: `${pos}%`, top: 6 }}
                 >
-                  {w.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                  {t.toLocaleDateString('pt-BR', config.tickFormat)}
                 </span>
               )
             })}
@@ -707,23 +753,25 @@ function GanttChart({ demandas }: { demandas: Demanda[] }) {
         )}
 
         {/* Rows */}
-        {activeDemandas.map((dem) => {
+        {visibleDemandas.map((dem) => {
           const origin = ORIGINS.find((o) => o.id === dem.origin)
           const startDate = new Date(dem.dateIn)
           const endDate = dem.deadline
             ? new Date(dem.deadline)
             : new Date(startDate.getTime() + DAY_MS * 7)
-          const startPos = ((startDate.getTime() - minDate.getTime()) / DAY_MS / totalDays) * 100
-          const width = Math.max(
-            ((endDate.getTime() - startDate.getTime()) / DAY_MS / totalDays) * 100,
-            2
-          )
+
+          // Clamp to visible range
+          const clampedStart = Math.max(startDate.getTime(), minDate.getTime())
+          const clampedEnd = Math.min(endDate.getTime(), maxDate.getTime())
+
+          const startPos = ((clampedStart - minDate.getTime()) / totalMs) * 100
+          const width = Math.max(((clampedEnd - clampedStart) / totalMs) * 100, 1)
           const isOverdue = dem.deadline && toDateStr(dem.deadline) < todayStr()
           const isBlocked = dem.status === 'bloqueada'
           const barColor = origin?.color || '#8899aa'
 
           return (
-            <div key={dem.id} className="flex items-center h-8 border-b border-slate-800/20">
+            <div key={dem.id} className="flex items-center h-8 border-b border-slate-100 dark:border-slate-800/20">
               <div
                 className="w-[180px] shrink-0 px-2 text-[11px] text-slate-700 dark:text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap"
                 title={dem.title}
@@ -777,6 +825,7 @@ export default function DemandasPage() {
   const [importModalOpen, setImportModalOpen] = useState(false)
   const [editingDemanda, setEditingDemanda] = useState<Demanda | null>(null)
   const [filterOrigin, setFilterOrigin] = useState('all')
+  const [timeRange, setTimeRange] = useState<TimeRange>('weeks')
 
   const fetchDemandas = useCallback(async () => {
     try {
@@ -968,13 +1017,30 @@ export default function DemandasPage() {
       {/* Gantt */}
       <Card className="bg-white dark:bg-[#111d2e]/60 border-slate-200/80 dark:border-blue-900/20">
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-blue-600 dark:text-blue-400 text-sm font-extrabold uppercase tracking-wider">
-              Timeline
-            </span>
-            <span className="text-[11px] text-slate-500">— demandas ativas</span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-blue-600 dark:text-blue-400 text-sm font-extrabold uppercase tracking-wider">
+                Timeline
+              </span>
+              <span className="text-[11px] text-slate-500">— demandas ativas</span>
+            </div>
+            <div className="flex gap-1">
+              {(['hours', 'days', 'weeks', 'months'] as TimeRange[]).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setTimeRange(range)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                    timeRange === range
+                      ? 'bg-blue-50 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-500/30'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-blue-900/10 border border-transparent'
+                  }`}
+                >
+                  {TIME_RANGE_CONFIG[range].label}
+                </button>
+              ))}
+            </div>
           </div>
-          <GanttChart demandas={filtered} />
+          <GanttChart demandas={filtered} timeRange={timeRange} />
         </CardContent>
       </Card>
 
