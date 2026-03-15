@@ -263,7 +263,7 @@ function ImportModal({
               </SelectTrigger>
               <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
                 {ORIGINS.map((o) => (
-                  <SelectItem key={o.id} value={o.id} className="text-slate-100">
+                  <SelectItem key={o.id} value={o.id} className="text-slate-800 dark:text-slate-200">
                     {o.label}
                   </SelectItem>
                 ))}
@@ -280,7 +280,7 @@ function ImportModal({
               </SelectTrigger>
               <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
                 {PRIORITIES.map((p) => (
-                  <SelectItem key={p.id} value={p.id} className="text-slate-100">
+                  <SelectItem key={p.id} value={p.id} className="text-slate-800 dark:text-slate-200">
                     {p.label}
                   </SelectItem>
                 ))}
@@ -428,7 +428,7 @@ function DemandaModal({
                 </SelectTrigger>
                 <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
                   {ORIGINS.map((o) => (
-                    <SelectItem key={o.id} value={o.id} className="text-slate-100">
+                    <SelectItem key={o.id} value={o.id} className="text-slate-800 dark:text-slate-200">
                       {o.label}
                     </SelectItem>
                   ))}
@@ -445,7 +445,7 @@ function DemandaModal({
                 </SelectTrigger>
                 <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
                   {PRIORITIES.map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="text-slate-100">
+                    <SelectItem key={p.id} value={p.id} className="text-slate-800 dark:text-slate-200">
                       {p.label}
                     </SelectItem>
                   ))}
