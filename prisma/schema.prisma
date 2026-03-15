@@ -41,6 +41,7 @@ model User {
   interactions            Interaction[]
   marketingLists          MarketingList[]
   dailyActivityLogs       DailyActivityLog[]
+  demandas                Demanda[]
 
   @@index([email])
 }
@@ -695,4 +696,34 @@ model DailyActivityLog {
   @@index([marketingListId]) // Busca por lista
   @@index([opportunityId]) // Busca por oportunidade
   @@map("daily_activity_logs")
+}
+
+// ============================================================
+// DEMANDAS (Gerenciamento de Demandas com Kanban + Gantt)
+// ============================================================
+
+model Demanda {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  origin      String    @default("outra") // fernando, securisoft, autogerada, outra
+  status      String    @default("solicitada") // solicitada, em_andamento, concluida, bloqueada
+  priority    String    @default("media") // alta, media, baixa
+  assignee    String?   // Pessoa designada para a demanda
+  dateIn      DateTime  @default(now())
+  deadline    DateTime?
+  dateDone    DateTime?
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([origin])
+  @@index([deadline])
+  @@index([assignee])
+  @@map("demandas")
 }

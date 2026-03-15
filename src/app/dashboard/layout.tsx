@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { Shield, BarChart3, Users, Target, Calendar, LogOut, Menu, X, Download, Settings, Briefcase, ChevronDown, CheckSquare, FileSpreadsheet, Database, PieChart } from 'lucide-react'
+import { Shield, BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 
 export default function DashboardLayout({
@@ -13,9 +13,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [crmOpen, setCrmOpen] = useState(true)
-  const [activitiesOpen, setActivitiesOpen] = useState(true)
-  const [executiveOpen, setExecutiveOpen] = useState(true)
+  const [demandasOpen, setDemandasOpen] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
   const { data: session, status } = useSession()
@@ -29,28 +27,6 @@ export default function DashboardLayout({
   const handleLogout = async () => {
     await signOut({ redirect: false })
     router.push('/')
-  }
-
-  const handleImportData = async () => {
-    try {
-      const response = await fetch('/api/activities/import', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        alert(`Dados importados com sucesso! ${result.count} atividades carregadas.`)
-        window.location.reload()
-      } else {
-        alert('Erro ao importar dados. Tente novamente.')
-      }
-    } catch (error) {
-      console.error('Error importing data:', error)
-      alert('Erro ao importar dados. Tente novamente.')
-    }
   }
 
   if (status === 'loading') {
@@ -87,163 +63,46 @@ export default function DashboardLayout({
 
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2">
-
-              {/* Activities Dropdown */}
+              {/* Demandas Dropdown */}
               <div className="space-y-1">
                 <button
-                  onClick={() => setActivitiesOpen(!activitiesOpen)}
+                  onClick={() => setDemandasOpen(!demandasOpen)}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100`}
                 >
                   <div className="flex items-center gap-3">
-                    <Target className="h-5 w-5" />
-                    {sidebarOpen && <span>Atividades Estratégicas</span>}
+                    <ClipboardList className="h-5 w-5" />
+                    {sidebarOpen && <span>Demandas</span>}
                   </div>
                   {sidebarOpen && (
-                    <ChevronDown className={`h-4 w-4 transition-transform ${activitiesOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 transition-transform ${demandasOpen ? 'rotate-180' : ''}`} />
                   )}
                 </button>
 
-                {activitiesOpen && sidebarOpen && (
+                {demandasOpen && sidebarOpen && (
                   <div className="pl-4 space-y-1">
                     <a
-                      href="/dashboard/activities"
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard/activities')
+                      href="/dashboard/demandas"
+                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard/demandas')
                         ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 font-medium'
                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                     >
-                      <CheckSquare className="h-4 w-4" />
-                      <span>Lista</span>
+                      <LayoutGrid className="h-4 w-4" />
+                      <span>Kanban</span>
                     </a>
                     <a
-                      href="/dashboard/calendar"
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard/calendar')
-                        ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 font-medium'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                        }`}
-                    >
-                      <Calendar className="h-4 w-4" />
-                      <span>Calendário</span>
-                    </a>
-                    <a
-                      href="/dashboard/analytics"
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard/analytics')
+                      href="/dashboard/demandas/analises"
+                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard/demandas/analises')
                         ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 font-medium'
                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                     >
                       <BarChart3 className="h-4 w-4" />
-                      <span>Análises</span>
-                    </a>
-                    <a
-                      href="/dashboard/excel-analytics"
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard/excel-analytics')
-                        ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 font-medium'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                        }`}
-                    >
-                      <FileSpreadsheet className="h-4 w-4" />
-                      <span>Excel AI</span>
+                      <span>Analises</span>
                     </a>
                   </div>
                 )}
               </div>
-
-              {/* CRM Dropdown */}
-              <div className="space-y-1">
-                <button
-                  onClick={() => setCrmOpen(!crmOpen)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Briefcase className="h-5 w-5" />
-                    {sidebarOpen && <span>CRM</span>}
-                  </div>
-                  {sidebarOpen && (
-                    <ChevronDown className={`h-4 w-4 transition-transform ${crmOpen ? 'rotate-180' : ''}`} />
-                  )}
-                </button>
-
-                {crmOpen && sidebarOpen && (
-                  <div className="pl-4 space-y-1">
-                    <a
-                      href="/dashboard"
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard')
-                        ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 font-medium'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                        }`}
-                    >
-                      <BarChart3 className="h-4 w-4" />
-                      <span>Visão Geral</span>
-                    </a>
-                    <a
-                      href="/dashboard/crm/pipeline"
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard/crm/pipeline')
-                        ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 font-medium'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                        }`}
-                    >
-                      <Target className="h-4 w-4" />
-                      <span>Pipeline</span>
-                    </a>
-                    <a
-                      href="/dashboard/crm/clients"
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard/crm/clients')
-                        ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 font-medium'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                        }`}
-                    >
-                      <Users className="h-4 w-4" />
-                      <span>Clientes</span>
-                    </a>
-                    <a
-                      href="/dashboard/reports"
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard/reports')
-                        ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 font-medium'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                        }`}
-                    >
-                      <BarChart3 className="h-4 w-4" />
-                      <span>Relatórios</span>
-                    </a>
-                    <a
-                      href="/dashboard/crm/import"
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${isActive('/dashboard/crm/import')
-                        ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 font-medium'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                        }`}
-                    >
-                      <Database className="h-4 w-4" />
-                      <span>Importar Dados</span>
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {/* Executivo */}
-              <a
-                href="/dashboard/executive"
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${pathname.startsWith('/dashboard/executive')
-                  ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 font-medium'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Briefcase className="h-5 w-5" />
-                  {sidebarOpen && <span>Executivo</span>}
-                </div>
-              </a>
-
-              <a
-                href="/dashboard/settings/notifications"
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/dashboard/settings/notifications')
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-900/20'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100'
-                  }`}
-              >
-                <Settings className="h-5 w-5" />
-                {sidebarOpen && <span>Notificações</span>}
-              </a>
             </nav>
           </div>
         </aside>
