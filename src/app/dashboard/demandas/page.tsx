@@ -573,8 +573,8 @@ function KanbanCard({ d, onClick }: { d: Demanda; onClick: (d: Demanda) => void 
   return (
     <div
       onClick={() => onClick(d)}
-      className={`group bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-xl p-3 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-900/5 border ${
-        isOverdue ? 'border-red-400/40 dark:border-red-500/40' : 'border-white/60 dark:border-slate-700/20 hover:border-blue-300/60 dark:hover:border-slate-600/40'
+      className={`group bg-white dark:bg-slate-800/40 rounded-xl p-3 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-900/[0.06] border ${
+        isOverdue ? 'border-red-400/40 dark:border-red-500/40' : 'border-slate-200/80 dark:border-slate-700/25 hover:border-blue-300 dark:hover:border-slate-600/40'
       }`}
       style={{ borderLeftWidth: 3, borderLeftColor: origin?.color || '#8899aa' }}
     >
@@ -966,7 +966,7 @@ export default function DemandasPage() {
         ].map((s) => (
           <Card
             key={s.label}
-            className="bg-white/70 dark:bg-slate-800/30 backdrop-blur-sm border-white/50 dark:border-slate-700/20 shadow-sm shadow-blue-900/5"
+            className="bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/25 shadow-sm shadow-slate-900/[0.04]"
             style={{ borderLeftWidth: 3, borderLeftColor: s.color }}
           >
             <CardContent className="p-3">
@@ -1010,7 +1010,7 @@ export default function DemandasPage() {
       </div>
 
       {/* Kanban */}
-      <Card className="bg-white/70 dark:bg-slate-800/30 backdrop-blur-sm border-white/50 dark:border-slate-700/20 shadow-sm shadow-blue-900/5">
+      <Card className="bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/25 shadow-sm shadow-slate-900/[0.04]">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-blue-600 dark:text-blue-400 text-sm font-extrabold uppercase tracking-wider">
@@ -1031,7 +1031,7 @@ export default function DemandasPage() {
       </Card>
 
       {/* Gantt */}
-      <Card className="bg-white/70 dark:bg-slate-800/30 backdrop-blur-sm border-white/50 dark:border-slate-700/20 shadow-sm shadow-blue-900/5">
+      <Card className="bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/25 shadow-sm shadow-slate-900/[0.04]">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">

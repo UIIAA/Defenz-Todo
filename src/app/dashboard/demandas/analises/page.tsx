@@ -183,7 +183,7 @@ export default function DemandasAnalisesPage() {
       </div>
 
       {/* Filters */}
-      <Card className="bg-white dark:bg-slate-800/30 backdrop-blur-sm border-white/50 dark:border-slate-700/20 shadow-sm shadow-blue-900/5">
+      <Card className="bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/25 shadow-sm shadow-slate-900/[0.04]">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-slate-500" />

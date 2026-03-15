@@ -60,10 +60,10 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-gradient-to-br from-white via-sky-50/80 to-blue-100/60 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 transition-colors">
       <div className="flex">
         {/* Sidebar */}
-        <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'} transition-all duration-300 bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border-r border-white/40 dark:border-slate-700/30 min-h-screen`}>
+        <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'} transition-all duration-300 bg-white/90 dark:bg-slate-900/60 backdrop-blur-xl border-r border-slate-200/70 dark:border-slate-700/30 min-h-screen`}>
           <div className="flex flex-col h-full">
             {/* Logo */}
-            <div className="p-5 border-b border-slate-200/40 dark:border-slate-700/30">
+            <div className="p-5 border-b border-slate-200/70 dark:border-slate-700/30">
               <div className="flex items-center gap-2.5">
                 <DefenzLogoIcon size={30} className="shrink-0" />
                 {sidebarOpen && (
@@ -123,7 +123,7 @@ export default function DashboardLayout({
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <header className="bg-white/60 dark:bg-slate-900/40 border-b border-white/40 dark:border-slate-700/30 backdrop-blur-xl transition-colors">
+          <header className="bg-white/90 dark:bg-slate-900/40 border-b border-slate-200/70 dark:border-slate-700/30 backdrop-blur-xl transition-colors">
             <div className="px-6">
               <div className="flex justify-between items-center h-16">
                 <div className="flex items-center gap-4">

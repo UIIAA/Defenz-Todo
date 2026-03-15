@@ -144,7 +144,7 @@ export default function LogsPage() {
       </div>
 
       {/* Logs Table */}
-      <Card className="bg-white/70 dark:bg-slate-800/30 backdrop-blur-sm border-white/50 dark:border-slate-700/20 shadow-sm shadow-blue-900/5">
+      <Card className="bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-700/25 shadow-sm shadow-slate-900/[0.04]">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm font-extrabold uppercase tracking-wider">
             <FileText className="h-4 w-4" />
