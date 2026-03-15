@@ -89,3 +89,4 @@ pids
 .yarn/install-state.gz
 .pnp.*
 *.backup*
+.vercel
