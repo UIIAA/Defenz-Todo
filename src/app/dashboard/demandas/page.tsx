@@ -646,11 +646,11 @@ function KanbanColumn({
 
 type TimeRange = 'hours' | 'days' | 'weeks' | 'months'
 
-const TIME_RANGE_CONFIG: Record<TimeRange, { label: string; daysSpan: number; tickInterval: number; tickFormat: Intl.DateTimeFormatOptions }> = {
-  hours: { label: 'Horas', daysSpan: 1, tickInterval: 1 / 24, tickFormat: { hour: '2-digit', minute: '2-digit' } },
-  days: { label: 'Dias', daysSpan: 14, tickInterval: 1, tickFormat: { day: '2-digit', month: 'short' } },
-  weeks: { label: 'Semanas', daysSpan: 60, tickInterval: 7, tickFormat: { day: '2-digit', month: 'short' } },
-  months: { label: 'Meses', daysSpan: 180, tickInterval: 30, tickFormat: { month: 'short', year: '2-digit' } },
+const TIME_RANGE_CONFIG: Record<TimeRange, { label: string; daysSpan: number; tickHours: number; tickFormat: Intl.DateTimeFormatOptions }> = {
+  hours: { label: 'Horas', daysSpan: 1, tickHours: 3, tickFormat: { hour: '2-digit', minute: '2-digit' } },
+  days: { label: 'Dias', daysSpan: 14, tickHours: 24, tickFormat: { day: '2-digit', month: 'short' } },
+  weeks: { label: 'Semanas', daysSpan: 60, tickHours: 24 * 7, tickFormat: { day: '2-digit', month: 'short' } },
+  months: { label: 'Meses', daysSpan: 180, tickHours: 24 * 30, tickFormat: { month: 'short', year: '2-digit' } },
 }
 
 function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: TimeRange }) {
@@ -678,17 +678,23 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
 
   // Generate tick marks
   const ticks: Date[] = []
-  const tickMs = config.tickInterval * DAY_MS
+  const tickMs = config.tickHours * 3600000
   const firstTick = new Date(minDate)
+
+  // Align first tick to clean boundary
   if (timeRange === 'hours') {
-    firstTick.setMinutes(0, 0, 0)
+    const h = firstTick.getHours()
+    firstTick.setHours(h - (h % config.tickHours) + config.tickHours, 0, 0, 0)
   } else if (timeRange === 'months') {
     firstTick.setDate(1)
+    firstTick.setHours(0, 0, 0, 0)
   } else if (timeRange === 'weeks') {
-    // Align to Monday
     const day = firstTick.getDay()
     const diff = day === 0 ? -6 : 1 - day
     firstTick.setDate(firstTick.getDate() + diff)
+    firstTick.setHours(0, 0, 0, 0)
+  } else {
+    firstTick.setHours(0, 0, 0, 0)
   }
 
   const cursor = new Date(firstTick)
@@ -696,9 +702,7 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
     if (cursor >= minDate) {
       ticks.push(new Date(cursor))
     }
-    if (timeRange === 'hours') {
-      cursor.setHours(cursor.getHours() + 1)
-    } else if (timeRange === 'months') {
+    if (timeRange === 'months') {
       cursor.setMonth(cursor.getMonth() + 1)
     } else {
       cursor.setTime(cursor.getTime() + tickMs)
@@ -720,11 +724,9 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
     )
   }
 
-  const chartWidth = timeRange === 'hours' ? 1200 : timeRange === 'months' ? Math.max(800, config.daysSpan * 8) : Math.max(600, config.daysSpan * 32)
-
   return (
-    <div className="overflow-x-auto relative">
-      <div className="relative" style={{ minWidth: chartWidth }}>
+    <div className="overflow-x-auto relative w-full">
+      <div className="relative min-w-[500px]">
         {/* Tick headers */}
         <div className="flex border-b border-slate-200 dark:border-slate-800 mb-1">
           <div className="w-[180px] shrink-0 p-1.5" />
@@ -911,7 +913,7 @@ export default function DemandasPage() {
   }
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-6 space-y-5 max-w-full overflow-hidden">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
