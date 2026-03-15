@@ -724,19 +724,21 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
     )
   }
 
+  const rowCount = visibleDemandas.length
+
   return (
     <div className="overflow-x-auto relative w-full">
       <div className="relative min-w-[500px]">
         {/* Tick headers */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 mb-1">
-          <div className="w-[180px] shrink-0 p-1.5" />
+        <div className="flex border-b border-slate-300/60 dark:border-slate-700/40 mb-1">
+          <div className="w-[200px] shrink-0 p-1.5" />
           <div className="flex-1 relative h-7">
             {ticks.map((t, i) => {
               const pos = ((t.getTime() - minDate.getTime()) / totalMs) * 100
               return (
                 <span
                   key={i}
-                  className="absolute text-[10px] text-slate-500 font-semibold whitespace-nowrap"
+                  className="absolute text-[10px] text-slate-600 dark:text-slate-400 font-semibold whitespace-nowrap"
                   style={{ left: `${pos}%`, top: 6 }}
                 >
                   {t.toLocaleDateString('pt-BR', config.tickFormat)}
@@ -746,11 +748,23 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
           </div>
         </div>
 
+        {/* Vertical grid lines at each tick */}
+        {ticks.map((t, i) => {
+          const pos = ((t.getTime() - minDate.getTime()) / totalMs) * 100
+          return (
+            <div
+              key={`grid-${i}`}
+              className="absolute top-8 bottom-0 w-px bg-slate-200/60 dark:bg-slate-700/25 pointer-events-none"
+              style={{ left: `calc(200px + (100% - 200px) * ${pos} / 100)` }}
+            />
+          )
+        })}
+
         {/* Today line */}
         {todayPos >= 0 && todayPos <= 100 && (
           <div
             className="absolute top-8 bottom-0 w-0.5 bg-blue-500 opacity-60 z-10"
-            style={{ left: `calc(180px + ${todayPos}% * (100% - 180px) / 100%)` }}
+            style={{ left: `calc(200px + (100% - 200px) * ${todayPos} / 100)` }}
           />
         )}
 
@@ -773,16 +787,16 @@ function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: T
           const barColor = origin?.color || '#8899aa'
 
           return (
-            <div key={dem.id} className="flex items-center h-8 border-b border-slate-100 dark:border-slate-800/20">
+            <div key={dem.id} className="flex items-center h-9 border-b border-slate-200/40 dark:border-slate-700/15">
               <div
-                className="w-[180px] shrink-0 px-2 text-[11px] text-slate-700 dark:text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap"
+                className="w-[200px] shrink-0 px-2 text-[13px] text-slate-800 dark:text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap"
                 title={dem.title}
               >
                 {dem.title}
               </div>
               <div className="flex-1 relative h-full">
                 <div
-                  className="absolute top-1.5 h-5 rounded transition-all"
+                  className="absolute top-1.5 h-6 rounded transition-all"
                   style={{
                     left: `${startPos}%`,
                     width: `${width}%`,
