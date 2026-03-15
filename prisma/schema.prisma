@@ -163,7 +163,6 @@ model Activity {
   updatedAt   DateTime          @updatedAt
   userId      String
   user        User              @relation(fields: [userId], references: [id])
-  auditLogs   AuditLog[]
   comments    ActivityComment[]
   insight     ActivityInsight? // 1:1 com AI insights
   opportunities Opportunity[]
@@ -176,16 +175,15 @@ model Activity {
 
 model AuditLog {
   id         String   @id @default(cuid())
-  action     String // CREATE, UPDATE, DELETE, etc.
-  entityType String // Activity, User, etc.
+  action     String // CREATE, UPDATE, DELETE, IMPORT
+  entityType String // Demanda, Activity, User
   entityId   String
   userId     String
   userEmail  String
   changes    String? // JSON string of changes
   createdAt  DateTime @default(now())
 
-  activity Activity? @relation(fields: [entityId], references: [id])
-  user     User      @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@index([entityType, entityId])
   @@index([userId])
@@ -714,6 +712,7 @@ model Demanda {
   dateIn      DateTime  @default(now())
   deadline    DateTime?
   dateDone    DateTime?
+  version     Int       @default(1) // Optimistic locking
 
   userId    String
   user      User     @relation(fields: [userId], references: [id])

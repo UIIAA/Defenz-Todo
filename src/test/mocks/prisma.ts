@@ -15,6 +15,11 @@ export const mockDb = {
     findMany: vi.fn(),
     findFirst: vi.fn(),
   },
+  auditLog: {
+    create: vi.fn(),
+    findMany: vi.fn(),
+    count: vi.fn(),
+  },
 }
 
 vi.mock('@/lib/db', () => ({

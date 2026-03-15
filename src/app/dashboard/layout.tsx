@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { Shield, BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid } from 'lucide-react'
+import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { DefenzLogoIcon } from '@/components/defenz-logo'
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,9 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
   const { data: session, status } = useSession()
+
+  const userRole = (session?.user as { role?: string })?.role || ''
+  const isAdmin = ['admin', 'gerencia'].includes(userRole)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -44,6 +48,13 @@ export default function DashboardLayout({
 
   const isActive = (path: string) => pathname === path
 
+  const navItemClass = (path: string) =>
+    `flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm cursor-pointer ${
+      isActive(path)
+        ? 'bg-blue-50 dark:bg-blue-600/15 text-blue-700 dark:text-blue-400 font-semibold shadow-sm shadow-blue-500/5'
+        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
+    }`
+
   return (
     <div className="min-h-screen bg-[#f4f7fb] dark:bg-[#0a1628] transition-colors">
       <div className="flex">
@@ -53,21 +64,18 @@ export default function DashboardLayout({
             {/* Logo */}
             <div className="p-6 border-b border-slate-200/80 dark:border-blue-900/20">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-md shadow-blue-600/20">
-                  <Shield className="h-6 w-6 text-white" />
-                </div>
+                <DefenzLogoIcon size={36} className="text-blue-600 dark:text-blue-400 shrink-0" />
                 {sidebarOpen && (
-                  <div className="flex flex-col">
-                    <h1 className="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">
-                      DEFENZ<span className="text-blue-600">.</span>
-                    </h1>
-                  </div>
+                  <h1 className="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+                    DEFENZ<span className="text-blue-600">.</span>
+                  </h1>
                 )}
               </div>
             </div>
 
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2">
+              {/* Demandas Dropdown */}
               <div className="space-y-1">
                 <button
                   onClick={() => setDemandasOpen(!demandasOpen)}
@@ -84,29 +92,25 @@ export default function DashboardLayout({
 
                 {demandasOpen && sidebarOpen && (
                   <div className="pl-4 space-y-1">
-                    <a
-                      href="/dashboard/demandas"
-                      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm cursor-pointer ${isActive('/dashboard/demandas')
-                        ? 'bg-blue-50 dark:bg-blue-600/15 text-blue-700 dark:text-blue-400 font-semibold shadow-sm shadow-blue-500/5'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
-                        }`}
-                    >
+                    <a href="/dashboard/demandas" className={navItemClass('/dashboard/demandas')}>
                       <LayoutGrid className="h-4 w-4" />
                       <span>Kanban</span>
                     </a>
-                    <a
-                      href="/dashboard/demandas/analises"
-                      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm cursor-pointer ${isActive('/dashboard/demandas/analises')
-                        ? 'bg-blue-50 dark:bg-blue-600/15 text-blue-700 dark:text-blue-400 font-semibold shadow-sm shadow-blue-500/5'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
-                        }`}
-                    >
+                    <a href="/dashboard/demandas/analises" className={navItemClass('/dashboard/demandas/analises')}>
                       <BarChart3 className="h-4 w-4" />
                       <span>Analises</span>
                     </a>
                   </div>
                 )}
               </div>
+
+              {/* Admin: Logs */}
+              {isAdmin && sidebarOpen && (
+                <a href="/dashboard/logs" className={navItemClass('/dashboard/logs')}>
+                  <FileText className="h-5 w-5" />
+                  <span className="font-medium">Logs</span>
+                </a>
+              )}
             </nav>
           </div>
         </aside>

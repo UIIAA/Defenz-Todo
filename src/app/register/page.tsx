@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Shield, Lock, Mail, Eye, EyeOff, User } from 'lucide-react'
+import { Lock, Mail, Eye, EyeOff, User } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { DefenzLogoIcon } from '@/components/defenz-logo'
 
 export default function RegisterPage() {
   const [name, setName] = useState('')
@@ -76,9 +77,7 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-5">
-            <div className="relative p-4 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-xl shadow-blue-600/25">
-              <Shield className="h-10 w-10 text-white" />
-            </div>
+            <DefenzLogoIcon size={56} className="text-blue-600 drop-shadow-lg" />
           </div>
 
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-1">

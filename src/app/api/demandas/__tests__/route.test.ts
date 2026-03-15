@@ -121,6 +121,7 @@ describe('PUT /api/demandas', () => {
 
   it('updates demanda with partial data', async () => {
     mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
     mockDb.demanda.update.mockResolvedValue({ ...savedDemanda, status: 'concluida' })
     const req = createRequest('PUT', {
       body: { id: 'dem-001', status: 'concluida' },
@@ -132,6 +133,7 @@ describe('PUT /api/demandas', () => {
 
   it('scopes update to userId', async () => {
     mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
     mockDb.demanda.update.mockResolvedValue(savedDemanda)
     const req = createRequest('PUT', {
       body: { id: 'dem-001', title: 'Updated' },
@@ -206,6 +208,7 @@ describe('PUT /api/demandas', () => {
 
   it('works normally when updatedAt is not provided (backwards compatible)', async () => {
     mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
     mockDb.demanda.update.mockResolvedValue({ ...savedDemanda, status: 'em_andamento' })
 
     const req = createRequest('PUT', {
@@ -214,8 +217,8 @@ describe('PUT /api/demandas', () => {
     })
     const res = await PUT(req)
     expect(res.status).toBe(200)
-    // Should NOT call findUnique when no updatedAt provided
-    expect(mockDb.demanda.findUnique).not.toHaveBeenCalled()
+    // findUnique is called for audit diff but NOT for locking check
+    expect(mockDb.demanda.findUnique).toHaveBeenCalled()
   })
 })
 
