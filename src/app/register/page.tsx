@@ -24,15 +24,14 @@ export default function RegisterPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Validações
     if (password !== confirmPassword) {
-      toast.error('As senhas não coincidem')
+      toast.error('As senhas nao coincidem')
       setIsLoading(false)
       return
     }
 
     if (password.length < 6) {
-      toast.error('A senha deve ter no mínimo 6 caracteres')
+      toast.error('A senha deve ter no minimo 6 caracteres')
       setIsLoading(false)
       return
     }
@@ -41,11 +40,7 @@ export default function RegisterPage() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          password
-        })
+        body: JSON.stringify({ name, email, password })
       })
 
       const data = await response.json()
@@ -56,7 +51,7 @@ export default function RegisterPage() {
         return
       }
 
-      toast.success('Conta criada com sucesso! Faça login para continuar.')
+      toast.success('Conta criada com sucesso! Faca login para continuar.')
       router.push('/')
     } catch (error) {
       console.error('Register error:', error)
@@ -66,43 +61,50 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-      {/* Grid pattern overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20" />
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white via-sky-100 to-blue-500" />
+
+      {/* Subtle mesh overlay */}
+      <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_1px_1px,_#1a56db_1px,_transparent_0)] bg-[size:32px_32px]" />
+
+      {/* Glow orbs */}
+      <div className="absolute top-1/3 right-1/3 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/3 left-1/4 w-80 h-80 bg-sky-300/15 rounded-full blur-3xl" />
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Logo e header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="relative p-4 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 rounded-2xl shadow-lg shadow-blue-500/50 animate-pulse">
-              <Shield className="h-10 w-10 text-white drop-shadow-lg" />
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-400 opacity-50 blur-xl animate-pulse" />
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <div className="flex justify-center mb-5">
+            <div className="relative p-4 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-xl shadow-blue-600/25">
+              <Shield className="h-10 w-10 text-white" />
             </div>
           </div>
 
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2 drop-shadow-lg">
-            Defenz
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-1">
+            DEFENZ<span className="text-blue-600">.</span>
           </h1>
-          <p className="text-slate-400 text-sm tracking-wide">Gestão Estratégica de Atividades</p>
+          <p className="text-slate-500 text-sm font-medium tracking-widest uppercase">
+            Seguranca que simplifica
+          </p>
         </div>
 
-        {/* Card de Registro */}
-        <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-800/50 shadow-2xl shadow-blue-900/20">
+        {/* Register Card */}
+        <Card className="bg-white/70 backdrop-blur-xl border-white/50 shadow-2xl shadow-blue-900/10">
           <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-2xl font-bold text-slate-100 text-center">
+            <CardTitle className="text-xl font-bold text-slate-800 text-center">
               Criar Conta
             </CardTitle>
-            <CardDescription className="text-slate-400 text-center">
+            <CardDescription className="text-slate-500 text-center">
               Preencha os dados abaixo para criar sua conta
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleRegister} className="space-y-4">
-              {/* Nome */}
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-slate-300 flex items-center gap-2 font-medium">
-                  <User className="h-4 w-4 text-blue-400" />
+                <Label htmlFor="name" className="text-slate-600 flex items-center gap-2 font-medium text-sm">
+                  <User className="h-4 w-4 text-blue-500" />
                   Nome
                 </Label>
                 <Input
@@ -111,15 +113,14 @@ export default function RegisterPage() {
                   placeholder="Seu nome completo"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="bg-white/80 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all h-11"
                   required
                 />
               </div>
 
-              {/* E-mail */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-300 flex items-center gap-2 font-medium">
-                  <Mail className="h-4 w-4 text-blue-400" />
+                <Label htmlFor="email" className="text-slate-600 flex items-center gap-2 font-medium text-sm">
+                  <Mail className="h-4 w-4 text-blue-500" />
                   E-mail
                 </Label>
                 <Input
@@ -128,25 +129,24 @@ export default function RegisterPage() {
                   placeholder="seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="bg-white/80 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all h-11"
                   required
                 />
               </div>
 
-              {/* Senha */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-300 flex items-center gap-2 font-medium">
-                  <Lock className="h-4 w-4 text-blue-400" />
+                <Label htmlFor="password" className="text-slate-600 flex items-center gap-2 font-medium text-sm">
+                  <Lock className="h-4 w-4 text-blue-500" />
                   Senha
                 </Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Minimo 6 caracteres"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pr-10"
+                    className="bg-white/80 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pr-10 h-11"
                     required
                     minLength={6}
                   />
@@ -154,7 +154,7 @@ export default function RegisterPage() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 text-slate-400 hover:text-slate-100 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-full px-3 text-slate-400 hover:text-slate-700 hover:bg-transparent cursor-pointer"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -162,10 +162,9 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Confirmar Senha */}
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-slate-300 flex items-center gap-2 font-medium">
-                  <Lock className="h-4 w-4 text-blue-400" />
+                <Label htmlFor="confirmPassword" className="text-slate-600 flex items-center gap-2 font-medium text-sm">
+                  <Lock className="h-4 w-4 text-blue-500" />
                   Confirmar Senha
                 </Label>
                 <div className="relative">
@@ -175,7 +174,7 @@ export default function RegisterPage() {
                     placeholder="Digite a senha novamente"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pr-10"
+                    className="bg-white/80 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all pr-10 h-11"
                     required
                     minLength={6}
                   />
@@ -183,7 +182,7 @@ export default function RegisterPage() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 text-slate-400 hover:text-slate-100 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-full px-3 text-slate-400 hover:text-slate-700 hover:bg-transparent cursor-pointer"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -191,10 +190,9 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Botão de Registro */}
               <Button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 shadow-lg shadow-blue-600/30 hover:shadow-blue-700/40 transition-all duration-200 mt-6"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold h-11 shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30 transition-all duration-200 mt-6 cursor-pointer"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -207,11 +205,10 @@ export default function RegisterPage() {
                 )}
               </Button>
 
-              {/* Link para Login */}
-              <div className="text-center pt-4 border-t border-slate-800">
-                <p className="text-slate-400 text-sm">
-                  Já tem uma conta?{' '}
-                  <Link href="/" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+              <div className="text-center pt-4 border-t border-slate-200/60">
+                <p className="text-slate-500 text-sm">
+                  Ja tem uma conta?{' '}
+                  <Link href="/" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">
                     Fazer login
                   </Link>
                 </p>
@@ -220,10 +217,9 @@ export default function RegisterPage() {
           </CardContent>
         </Card>
 
-        {/* Footer */}
         <div className="mt-8 text-center">
-          <p className="text-slate-500 text-sm">
-            © 2024 Defenz. Todos os direitos reservados.
+          <p className="text-slate-400 text-xs font-medium">
+            &copy; 2025 Defenz. Todos os direitos reservados.
           </p>
         </div>
       </div>

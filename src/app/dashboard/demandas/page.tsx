@@ -218,9 +218,9 @@ function ImportModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] bg-slate-900 border-slate-700 text-slate-100">
+      <DialogContent className="sm:max-w-[520px] bg-white dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-red-500 text-lg font-bold">
+          <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
             Importar Demandas
           </DialogTitle>
         </DialogHeader>
@@ -231,8 +231,8 @@ function ImportModal({
             onClick={() => setMode('text')}
             className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
               mode === 'text'
-                ? 'bg-red-600/20 text-red-400 border border-red-500'
-                : 'bg-slate-800 text-slate-400 border border-slate-700'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500'
+                : 'bg-slate-100 dark:bg-[#1a2744] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-blue-900/30'
             }`}
           >
             <ListPlus className="h-4 w-4" />
@@ -242,8 +242,8 @@ function ImportModal({
             onClick={() => setMode('excel')}
             className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
               mode === 'excel'
-                ? 'bg-red-600/20 text-red-400 border border-red-500'
-                : 'bg-slate-800 text-slate-400 border border-slate-700'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500'
+                : 'bg-slate-100 dark:bg-[#1a2744] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-blue-900/30'
             }`}
           >
             <FileSpreadsheet className="h-4 w-4" />
@@ -258,10 +258,10 @@ function ImportModal({
               Origem padrao
             </label>
             <Select value={selectedOrigin} onValueChange={setSelectedOrigin}>
-              <SelectTrigger className="mt-1 bg-slate-950 border-slate-700 text-slate-100">
+              <SelectTrigger className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
+              <SelectContent className="bg-slate-50 dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30">
                 {ORIGINS.map((o) => (
                   <SelectItem key={o.id} value={o.id} className="text-slate-100">
                     {o.label}
@@ -275,10 +275,10 @@ function ImportModal({
               Prioridade padrao
             </label>
             <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-              <SelectTrigger className="mt-1 bg-slate-950 border-slate-700 text-slate-100">
+              <SelectTrigger className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700">
+              <SelectContent className="bg-slate-50 dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30">
                 {PRIORITIES.map((p) => (
                   <SelectItem key={p.id} value={p.id} className="text-slate-100">
                     {p.label}
@@ -299,7 +299,7 @@ function ImportModal({
               onChange={(e) => setTextInput(e.target.value)}
               placeholder={`Proposta cliente XPTO\nRevisao contrato ABC\nDashboard metricas\nRelatorio semanal`}
               rows={8}
-              className="mt-1.5 bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600 resize-y font-mono text-sm"
+              className="mt-1.5 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-600 resize-y font-mono text-sm"
             />
             <p className="text-[11px] text-slate-500 mt-1.5">
               {textInput.split('\n').filter((l) => l.trim()).length} itens detectados — serao criados na coluna <strong>Solicitada</strong>
@@ -307,7 +307,7 @@ function ImportModal({
             <Button
               onClick={handleTextImport}
               disabled={importing || !textInput.trim()}
-              className="w-full mt-3 bg-red-600 hover:bg-red-700 text-white"
+              className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white"
             >
               {importing ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -320,7 +320,7 @@ function ImportModal({
         ) : (
           <div>
             <div
-              className="border-2 border-dashed border-slate-700 rounded-lg p-8 text-center hover:border-red-500/50 transition-colors cursor-pointer"
+              className="border-2 border-dashed border-slate-700 rounded-lg p-8 text-center hover:border-blue-500/50 transition-colors cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
               <FileSpreadsheet className="h-10 w-10 text-slate-500 mx-auto mb-3" />
@@ -339,7 +339,7 @@ function ImportModal({
               />
             </div>
             {importing && (
-              <div className="flex items-center justify-center gap-2 mt-3 text-red-400">
+              <div className="flex items-center justify-center gap-2 mt-3 text-blue-500 dark:text-blue-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-sm">Processando planilha...</span>
               </div>
@@ -397,9 +397,9 @@ function DemandaModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] bg-slate-900 border-slate-700 text-slate-100">
+      <DialogContent className="sm:max-w-[480px] bg-white dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-red-500 text-lg font-bold">
+          <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
             {isNew ? 'Nova Demanda' : 'Editar Demanda'}
           </DialogTitle>
         </DialogHeader>
@@ -413,7 +413,7 @@ function DemandaModal({
               value={form.title}
               onChange={(e) => upd('title', e.target.value)}
               placeholder="Ex: Proposta cliente X"
-              className="mt-1 bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-500"
+              className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
             />
           </div>
 
@@ -423,10 +423,10 @@ function DemandaModal({
                 Origem
               </label>
               <Select value={form.origin} onValueChange={(v) => upd('origin', v)}>
-                <SelectTrigger className="mt-1 bg-slate-950 border-slate-700 text-slate-100">
+                <SelectTrigger className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent className="bg-slate-50 dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30">
                   {ORIGINS.map((o) => (
                     <SelectItem key={o.id} value={o.id} className="text-slate-100">
                       {o.label}
@@ -440,10 +440,10 @@ function DemandaModal({
                 Prioridade
               </label>
               <Select value={form.priority} onValueChange={(v) => upd('priority', v)}>
-                <SelectTrigger className="mt-1 bg-slate-950 border-slate-700 text-slate-100">
+                <SelectTrigger className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent className="bg-slate-50 dark:bg-[#111d2e] border-slate-200 dark:border-blue-900/30">
                   {PRIORITIES.map((p) => (
                     <SelectItem key={p.id} value={p.id} className="text-slate-100">
                       {p.label}
@@ -462,7 +462,7 @@ function DemandaModal({
               value={form.assignee || ''}
               onChange={(e) => upd('assignee', e.target.value || null)}
               placeholder="Nome da pessoa responsavel"
-              className="mt-1 bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-500"
+              className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
             />
           </div>
 
@@ -481,8 +481,8 @@ function DemandaModal({
                   }}
                   className={`flex-1 py-2 px-0.5 rounded-md border text-[10px] font-medium transition-colors ${
                     form.status === s.id
-                      ? 'border-red-500 bg-red-500/10 text-red-400'
-                      : 'border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-600'
+                      ? 'border-blue-500 bg-blue-500/10 text-blue-500 dark:text-blue-400'
+                      : 'border-slate-200 dark:border-blue-900/30 bg-white dark:bg-[#0a1628] text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-blue-800/40'
                   }`}
                 >
                   {s.icon} {s.label}
@@ -500,7 +500,7 @@ function DemandaModal({
                 type="date"
                 value={form.dateIn}
                 onChange={(e) => upd('dateIn', e.target.value)}
-                className="mt-1 bg-slate-950 border-slate-700 text-slate-100"
+                className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100"
               />
             </div>
             <div>
@@ -511,7 +511,7 @@ function DemandaModal({
                 type="date"
                 value={form.deadline || ''}
                 onChange={(e) => upd('deadline', e.target.value || null)}
-                className="mt-1 bg-slate-950 border-slate-700 text-slate-100"
+                className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100"
               />
             </div>
           </div>
@@ -525,7 +525,7 @@ function DemandaModal({
               onChange={(e) => upd('description', e.target.value)}
               placeholder="Detalhes, contexto, proximo passo..."
               rows={3}
-              className="mt-1 bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-500 resize-y"
+              className="mt-1 bg-white dark:bg-[#0a1628] border-slate-200 dark:border-blue-900/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500 resize-y"
             />
           </div>
         </div>
@@ -537,7 +537,7 @@ function DemandaModal({
               onClick={() => {
                 if (form.id) onDelete(form.id)
               }}
-              className="mr-auto border-red-800 text-red-400 hover:bg-red-950 hover:text-red-300"
+              className="mr-auto border-red-300 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 dark:hover:text-red-300"
             >
               <Trash2 className="h-4 w-4 mr-1" />
               Excluir
@@ -553,7 +553,7 @@ function DemandaModal({
           <Button
             onClick={() => form.title.trim() && onSave(form)}
             disabled={!form.title.trim()}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             {isNew ? 'Criar' : 'Salvar'}
           </Button>
@@ -573,13 +573,13 @@ function KanbanCard({ d, onClick }: { d: Demanda; onClick: (d: Demanda) => void 
   return (
     <div
       onClick={() => onClick(d)}
-      className={`group bg-slate-950 rounded-lg p-3 cursor-pointer transition-all hover:-translate-y-0.5 border ${
-        isOverdue ? 'border-red-500/40' : 'border-slate-800 hover:border-slate-600'
+      className={`group bg-white dark:bg-[#0d1929] rounded-xl p-3 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-900/5 border ${
+        isOverdue ? 'border-red-400/40 dark:border-red-500/40' : 'border-slate-200 dark:border-blue-900/20 hover:border-blue-300 dark:hover:border-blue-800/40'
       }`}
       style={{ borderLeftWidth: 3, borderLeftColor: origin?.color || '#8899aa' }}
     >
       <div className="flex justify-between items-start gap-2 mb-1.5">
-        <span className="text-[13px] font-semibold text-slate-100 leading-tight flex-1">
+        <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 leading-tight flex-1">
           {d.title}
         </span>
         {prio && (
@@ -601,7 +601,7 @@ function KanbanCard({ d, onClick }: { d: Demanda; onClick: (d: Demanda) => void 
           {origin?.label}
         </span>
         {d.deadline && (
-          <span className={`text-[10px] ${isOverdue ? 'text-red-400' : 'text-slate-500'}`}>
+          <span className={`text-[10px] ${isOverdue ? 'text-blue-500 dark:text-blue-400' : 'text-slate-500'}`}>
             {isOverdue ? '⚠ ' : ''}
             {new Date(d.deadline).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
           </span>
@@ -626,10 +626,10 @@ function KanbanColumn({
     <div className="flex-1 min-w-[180px]">
       <div className="flex items-center gap-2 mb-3 px-1">
         <span className="text-base">{status.icon}</span>
-        <span className="text-[12px] font-bold uppercase tracking-wider text-slate-100">
+        <span className="text-[12px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-100">
           {status.label}
         </span>
-        <span className="bg-slate-800 text-slate-400 text-[11px] font-bold px-2 py-0.5 rounded-full">
+        <span className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[11px] font-bold px-2 py-0.5 rounded-full">
           {items.length}
         </span>
       </div>
@@ -701,7 +701,7 @@ function GanttChart({ demandas }: { demandas: Demanda[] }) {
         {/* Today line */}
         {todayPos >= 0 && todayPos <= 100 && (
           <div
-            className="absolute top-8 bottom-0 w-0.5 bg-red-500 opacity-60 z-10"
+            className="absolute top-8 bottom-0 w-0.5 bg-blue-500 opacity-60 z-10"
             style={{ left: `calc(180px + ${todayPos}% * (100% - 180px) / 100%)` }}
           />
         )}
@@ -725,7 +725,7 @@ function GanttChart({ demandas }: { demandas: Demanda[] }) {
           return (
             <div key={dem.id} className="flex items-center h-8 border-b border-slate-800/20">
               <div
-                className="w-[180px] shrink-0 px-2 text-[11px] text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap"
+                className="w-[180px] shrink-0 px-2 text-[11px] text-slate-700 dark:text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap"
                 title={dem.title}
               >
                 {dem.title}
@@ -856,7 +856,7 @@ export default function DemandasPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
       </div>
     )
   }
@@ -882,7 +882,7 @@ export default function DemandasPage() {
             <Upload className="h-4 w-4 mr-1.5" />
             Importar
           </Button>
-          <Button onClick={openNew} className="bg-red-600 hover:bg-red-700 text-white">
+          <Button onClick={openNew} className="bg-blue-600 hover:bg-blue-700 text-white">
             <Plus className="h-4 w-4 mr-1.5" />
             Nova Demanda
           </Button>
@@ -901,7 +901,7 @@ export default function DemandasPage() {
         ].map((s) => (
           <Card
             key={s.label}
-            className="bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800"
+            className="bg-white dark:bg-[#111d2e]/80 border-slate-200/80 dark:border-blue-900/20"
             style={{ borderLeftWidth: 3, borderLeftColor: s.color }}
           >
             <CardContent className="p-3">
@@ -922,8 +922,8 @@ export default function DemandasPage() {
           onClick={() => setFilterOrigin('all')}
           className={`px-3.5 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
             filterOrigin === 'all'
-              ? 'border-red-500 bg-red-500/10 text-red-500'
-              : 'border-slate-300 dark:border-slate-700 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
+              : 'border-slate-200 dark:border-blue-900/20 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
           Todas
@@ -945,10 +945,10 @@ export default function DemandasPage() {
       </div>
 
       {/* Kanban */}
-      <Card className="bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-[#111d2e]/60 border-slate-200/80 dark:border-blue-900/20">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-red-500 text-sm font-extrabold uppercase tracking-wider">
+            <span className="text-blue-600 dark:text-blue-400 text-sm font-extrabold uppercase tracking-wider">
               Kanban
             </span>
           </div>
@@ -966,10 +966,10 @@ export default function DemandasPage() {
       </Card>
 
       {/* Gantt */}
-      <Card className="bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-[#111d2e]/60 border-slate-200/80 dark:border-blue-900/20">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-red-500 text-sm font-extrabold uppercase tracking-wider">
+            <span className="text-blue-600 dark:text-blue-400 text-sm font-extrabold uppercase tracking-wider">
               Timeline
             </span>
             <span className="text-[11px] text-slate-500">— demandas ativas</span>

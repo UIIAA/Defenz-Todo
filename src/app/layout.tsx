@@ -1,35 +1,37 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "@/components/Providers";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const sans = Plus_Jakarta_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const mono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
-  title: "Defenz - Gestão Estratégica de Atividades",
-  description: "Sistema completo para gerenciamento de atividades estratégicas do projeto Defenz. Desenvolvido com Next.js 15, TypeScript e tecnologias modernas.",
-  keywords: ["Defenz", "Gestão de Atividades", "Next.js", "TypeScript", "Tailwind CSS", "Planejamento Estratégico", "Gerenciamento de Projetos"],
+  title: "Defenz - Gestao Estrategica de Atividades",
+  description: "Sistema completo para gerenciamento de atividades estrategicas do projeto Defenz. Desenvolvido com Next.js 16, TypeScript e tecnologias modernas.",
+  keywords: ["Defenz", "Gestao de Atividades", "Next.js", "TypeScript", "Tailwind CSS", "Planejamento Estrategico", "Gerenciamento de Projetos"],
   authors: [{ name: "Defenz Team" }],
   openGraph: {
-    title: "Defenz - Gestão Estratégica",
-    description: "Sistema completo para gerenciamento de atividades estratégicas",
+    title: "Defenz - Gestao Estrategica",
+    description: "Sistema completo para gerenciamento de atividades estrategicas",
     siteName: "Defenz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Defenz - Gestão Estratégica",
-    description: "Sistema completo para gerenciamento de atividades estratégicas",
+    title: "Defenz - Gestao Estrategica",
+    description: "Sistema completo para gerenciamento de atividades estrategicas",
   },
 };
 
@@ -39,9 +41,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${sans.variable} ${mono.variable} font-sans antialiased bg-background text-foreground`}
       >
         <Providers>
           <ThemeProvider
