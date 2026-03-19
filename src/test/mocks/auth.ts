@@ -4,6 +4,7 @@ export const mockUser = {
   id: 'user-test-123',
   name: 'Test User',
   email: 'test@example.com',
+  role: 'admin',
 }
 
 const getCurrentUser = vi.fn()
@@ -18,10 +19,11 @@ vi.mock('@/lib/auth', () => ({
 
 export { getCurrentUser, getSession, requireAuth }
 
-export function mockAuthenticated() {
-  getCurrentUser.mockResolvedValue(mockUser)
-  getSession.mockResolvedValue({ user: mockUser })
-  requireAuth.mockResolvedValue(mockUser)
+export function mockAuthenticated(overrides?: Partial<typeof mockUser>) {
+  const user = { ...mockUser, ...overrides }
+  getCurrentUser.mockResolvedValue(user)
+  getSession.mockResolvedValue({ user })
+  requireAuth.mockResolvedValue(user)
 }
 
 export function mockUnauthenticated() {

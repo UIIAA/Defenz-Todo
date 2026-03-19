@@ -23,6 +23,7 @@ import {
   ORIGINS,
   STATUSES,
   PRIORITIES,
+  CLASSIFICATIONS,
   toDateStr,
   todayStr,
   emptyForm,
@@ -70,6 +71,7 @@ export function DemandaModal({
         origin: demanda.origin,
         status: demanda.status,
         priority: demanda.priority,
+        classification: demanda.classification || null,
         assignee: demanda.assignee || '',
         dateIn: toDateStr(demanda.dateIn),
         deadline: toDateStr(demanda.deadline),
@@ -209,6 +211,30 @@ export function DemandaModal({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Classificacao
+            </label>
+            <Select value={form.classification || '__none__'} onValueChange={(v) => upd('classification', v === '__none__' ? null : v)}>
+              <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
+                <SelectValue placeholder="Sem classificacao" />
+              </SelectTrigger>
+              <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
+                <SelectItem value="__none__" className="text-slate-500 dark:text-slate-400">
+                  Sem classificacao
+                </SelectItem>
+                {CLASSIFICATIONS.map((c) => (
+                  <SelectItem key={c.id} value={c.id} className="text-slate-800 dark:text-slate-200">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                      {c.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

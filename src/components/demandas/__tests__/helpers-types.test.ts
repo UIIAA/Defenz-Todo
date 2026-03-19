@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { STATUSES, ORIGINS, PRIORITIES } from '@/app/dashboard/demandas/helpers'
+import { STATUSES, ORIGINS, PRIORITIES, CLASSIFICATIONS } from '@/app/dashboard/demandas/helpers'
 import type { Subtask, Demanda } from '@/app/dashboard/demandas/helpers'
 
 describe('Demanda type with subtasks', () => {
@@ -11,6 +11,7 @@ describe('Demanda type with subtasks', () => {
       origin: 'fernando',
       status: 'solicitada',
       priority: 'media',
+      classification: null,
       assignee: null,
       dateIn: '2026-01-01',
       deadline: null,
@@ -31,6 +32,7 @@ describe('Demanda type with subtasks', () => {
       origin: 'fernando',
       status: 'solicitada',
       priority: 'media',
+      classification: null,
       assignee: null,
       dateIn: '2026-01-01',
       deadline: null,
@@ -74,6 +76,22 @@ describe('Constants integrity', () => {
     expect(PRIORITIES).toHaveLength(3)
     expect(PRIORITIES.map((p) => p.id)).toEqual(['alta', 'media', 'baixa'])
   })
+
+  it('CLASSIFICATIONS has 9 items', () => {
+    expect(CLASSIFICATIONS).toHaveLength(9)
+    expect(CLASSIFICATIONS.map((c) => c.id)).toEqual([
+      'marketing', 'administrativo', 'vendas', 'financeiro',
+      'operacional', 'tecnologia', 'juridico', 'rh', 'estrategico',
+    ])
+  })
+
+  it('each classification has id, label, and color', () => {
+    for (const c of CLASSIFICATIONS) {
+      expect(c.id).toBeTruthy()
+      expect(c.label).toBeTruthy()
+      expect(c.color).toMatch(/^#[0-9a-f]{6}$/i)
+    }
+  })
 })
 
 describe('Kanban statuses filtering (bloqueada lane)', () => {
@@ -87,17 +105,17 @@ describe('Kanban statuses filtering (bloqueada lane)', () => {
     const blocked: Demanda[] = [
       {
         id: '1', title: 'A', description: null, origin: 'fernando', status: 'bloqueada',
-        priority: 'media', assignee: null, previousStatus: 'em_andamento',
+        priority: 'media', classification: null, assignee: null, previousStatus: 'em_andamento',
         dateIn: '2026-01-01', deadline: null, dateDone: null,
       },
       {
         id: '2', title: 'B', description: null, origin: 'outra', status: 'bloqueada',
-        priority: 'alta', assignee: null, previousStatus: 'solicitada',
+        priority: 'alta', classification: null, assignee: null, previousStatus: 'solicitada',
         dateIn: '2026-01-01', deadline: null, dateDone: null,
       },
       {
         id: '3', title: 'C', description: null, origin: 'outra', status: 'bloqueada',
-        priority: 'baixa', assignee: null, previousStatus: 'em_andamento',
+        priority: 'baixa', classification: null, assignee: null, previousStatus: 'em_andamento',
         dateIn: '2026-01-01', deadline: null, dateDone: null,
       },
     ]
@@ -113,7 +131,7 @@ describe('Kanban statuses filtering (bloqueada lane)', () => {
   it('previousStatus is optional on Demanda', () => {
     const demanda: Demanda = {
       id: '1', title: 'Test', description: null, origin: 'fernando',
-      status: 'solicitada', priority: 'media', assignee: null,
+      status: 'solicitada', priority: 'media', classification: null, assignee: null,
       dateIn: '2026-01-01', deadline: null, dateDone: null,
     }
     expect(demanda.previousStatus).toBeUndefined()

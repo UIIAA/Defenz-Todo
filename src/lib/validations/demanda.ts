@@ -6,7 +6,8 @@ export const createDemandaSchema = z.object({
   origin: z.enum(['fernando', 'securisoft', 'autogerada', 'outra']).default('outra'),
   status: z.enum(['solicitada', 'selecionada', 'em_andamento', 'concluida', 'bloqueada']).default('solicitada'),
   priority: z.enum(['alta', 'media', 'baixa']).default('media'),
-  assignee: z.string().optional(),
+  classification: z.enum(['marketing', 'administrativo', 'vendas', 'financeiro', 'operacional', 'tecnologia', 'juridico', 'rh', 'estrategico']).nullable().optional(),
+  assignee: z.string().nullable().optional(),
   dateIn: z.string().optional(),
   deadline: z.string().optional(),
   dateDone: z.string().nullable().optional(),
@@ -22,7 +23,7 @@ export const importItemSchema = z.object({
   description: z.string().optional().default(''),
   origin: z.enum(['fernando', 'securisoft', 'autogerada', 'outra']).default('outra'),
   priority: z.enum(['alta', 'media', 'baixa']).default('media'),
-  assignee: z.string().optional(),
+  assignee: z.string().nullable().optional(),
   deadline: z.string().optional(),
 })
 

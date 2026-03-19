@@ -6,12 +6,13 @@ import { StatusBadge } from '@/components/status-badge'
 import {
   ORIGINS,
   PRIORITIES,
+  CLASSIFICATIONS,
   toDateStr,
   todayStr,
   type Demanda,
 } from '@/app/dashboard/demandas/helpers'
 
-export type SortableField = 'title' | 'status' | 'priority' | 'deadline' | 'origin' | 'assignee'
+export type SortableField = 'title' | 'status' | 'priority' | 'deadline' | 'origin' | 'assignee' | 'classification'
 
 const STATUS_ORDER: Record<string, number> = {
   solicitada: 0,
@@ -68,17 +69,22 @@ export function ListViewTable({
       case 'assignee':
         cmp = (a.assignee || 'zzz').localeCompare(b.assignee || 'zzz', 'pt-BR')
         break
+      case 'classification':
+        cmp = (a.classification || 'zzz').localeCompare(b.classification || 'zzz', 'pt-BR')
+        break
     }
     return sortDir === 'asc' ? cmp : -cmp
   })
 
   const originMap = Object.fromEntries(ORIGINS.map((o) => [o.id, o]))
   const prioMap = Object.fromEntries(PRIORITIES.map((p) => [p.id, p]))
+  const classifMap = Object.fromEntries(CLASSIFICATIONS.map((c) => [c.id, c]))
   const today = todayStr()
 
   const columns: { key: SortableField; label: string }[] = [
     { key: 'title', label: 'Titulo' },
     { key: 'origin', label: 'Origem' },
+    { key: 'classification', label: 'Classificacao' },
     { key: 'priority', label: 'Prioridade' },
     { key: 'status', label: 'Status' },
     { key: 'assignee', label: 'Responsavel' },
@@ -109,7 +115,7 @@ export function ListViewTable({
             <tbody>
               {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-sm text-slate-400">
+                  <td colSpan={7} className="text-center py-8 text-sm text-slate-400">
                     Nenhuma demanda encontrada
                   </td>
                 </tr>
@@ -133,6 +139,18 @@ export function ListViewTable({
                         <span className="font-semibold" style={{ color: origin?.color }}>
                           {origin?.label || d.origin}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {d.classification ? (
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                            style={{ background: (classifMap[d.classification]?.color || '#94a3b8') + '22', color: classifMap[d.classification]?.color || '#94a3b8' }}
+                          >
+                            {classifMap[d.classification]?.label || d.classification}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 italic">--</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span className="font-semibold" style={{ color: prio?.color }}>

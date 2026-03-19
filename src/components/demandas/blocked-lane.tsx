@@ -19,23 +19,39 @@ function BlockedDropZone({
     id: `blocked-${statusId}`,
   })
 
+  const isEmpty = items.length === 0
+
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[180px] min-h-[60px] rounded-lg p-1 transition-all${
-        isOver ? ' ring-2 ring-red-400/50 bg-red-50/30 dark:bg-red-900/10' : ''
+      className={`flex-1 min-w-[180px] min-h-[60px] rounded-lg p-1 transition-all ${
+        isOver
+          ? 'ring-2 ring-red-400/50 bg-red-50/30 dark:bg-red-900/10'
+          : isEmpty
+            ? 'border border-dashed border-slate-200 dark:border-slate-700/50'
+            : ''
       }`}
     >
-      <div className="flex flex-col gap-2">
-        {items.map((d) => (
-          <KanbanCard
-            key={d.id}
-            d={d}
-            onClick={onClickCard}
-            highlighted={highlightedCardId === d.id}
-          />
-        ))}
-      </div>
+      {isEmpty ? (
+        <div className={`flex items-center justify-center h-full min-h-[52px] transition-opacity ${
+          isOver ? 'opacity-80' : 'opacity-40'
+        }`}>
+          <span className="text-[11px] text-slate-400 dark:text-slate-500 select-none">
+            Arraste para bloquear
+          </span>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {items.map((d) => (
+            <KanbanCard
+              key={d.id}
+              d={d}
+              onClick={onClickCard}
+              highlighted={highlightedCardId === d.id}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -58,9 +74,11 @@ export function BlockedLane({
         <span className="text-[12px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
           Bloqueada
         </span>
-        <span className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-[11px] font-bold px-2 py-0.5 rounded-full">
-          {demandas.length}
-        </span>
+        {demandas.length > 0 && (
+          <span className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-[11px] font-bold px-2 py-0.5 rounded-full">
+            {demandas.length}
+          </span>
+        )}
       </div>
       <div className="flex gap-3 overflow-x-auto">
         {kanbanStatuses.map((s) => {

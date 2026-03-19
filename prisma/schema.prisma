@@ -719,6 +719,8 @@ model Demanda {
   dateDone    DateTime?
   version     Int       @default(1) // Optimistic locking
 
+  classification String?   // marketing, administrativo, vendas, financeiro, operacional, tecnologia, juridico, rh, estrategico
+
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   subtasks  Subtask[]
@@ -731,6 +733,7 @@ model Demanda {
   @@index([origin])
   @@index([deadline])
   @@index([assignee])
+  @@index([classification])
   @@map("demandas")
 }
 

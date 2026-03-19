@@ -36,7 +36,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-import { toDateStr, todayStr } from '../helpers'
+import { toDateStr, todayStr, CLASSIFICATIONS } from '../helpers'
 
 interface Demanda {
   id: string
@@ -45,6 +45,7 @@ interface Demanda {
   origin: string
   status: string
   priority: string
+  classification: string | null
   assignee: string | null
   dateIn: string
   deadline: string | null
@@ -64,6 +65,7 @@ export default function DemandasAnalisesPage() {
   const [filterAssignee, setFilterAssignee] = useState('all')
   const [filterOrigin, setFilterOrigin] = useState('all')
   const [filterPriority, setFilterPriority] = useState('all')
+  const [filterClassification, setFilterClassification] = useState('all')
 
   useEffect(() => {
     const fetchDemandas = async () => {
@@ -102,8 +104,15 @@ export default function DemandasAnalisesPage() {
     if (filterPriority !== 'all') {
       filtered = filtered.filter((d) => d.priority === filterPriority)
     }
+    if (filterClassification !== 'all') {
+      if (filterClassification === '_unclassified') {
+        filtered = filtered.filter((d) => !d.classification)
+      } else {
+        filtered = filtered.filter((d) => d.classification === filterClassification)
+      }
+    }
     return filtered
-  }, [allDemandas, filterAssignee, filterOrigin, filterPriority])
+  }, [allDemandas, filterAssignee, filterOrigin, filterPriority, filterClassification])
 
   const total = demandas.length
   const solicitadas = demandas.filter((d) => d.status === 'solicitada').length
@@ -173,7 +182,21 @@ export default function DemandasAnalisesPage() {
       .sort((a, b) => b.total - a.total)
   }, [demandas])
 
-  const hasFilters = filterAssignee !== 'all' || filterOrigin !== 'all' || filterPriority !== 'all'
+  // Classification chart data
+  const classificationData = useMemo(() => {
+    return CLASSIFICATIONS.map((c) => ({
+      ...c,
+      total: demandas.filter((d) => d.classification === c.id).length,
+      concluidas: demandas.filter((d) => d.classification === c.id && d.status === 'concluida').length,
+      atrasadas: demandas.filter(
+        (d) => d.classification === c.id && d.deadline && toDateStr(d.deadline) < todayStr() && d.status !== 'concluida'
+      ).length,
+    })).filter((c) => c.total > 0)
+  }, [demandas])
+
+  const unclassifiedCount = useMemo(() => demandas.filter((d) => !d.classification).length, [demandas])
+
+  const hasFilters = filterAssignee !== 'all' || filterOrigin !== 'all' || filterPriority !== 'all' || filterClassification !== 'all'
 
   return (
     <div className="space-y-6 p-6">
@@ -206,6 +229,7 @@ export default function DemandasAnalisesPage() {
                   setFilterAssignee('all')
                   setFilterOrigin('all')
                   setFilterPriority('all')
+                  setFilterClassification('all')
                 }}
                 className="text-xs text-red-500 hover:text-red-400 ml-auto"
               >
@@ -213,7 +237,7 @@ export default function DemandasAnalisesPage() {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
                 Responsavel
@@ -264,6 +288,25 @@ export default function DemandasAnalisesPage() {
                   <SelectItem value="alta" className="text-slate-900 dark:text-slate-100">Alta</SelectItem>
                   <SelectItem value="media" className="text-slate-900 dark:text-slate-100">Media</SelectItem>
                   <SelectItem value="baixa" className="text-slate-900 dark:text-slate-100">Baixa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
+                Classificacao
+              </label>
+              <Select value={filterClassification} onValueChange={setFilterClassification}>
+                <SelectTrigger className="bg-white dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-900 dark:text-slate-100 h-9 text-sm">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-800/60 backdrop-blur-sm border-white/50 dark:border-slate-700/30">
+                  <SelectItem value="all" className="text-slate-900 dark:text-slate-100">Todas</SelectItem>
+                  <SelectItem value="_unclassified" className="text-slate-900 dark:text-slate-100">Sem classificacao</SelectItem>
+                  {CLASSIFICATIONS.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="text-slate-900 dark:text-slate-100">
+                      {c.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -532,6 +575,52 @@ export default function DemandasAnalisesPage() {
               </ResponsiveContainer>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Classificacao - BarChart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-indigo-500" />
+              Distribuicao por Classificacao
+            </CardTitle>
+            <CardDescription>Volume e conclusao por area</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {classificationData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={Math.max(250, classificationData.length * 40)}>
+                <BarChart data={classificationData} layout="vertical" margin={{ left: 30, right: 20, top: 5, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f044" />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                  <YAxis type="category" dataKey="label" tick={{ fontSize: 13, fill: '#94a3b8' }} width={100} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255,255,255,0.95)',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                    }}
+                    formatter={(value: number, name: string) => [
+                      `${value} demanda(s)`,
+                      name === 'total' ? 'Total' : name === 'concluidas' ? 'Concluidas' : 'Atrasadas',
+                    ]}
+                  />
+                  <Bar dataKey="total" fill="#94a3b8" radius={[0, 4, 4, 0]} barSize={20} name="total" />
+                  <Bar dataKey="concluidas" radius={[0, 4, 4, 0]} barSize={20} name="concluidas">
+                    {classificationData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                {unclassifiedCount > 0
+                  ? `${unclassifiedCount} demanda(s) sem classificacao`
+                  : 'Sem dados'}
+              </p>
             )}
           </CardContent>
         </Card>

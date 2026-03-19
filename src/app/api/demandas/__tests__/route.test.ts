@@ -99,6 +99,30 @@ describe('POST /api/demandas', () => {
     expect(createCall.data.priority).toBe('media')
   })
 
+  it('creates demanda with null assignee (201)', async () => {
+    mockAuthenticated()
+    mockDb.demanda.create.mockResolvedValue({ ...savedDemanda, assignee: null })
+    const req = createRequest('POST', {
+      body: { ...validDemanda, assignee: null },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(201)
+  })
+
+  it('creates demanda with classification + null assignee (201)', async () => {
+    mockAuthenticated()
+    mockDb.demanda.create.mockResolvedValue({ ...savedDemanda, assignee: null, classification: 'marketing' })
+    const req = createRequest('POST', {
+      body: { title: 'Marketing task', classification: 'marketing', assignee: null },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(201)
+    const body = await res.json()
+    expect(body.success).toBe(true)
+  })
+
   it('uses new Date() when dateIn not provided', async () => {
     mockAuthenticated()
     mockDb.demanda.create.mockResolvedValue(savedDemanda)
@@ -251,6 +275,36 @@ describe('PUT /api/demandas', () => {
     expect(res.status).toBe(200)
     const updateData = mockDb.demanda.update.mock.calls[0][0].data
     expect(updateData.previousStatus).toBeNull()
+  })
+
+  it('updates demanda with classification field', async () => {
+    mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
+    mockDb.demanda.update.mockResolvedValue({ ...savedDemanda, classification: 'marketing' })
+
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', classification: 'marketing' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+    const updateData = mockDb.demanda.update.mock.calls[0][0].data
+    expect(updateData.classification).toBe('marketing')
+  })
+
+  it('clears classification when set to null', async () => {
+    mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, classification: 'vendas' })
+    mockDb.demanda.update.mockResolvedValue({ ...savedDemanda, classification: null })
+
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', classification: null },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+    const updateData = mockDb.demanda.update.mock.calls[0][0].data
+    expect(updateData.classification).toBeNull()
   })
 
   it('does not set previousStatus when moving between normal statuses', async () => {

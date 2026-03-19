@@ -8,8 +8,15 @@ export const mockDb = {
     create: vi.fn(),
     createMany: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     delete: vi.fn(),
     count: vi.fn(),
+  },
+  user: {
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
   },
   activity: {
     findMany: vi.fn(),
@@ -19,6 +26,12 @@ export const mockDb = {
     create: vi.fn(),
     findMany: vi.fn(),
     count: vi.fn(),
+  },
+  inviteToken: {
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    delete: vi.fn(),
   },
 }
 

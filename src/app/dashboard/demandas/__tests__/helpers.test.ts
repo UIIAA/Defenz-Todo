@@ -40,4 +40,9 @@ describe('emptyForm', () => {
     const form = emptyForm()
     expect(form.previousStatus).toBeNull()
   })
+
+  it('includes classification as null', () => {
+    const form = emptyForm()
+    expect(form.classification).toBeNull()
+  })
 })

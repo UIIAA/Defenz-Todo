@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import {
   Select,
@@ -20,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Users, Plus, Copy, Check, Link2, Clock, Mail } from 'lucide-react'
+import { Users, Plus, Copy, Check, Link2, Clock, Mail, Pencil, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface UserInfo {
@@ -56,7 +57,21 @@ export default function UsuariosPage() {
   const [generatedLink, setGeneratedLink] = useState('')
   const [copied, setCopied] = useState(false)
 
+  // Edit user state
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<UserInfo | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editRole, setEditRole] = useState('')
+  const [editPosition, setEditPosition] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Delete user state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deletingUser, setDeletingUser] = useState<UserInfo | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
   const userRole = (session?.user as { role?: string })?.role || ''
+  const userId = (session?.user as { id?: string })?.id || ''
   const isAdmin = ['admin', 'gerencia'].includes(userRole)
 
   const fetchData = useCallback(async () => {
@@ -133,6 +148,86 @@ export default function UsuariosPage() {
     }
   }
 
+  // Edit user handlers
+  const openEditDialog = (u: UserInfo) => {
+    setEditingUser(u)
+    setEditName(u.name || '')
+    setEditRole(u.role)
+    setEditPosition(u.position || '')
+    setEditDialogOpen(true)
+  }
+
+  const handleSaveUser = async () => {
+    if (!editingUser) return
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName,
+          role: editRole,
+          position: editPosition,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Usuario atualizado')
+        setEditDialogOpen(false)
+        setEditingUser(null)
+        fetchData()
+      } else {
+        toast.error(data.error || 'Erro ao atualizar')
+      }
+    } catch {
+      toast.error('Erro ao atualizar usuario')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Delete user handlers
+  const openDeleteDialog = (u: UserInfo) => {
+    setDeletingUser(u)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/users/${deletingUser.id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Usuario removido')
+        setDeleteDialogOpen(false)
+        setDeletingUser(null)
+        fetchData()
+      } else {
+        toast.error(data.error || 'Erro ao remover')
+      }
+    } catch {
+      toast.error('Erro ao remover usuario')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleRevokeInvite = async (inviteId: string) => {
+    try {
+      const res = await fetch(`/api/invites?id=${inviteId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Convite revogado')
+        fetchData()
+      } else {
+        toast.error(data.error || 'Erro ao revogar convite')
+      }
+    } catch {
+      toast.error('Erro ao revogar convite')
+    }
+  }
+
   const getInviteStatus = (invite: InviteInfo) => {
     if (invite.usedAt) return { label: 'Usado', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' }
     if (new Date(invite.expiresAt) < new Date()) return { label: 'Expirado', color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' }
@@ -193,6 +288,7 @@ export default function UsuariosPage() {
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Cargo</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Role</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Data cadastro</th>
+                    <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Acoes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -211,6 +307,30 @@ export default function UsuariosPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(u.createdAt)}</td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(u)}
+                            className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                            title="Editar usuario"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          {u.id !== userId && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openDeleteDialog(u)}
+                              className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                              title="Remover usuario"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -247,6 +367,7 @@ export default function UsuariosPage() {
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Link</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Criado por</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Data criacao</th>
+                    <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Acoes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -289,6 +410,19 @@ export default function UsuariosPage() {
                           {inv.createdByUser?.name || inv.createdByUser?.email || '--'}
                         </td>
                         <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(inv.createdAt)}</td>
+                        <td className="py-3 px-4 text-right">
+                          {status.label === 'Pendente' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRevokeInvite(inv.id)}
+                              className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                              title="Revogar convite"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </td>
                       </tr>
                     )
                   })}
@@ -397,6 +531,121 @@ export default function UsuariosPage() {
               </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[480px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
+              Editar Usuario
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 dark:text-slate-400 text-sm">
+              {editingUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-slate-600 dark:text-slate-300 font-medium text-sm">Nome</Label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-600 dark:text-slate-300 font-medium text-sm">Cargo</Label>
+              <Input
+                value={editPosition}
+                onChange={(e) => setEditPosition(e.target.value)}
+                placeholder="Ex: Desenvolvedor, Gerente"
+                className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-600 dark:text-slate-300 font-medium text-sm">Role</Label>
+              <Select value={editRole} onValueChange={setEditRole}>
+                <SelectTrigger className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                  <SelectItem value="user">user</SelectItem>
+                  <SelectItem value="gerencia">gerencia</SelectItem>
+                  {userRole === 'admin' && <SelectItem value="admin">admin</SelectItem>}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+                className="flex-1 cursor-pointer"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSaveUser}
+                disabled={saving}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+              >
+                {saving ? (
+                  <span className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Salvando...
+                  </span>
+                ) : (
+                  'Salvar'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[420px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 dark:text-red-400 text-lg font-bold">
+              Remover Usuario
+            </DialogTitle>
+            <DialogDescription className="text-slate-600 dark:text-slate-300 text-sm">
+              Tem certeza que deseja remover <strong>{deletingUser?.name || deletingUser?.email}</strong>?
+              Demandas atribuidas a este usuario serao desvinculadas.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="flex-1 cursor-pointer"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleDeleteUser}
+              disabled={deleting}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+            >
+              {deleting ? (
+                <span className="flex items-center gap-2">
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Removendo...
+                </span>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-1.5" />
+                  Remover
+                </>
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

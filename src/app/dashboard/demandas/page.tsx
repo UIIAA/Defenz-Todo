@@ -93,9 +93,12 @@ export default function DemandasPage() {
         await fetchDemandas()
         setModalOpen(false)
         setEditingDemanda(null)
+      } else {
+        toast.error(json.error || 'Erro ao salvar demanda')
       }
     } catch (err) {
       console.error('Erro ao salvar demanda:', err)
+      toast.error('Erro ao salvar demanda')
     }
   }
 
@@ -291,7 +294,7 @@ export default function DemandasPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Demandas</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Kanban e timeline de demandas</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">Kanban e timeline de demandas</p>
           </div>
         </div>
         <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] border border-slate-200 dark:border-slate-700">
@@ -385,7 +388,7 @@ export default function DemandasPage() {
               <div className="text-2xl font-bold" style={{ color: s.color }}>
                 {s.value}
               </div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mt-0.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mt-0.5">
                 {s.label}
               </div>
             </CardContent>
@@ -397,7 +400,7 @@ export default function DemandasPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Origem */}
         <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 mr-1">Origem:</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mr-1">Origem:</span>
           <button
             onClick={() => setFilterOrigin('all')}
             className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
@@ -426,7 +429,7 @@ export default function DemandasPage() {
 
         {/* Responsavel */}
         <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 mr-1">Responsavel:</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mr-1">Responsavel:</span>
           <button
             onClick={() => setFilterAssignee('all')}
             className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
@@ -476,7 +479,7 @@ export default function DemandasPage() {
                 <span className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                   Kanban
                 </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                   {filtered.length} demanda{filtered.length !== 1 ? 's' : ''}
                 </span>
               </button>
@@ -500,15 +503,13 @@ export default function DemandasPage() {
                   ))}
                 </div>
 
-                {/* Bloqueada Lane */}
-                {blockedDemandas.length > 0 && (
-                  <BlockedLane
-                    demandas={blockedDemandas}
-                    kanbanStatuses={KANBAN_STATUSES}
-                    onClickCard={openEdit}
-                    highlightedCardId={highlightedCardId}
-                  />
-                )}
+                {/* Bloqueada Lane — always visible as drop target */}
+                <BlockedLane
+                  demandas={blockedDemandas}
+                  kanbanStatuses={KANBAN_STATUSES}
+                  onClickCard={openEdit}
+                  highlightedCardId={highlightedCardId}
+                />
 
                 <DragOverlay>
                   {activeDemanda ? (

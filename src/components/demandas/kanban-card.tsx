@@ -4,6 +4,7 @@ import { useDraggable } from '@dnd-kit/core'
 import {
   ORIGINS,
   PRIORITIES,
+  CLASSIFICATIONS,
   toDateStr,
   todayStr,
   type Demanda,
@@ -22,6 +23,7 @@ export function KanbanCard({
 }) {
   const origin = ORIGINS.find((o) => o.id === d.origin)
   const prio = PRIORITIES.find((p) => p.id === d.priority)
+  const classif = d.classification ? CLASSIFICATIONS.find((c) => c.id === d.classification) : null
   const isOverdue = d.deadline && d.status !== 'concluida' && toDateStr(d.deadline) < todayStr()
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -57,6 +59,14 @@ export function KanbanCard({
         <div className="text-[10px] text-slate-400 mb-1 truncate">
           → {d.assignee}
         </div>
+      )}
+      {classif && (
+        <span
+          className="inline-block text-[9px] px-1.5 py-0.5 rounded font-medium mb-1"
+          style={{ background: classif.color + '22', color: classif.color }}
+        >
+          {classif.label}
+        </span>
       )}
       {d.subtasks && d.subtasks.length > 0 && (
         <div className="flex items-center gap-1.5 mb-1">

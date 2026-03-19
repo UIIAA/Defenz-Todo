@@ -1,7 +1,10 @@
 'use client'
 
+import { useState } from 'react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import {
   ORIGINS,
+  CLASSIFICATIONS,
   toDateStr,
   todayStr,
   type Demanda,
@@ -80,6 +83,17 @@ export function GanttChart({
     }
   }
 
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+
+  const toggleGroup = (groupId: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupId)) next.delete(groupId)
+      else next.add(groupId)
+      return next
+    })
+  }
+
   // Filter demandas that overlap with visible window, sorted by dateIn ascending
   const visibleDemandas = activeDemandas
     .filter((dem) => {
@@ -93,6 +107,87 @@ export function GanttChart({
     return (
       <div className="text-slate-500 text-sm text-center py-5">
         Nenhuma demanda neste periodo
+      </div>
+    )
+  }
+
+  // Group by classification
+  const classifMap = Object.fromEntries(CLASSIFICATIONS.map((c) => [c.id, c]))
+  const groups: { id: string; label: string; color: string; demandas: typeof visibleDemandas }[] = []
+  const grouped = new Map<string, typeof visibleDemandas>()
+
+  for (const dem of visibleDemandas) {
+    const key = dem.classification || '__none__'
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key)!.push(dem)
+  }
+
+  // Classified groups first (in CLASSIFICATIONS order), then unclassified
+  for (const c of CLASSIFICATIONS) {
+    if (grouped.has(c.id)) {
+      groups.push({ id: c.id, label: c.label, color: c.color, demandas: grouped.get(c.id)! })
+    }
+  }
+  if (grouped.has('__none__')) {
+    groups.push({ id: '__none__', label: 'Sem classificacao', color: '#94a3b8', demandas: grouped.get('__none__')! })
+  }
+
+  const renderBar = (dem: typeof visibleDemandas[0]) => {
+    const origin = ORIGINS.find((o) => o.id === dem.origin)
+    const startDate = new Date(dem.dateIn)
+    const endDate = dem.deadline
+      ? new Date(dem.deadline)
+      : new Date(startDate.getTime() + DAY_MS * 7)
+
+    const clampedStart = Math.max(startDate.getTime(), minDate.getTime())
+    const clampedEnd = Math.min(endDate.getTime(), maxDate.getTime())
+
+    const startPos = ((clampedStart - minDate.getTime()) / totalMs) * 100
+    const width = Math.max(((clampedEnd - clampedStart) / totalMs) * 100, 1)
+    const isOverdue = dem.deadline && toDateStr(dem.deadline) < todayStr()
+    const isBlocked = dem.status === 'bloqueada'
+    const barColor = origin?.color || '#8899aa'
+
+    return (
+      <div key={dem.id} className="flex items-center h-9 border-b border-blue-100/60 dark:border-slate-700/30">
+        <div
+          className={`w-[200px] shrink-0 px-2 pl-6 text-[13px] text-slate-800 dark:text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap${onBarClick ? ' cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors' : ''}`}
+          title={dem.title}
+          onClick={onBarClick ? () => onBarClick(dem.id) : undefined}
+        >
+          {dem.title}
+        </div>
+        <div className="flex-1 relative h-full">
+          <div
+            className={`absolute top-1.5 h-6 rounded transition-all${onBarClick ? ' cursor-pointer hover:brightness-110' : ''}`}
+            style={{
+              left: `${startPos}%`,
+              width: `${width}%`,
+              background: isBlocked
+                ? `repeating-linear-gradient(45deg, ${barColor}33, ${barColor}33 4px, transparent 4px, transparent 8px)`
+                : `${barColor}44`,
+              border: `1px solid ${isOverdue ? '#ef4444' : barColor}88`,
+            }}
+            onClick={onBarClick ? () => onBarClick(dem.id) : undefined}
+          >
+            <div
+              className="h-full rounded-sm transition-all duration-300"
+              style={{
+                background: isOverdue
+                  ? `linear-gradient(90deg, ${barColor}88, #ef444466)`
+                  : `${barColor}66`,
+                width:
+                  dem.status === 'em_andamento'
+                    ? '60%'
+                    : dem.status === 'selecionada'
+                    ? '10%'
+                    : dem.status === 'concluida'
+                    ? '100%'
+                    : '5%',
+              }}
+            />
+          </div>
+        </div>
       </div>
     )
   }
@@ -139,64 +234,33 @@ export function GanttChart({
           />
         )}
 
-        {/* Rows */}
-        {visibleDemandas.map((dem) => {
-          const origin = ORIGINS.find((o) => o.id === dem.origin)
-          const startDate = new Date(dem.dateIn)
-          const endDate = dem.deadline
-            ? new Date(dem.deadline)
-            : new Date(startDate.getTime() + DAY_MS * 7)
-
-          // Clamp to visible range
-          const clampedStart = Math.max(startDate.getTime(), minDate.getTime())
-          const clampedEnd = Math.min(endDate.getTime(), maxDate.getTime())
-
-          const startPos = ((clampedStart - minDate.getTime()) / totalMs) * 100
-          const width = Math.max(((clampedEnd - clampedStart) / totalMs) * 100, 1)
-          const isOverdue = dem.deadline && toDateStr(dem.deadline) < todayStr()
-          const isBlocked = dem.status === 'bloqueada'
-          const barColor = origin?.color || '#8899aa'
-
+        {/* Grouped Rows */}
+        {groups.map((group) => {
+          const isCollapsed = collapsedGroups.has(group.id)
           return (
-            <div key={dem.id} className="flex items-center h-9 border-b border-blue-100/60 dark:border-slate-700/30">
+            <div key={group.id}>
+              {/* Group header */}
               <div
-                className={`w-[200px] shrink-0 px-2 text-[13px] text-slate-800 dark:text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap${onBarClick ? ' cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors' : ''}`}
-                title={dem.title}
-                onClick={onBarClick ? () => onBarClick(dem.id) : undefined}
+                className="flex items-center h-8 cursor-pointer select-none border-b border-blue-100/60 dark:border-slate-700/30"
+                style={{ backgroundColor: group.color + '10' }}
+                onClick={() => toggleGroup(group.id)}
               >
-                {dem.title}
-              </div>
-              <div className="flex-1 relative h-full">
-                <div
-                  className={`absolute top-1.5 h-6 rounded transition-all${onBarClick ? ' cursor-pointer hover:brightness-110' : ''}`}
-                  style={{
-                    left: `${startPos}%`,
-                    width: `${width}%`,
-                    background: isBlocked
-                      ? `repeating-linear-gradient(45deg, ${barColor}33, ${barColor}33 4px, transparent 4px, transparent 8px)`
-                      : `${barColor}44`,
-                    border: `1px solid ${isOverdue ? '#ef4444' : barColor}88`,
-                  }}
-                  onClick={onBarClick ? () => onBarClick(dem.id) : undefined}
-                >
-                  <div
-                    className="h-full rounded-sm transition-all duration-300"
-                    style={{
-                      background: isOverdue
-                        ? `linear-gradient(90deg, ${barColor}88, #ef444466)`
-                        : `${barColor}66`,
-                      width:
-                        dem.status === 'em_andamento'
-                          ? '60%'
-                          : dem.status === 'selecionada'
-                          ? '10%'
-                          : dem.status === 'concluida'
-                          ? '100%'
-                          : '5%',
-                    }}
-                  />
+                <div className="w-[200px] shrink-0 px-2 flex items-center gap-1.5">
+                  {isCollapsed ? (
+                    <ChevronRight className="h-3.5 w-3.5" style={{ color: group.color }} />
+                  ) : (
+                    <ChevronDown className="h-3.5 w-3.5" style={{ color: group.color }} />
+                  )}
+                  <span className="text-[12px] font-bold" style={{ color: group.color }}>
+                    {group.label}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    ({group.demandas.length})
+                  </span>
                 </div>
               </div>
+              {/* Group items */}
+              {!isCollapsed && group.demandas.map(renderBar)}
             </div>
           )
         })}

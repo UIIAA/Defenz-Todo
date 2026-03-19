@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
+import { createAuditLog } from '@/lib/audit'
 import crypto from 'crypto'
 
 export async function GET() {
@@ -86,6 +87,61 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json(
       { error: 'Erro ao criar convite' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await requireAuth()
+    const role = (user as { role?: string }).role || ''
+
+    if (!['admin', 'gerencia'].includes(role)) {
+      return NextResponse.json(
+        { error: 'Acesso restrito a administradores' },
+        { status: 403 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    if (!id) {
+      return NextResponse.json({ error: 'ID e obrigatorio' }, { status: 400 })
+    }
+
+    const invite = await db.inviteToken.findUnique({ where: { id } })
+    if (!invite) {
+      return NextResponse.json({ error: 'Convite nao encontrado' }, { status: 404 })
+    }
+
+    // Only pending invites can be revoked
+    if (invite.usedAt || new Date(invite.expiresAt) < new Date()) {
+      return NextResponse.json(
+        { error: 'Apenas convites pendentes podem ser revogados' },
+        { status: 400 }
+      )
+    }
+
+    await db.inviteToken.delete({ where: { id } })
+
+    await createAuditLog({
+      action: 'DELETE',
+      entityType: 'InviteToken',
+      entityId: id,
+      userId: (user as { id: string }).id,
+      userEmail: (user as { email: string }).email,
+      changes: { email: { from: invite.email, to: null } },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Revoke invite error:', error)
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Nao autenticado' }, { status: 401 })
+    }
+    return NextResponse.json(
+      { error: 'Erro ao revogar convite' },
       { status: 500 }
     )
   }

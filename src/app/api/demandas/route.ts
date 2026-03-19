@@ -5,7 +5,7 @@ import { handleApiError, createdResponse, successResponse, ApiError } from '@/li
 import { createDemandaSchema, updateDemandaSchema } from '@/lib/validations/demanda'
 import { createAuditLog, diffChanges } from '@/lib/audit'
 
-const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'assignee', 'deadline', 'dateDone']
+const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'assignee', 'deadline', 'dateDone']
 
 export async function GET() {
   try {
@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
         origin: data.origin,
         status: data.status,
         priority: data.priority,
+        classification: data.classification || null,
         assignee: data.assignee || null,
         dateIn: data.dateIn ? new Date(data.dateIn) : new Date(),
         deadline: data.deadline ? new Date(data.deadline) : null,
@@ -113,6 +114,7 @@ export async function PUT(request: NextRequest) {
         ...(data.origin !== undefined && { origin: data.origin }),
         ...(data.status !== undefined && { status: data.status }),
         ...(data.priority !== undefined && { priority: data.priority }),
+        ...(data.classification !== undefined && { classification: data.classification || null }),
         ...(data.assignee !== undefined && { assignee: data.assignee || null }),
         ...(data.dateIn !== undefined && { dateIn: new Date(data.dateIn) }),
         ...(data.deadline !== undefined && { deadline: data.deadline ? new Date(data.deadline) : null }),
