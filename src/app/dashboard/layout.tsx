@@ -74,7 +74,7 @@ export default function DashboardLayout({
   }
 
   if (status === 'loading') {
-    return <div className="min-h-screen bg-[#F0F4F8] dark:bg-slate-900 flex items-center justify-center">
+    return <div className="min-h-screen bg-gradient-to-br from-white via-sky-50/50 to-blue-100/60 dark:bg-slate-900 flex items-center justify-center">
       <div className="flex items-center gap-3">
         <div className="h-5 w-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
         <span className="text-muted-foreground font-medium">Carregando...</span>
@@ -96,7 +96,7 @@ export default function DashboardLayout({
     }`
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] dark:bg-slate-900 transition-colors">
+    <div className="min-h-screen bg-gradient-to-br from-white via-sky-50/50 to-blue-100/60 dark:bg-slate-900 transition-colors">
       <div className="flex">
         {/* Sidebar - always dark navy */}
         <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'} transition-all duration-300 bg-[#1C2536] min-h-screen`}>

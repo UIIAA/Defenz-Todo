@@ -35,4 +35,9 @@ describe('emptyForm', () => {
     expect(form.dateDone).toBeNull()
     expect(form.dateIn).toBe(todayStr())
   })
+
+  it('includes previousStatus as null', () => {
+    const form = emptyForm()
+    expect(form.previousStatus).toBeNull()
+  })
 })

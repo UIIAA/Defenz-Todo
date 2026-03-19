@@ -32,7 +32,7 @@ describe('GET /api/demandas', () => {
     expect(body.data[0].id).toBe(demandaList[0].id)
     expect(mockDb.demanda.findMany).toHaveBeenCalledWith({
       orderBy: { createdAt: 'desc' },
-      include: { user: { select: { name: true, email: true } } },
+      include: { user: { select: { name: true, email: true } }, subtasks: { orderBy: { position: 'asc' } } },
     })
   })
 })
@@ -219,6 +219,54 @@ describe('PUT /api/demandas', () => {
     expect(res.status).toBe(200)
     // findUnique is called for audit diff but NOT for locking check
     expect(mockDb.demanda.findUnique).toHaveBeenCalled()
+  })
+
+  it('saves previousStatus when moving to bloqueada', async () => {
+    mockAuthenticated()
+    const current = { ...savedDemanda, status: 'em_andamento' }
+    mockDb.demanda.findUnique.mockResolvedValue(current)
+    mockDb.demanda.update.mockResolvedValue({ ...current, status: 'bloqueada', previousStatus: 'em_andamento' })
+
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', status: 'bloqueada' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+    const updateData = mockDb.demanda.update.mock.calls[0][0].data
+    expect(updateData.previousStatus).toBe('em_andamento')
+  })
+
+  it('clears previousStatus when unblocking', async () => {
+    mockAuthenticated()
+    const current = { ...savedDemanda, status: 'bloqueada', previousStatus: 'em_andamento' }
+    mockDb.demanda.findUnique.mockResolvedValue(current)
+    mockDb.demanda.update.mockResolvedValue({ ...current, status: 'selecionada', previousStatus: null })
+
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', status: 'selecionada' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+    const updateData = mockDb.demanda.update.mock.calls[0][0].data
+    expect(updateData.previousStatus).toBeNull()
+  })
+
+  it('does not set previousStatus when moving between normal statuses', async () => {
+    mockAuthenticated()
+    const current = { ...savedDemanda, status: 'solicitada' }
+    mockDb.demanda.findUnique.mockResolvedValue(current)
+    mockDb.demanda.update.mockResolvedValue({ ...current, status: 'em_andamento' })
+
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', status: 'em_andamento' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+    const updateData = mockDb.demanda.update.mock.calls[0][0].data
+    expect(updateData.previousStatus).toBeUndefined()
   })
 })
 

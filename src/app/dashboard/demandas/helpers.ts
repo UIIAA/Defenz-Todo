@@ -31,6 +31,14 @@ export const toDateStr = (d: string | Date | null): string => {
 
 export const todayStr = () => new Date().toISOString().split('T')[0]
 
+export interface Subtask {
+  id: string
+  title: string
+  completed: boolean
+  position: number
+  demandaId: string
+}
+
 export interface Demanda {
   id: string
   title: string
@@ -39,9 +47,11 @@ export interface Demanda {
   status: string
   priority: string
   assignee: string | null
+  previousStatus?: string | null
   dateIn: string
   deadline: string | null
   dateDone: string | null
+  subtasks?: Subtask[]
 }
 
 export type DemandaForm = Omit<Demanda, 'id'> & { id?: string }
@@ -53,6 +63,7 @@ export const emptyForm = (): DemandaForm => ({
   status: 'solicitada',
   priority: 'media',
   assignee: null,
+  previousStatus: null,
   dateIn: todayStr(),
   deadline: '',
   dateDone: null,

@@ -1,1017 +1,32 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Plus, Trash2, Loader2, Upload, FileSpreadsheet, ListPlus, ChevronDown, LayoutGrid, List, ArrowUp, ArrowDown, ClipboardList } from 'lucide-react'
-import { toast } from 'sonner'
-import * as XLSX from 'xlsx'
-
-import { StatusBadge } from '@/components/status-badge'
-import { EmptyState } from '@/components/empty-state'
+import { Plus, Upload, ChevronDown, LayoutGrid, List, ClipboardList } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/empty-state'
+import { toast } from 'sonner'
+import { DndContext, DragOverlay, PointerSensor, TouchSensor, useSensor, useSensors, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core'
 import {
   ORIGINS,
   STATUSES,
-  PRIORITIES,
   toDateStr,
   todayStr,
-  emptyForm,
   type Demanda,
   type DemandaForm,
-  type Origin,
-  type Status,
-  type Priority,
 } from './helpers'
 
-// ─── Import Modal ────────────────────────────────────────────
-
-function ImportModal({
-  open,
-  onOpenChange,
-  onImported,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onImported: () => void
-}) {
-  const [mode, setMode] = useState<'text' | 'excel'>('text')
-  const [textInput, setTextInput] = useState('')
-  const [importing, setImporting] = useState(false)
-  const [selectedOrigin, setSelectedOrigin] = useState('outra')
-  const [selectedPriority, setSelectedPriority] = useState('media')
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleTextImport = async () => {
-    const lines = textInput
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0)
-
-    if (lines.length === 0) {
-      toast.error('Nenhum item para importar')
-      return
-    }
-
-    setImporting(true)
-    try {
-      const items = lines.map((line) => ({
-        title: line,
-        origin: selectedOrigin,
-        priority: selectedPriority,
-      }))
-
-      const res = await fetch('/api/demandas/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
-      })
-      const json = await res.json()
-      if (json.success) {
-        toast.success(`${json.data.count} demandas importadas na coluna Solicitada`)
-        setTextInput('')
-        onImported()
-        onOpenChange(false)
-      } else {
-        toast.error(json.error || 'Erro na importacao')
-      }
-    } catch {
-      toast.error('Erro ao importar')
-    } finally {
-      setImporting(false)
-    }
-  }
-
-  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setImporting(true)
-    try {
-      const reader = new FileReader()
-      reader.onload = async (evt) => {
-        try {
-          const bstr = evt.target?.result
-          const wb = XLSX.read(bstr, { type: 'binary' })
-          const ws = wb.Sheets[wb.SheetNames[0]]
-          const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws)
-
-          if (rows.length === 0) {
-            toast.error('Planilha vazia')
-            setImporting(false)
-            return
-          }
-
-          // Tenta mapear colunas inteligentemente
-          const items = rows.map((row) => {
-            const title =
-              (row['titulo'] as string) ||
-              (row['Titulo'] as string) ||
-              (row['title'] as string) ||
-              (row['Title'] as string) ||
-              (row['demanda'] as string) ||
-              (row['Demanda'] as string) ||
-              (row['descricao'] as string) ||
-              (row['Descricao'] as string) ||
-              (row['atividade'] as string) ||
-              (row['Atividade'] as string) ||
-              (row['tarefa'] as string) ||
-              (row['Tarefa'] as string) ||
-              // Pega a primeira coluna como fallback
-              String(Object.values(row)[0] || '')
-
-            const description =
-              (row['descricao'] as string) ||
-              (row['Descricao'] as string) ||
-              (row['description'] as string) ||
-              (row['Description'] as string) ||
-              (row['detalhe'] as string) ||
-              (row['Detalhe'] as string) ||
-              ''
-
-            const rawOrigin = (
-              (row['origem'] as string) ||
-              (row['Origem'] as string) ||
-              (row['origin'] as string) ||
-              ''
-            ).toLowerCase()
-            const origin = ['fernando', 'securisoft', 'autogerada'].includes(rawOrigin)
-              ? rawOrigin
-              : selectedOrigin
-
-            const rawPriority = (
-              (row['prioridade'] as string) ||
-              (row['Prioridade'] as string) ||
-              (row['priority'] as string) ||
-              ''
-            ).toLowerCase()
-            const priority = ['alta', 'media', 'baixa'].includes(rawPriority)
-              ? rawPriority
-              : selectedPriority
-
-            const assignee =
-              (row['responsavel'] as string) ||
-              (row['Responsavel'] as string) ||
-              (row['Responsável'] as string) ||
-              (row['assignee'] as string) ||
-              (row['pessoa'] as string) ||
-              (row['Pessoa'] as string) ||
-              undefined
-
-            const deadline =
-              (row['prazo'] as string) ||
-              (row['Prazo'] as string) ||
-              (row['deadline'] as string) ||
-              (row['Deadline'] as string) ||
-              undefined
-
-            return { title, description, origin, priority, assignee, deadline }
-          }).filter((item) => item.title.trim().length > 0)
-
-          if (items.length === 0) {
-            toast.error('Nenhum item valido encontrado na planilha')
-            setImporting(false)
-            return
-          }
-
-          const res = await fetch('/api/demandas/import', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items }),
-          })
-          const json = await res.json()
-          if (json.success) {
-            toast.success(`${json.data.count} demandas importadas da planilha`)
-            onImported()
-            onOpenChange(false)
-          } else {
-            toast.error(json.error || 'Erro na importacao')
-          }
-        } catch (err) {
-          console.error('Erro ao processar planilha:', err)
-          toast.error('Erro ao processar a planilha')
-        } finally {
-          setImporting(false)
-        }
-      }
-      reader.readAsBinaryString(file)
-    } catch {
-      toast.error('Erro ao ler arquivo')
-      setImporting(false)
-    }
-
-    // Reset file input
-    if (fileInputRef.current) fileInputRef.current.value = ''
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
-        <DialogHeader>
-          <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
-            Importar Demandas
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Mode Tabs */}
-        <div className="flex gap-2 mb-2">
-          <button
-            onClick={() => setMode('text')}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
-              mode === 'text'
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500'
-                : 'bg-slate-100 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/30'
-            }`}
-          >
-            <ListPlus className="h-4 w-4" />
-            Lista de Texto
-          </button>
-          <button
-            onClick={() => setMode('excel')}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
-              mode === 'excel'
-                ? 'bg-blue-600/20 text-blue-400 border border-blue-500'
-                : 'bg-slate-100 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/30'
-            }`}
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            Planilha Excel
-          </button>
-        </div>
-
-        {/* Default origin/priority */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Origem padrao
-            </label>
-            <Select value={selectedOrigin} onValueChange={setSelectedOrigin}>
-              <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
-                {ORIGINS.map((o) => (
-                  <SelectItem key={o.id} value={o.id} className="text-slate-800 dark:text-slate-200">
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Prioridade padrao
-            </label>
-            <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-              <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
-                {PRIORITIES.map((p) => (
-                  <SelectItem key={p.id} value={p.id} className="text-slate-800 dark:text-slate-200">
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {mode === 'text' ? (
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Cole a lista (uma demanda por linha)
-            </label>
-            <Textarea
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              placeholder={`Proposta cliente XPTO\nRevisao contrato ABC\nDashboard metricas\nRelatorio semanal`}
-              rows={8}
-              className="mt-1.5 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-600 resize-y font-mono text-sm"
-            />
-            <p className="text-[11px] text-slate-500 mt-1.5">
-              {textInput.split('\n').filter((l) => l.trim()).length} itens detectados — serao criados na coluna <strong>Solicitada</strong>
-            </p>
-            <Button
-              onClick={handleTextImport}
-              disabled={importing || !textInput.trim()}
-              className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {importing ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Upload className="h-4 w-4 mr-2" />
-              )}
-              Importar {textInput.split('\n').filter((l) => l.trim()).length} demandas
-            </Button>
-          </div>
-        ) : (
-          <div>
-            <div
-              className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-8 text-center hover:border-blue-500/50 transition-colors cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <FileSpreadsheet className="h-10 w-10 text-slate-500 mx-auto mb-3" />
-              <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
-                Clique ou arraste um arquivo .xlsx / .csv
-              </p>
-              <p className="text-xs text-slate-500 mt-1.5">
-                Colunas reconhecidas: titulo, descricao, origem, prioridade, prazo
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleExcelUpload}
-                className="hidden"
-              />
-            </div>
-            {importing && (
-              <div className="flex items-center justify-center gap-2 mt-3 text-blue-500 dark:text-blue-400">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Processando planilha...</span>
-              </div>
-            )}
-            <p className="text-[11px] text-slate-500 mt-2">
-              Se a planilha nao tiver coluna "titulo", a primeira coluna sera usada como titulo.
-              Demandas serao criadas na coluna <strong>Solicitada</strong>.
-            </p>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// ─── Demanda Modal ───────────────────────────────────────────
-
-function DemandaModal({
-  demanda,
-  open,
-  onOpenChange,
-  onSave,
-  onDelete,
-}: {
-  demanda: Demanda | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSave: (d: DemandaForm) => void
-  onDelete: (id: string) => void
-}) {
-  const [form, setForm] = useState<DemandaForm>(emptyForm())
-  const [modalUsers, setModalUsers] = useState<{ id: string; name: string | null; email: string }[]>([])
-  const isNew = !demanda
-
-  useEffect(() => {
-    if (open) {
-      fetch('/api/users')
-        .then((r) => r.json())
-        .then((d) => { if (d.success) setModalUsers(d.data) })
-        .catch(() => {})
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (demanda) {
-      setForm({
-        id: demanda.id,
-        title: demanda.title,
-        description: demanda.description || '',
-        origin: demanda.origin,
-        status: demanda.status,
-        priority: demanda.priority,
-        assignee: demanda.assignee || '',
-        dateIn: toDateStr(demanda.dateIn),
-        deadline: toDateStr(demanda.deadline),
-        dateDone: demanda.dateDone ? toDateStr(demanda.dateDone) : null,
-      })
-    } else {
-      setForm(emptyForm())
-    }
-  }, [demanda])
-
-  const upd = (k: keyof DemandaForm, v: string | null) =>
-    setForm((p) => ({ ...p, [k]: v }))
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
-        <DialogHeader>
-          <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
-            {isNew ? 'Nova Demanda' : 'Editar Demanda'}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Titulo
-            </label>
-            <Input
-              value={form.title}
-              onChange={(e) => upd('title', e.target.value)}
-              placeholder="Ex: Proposta cliente X"
-              className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Origem
-              </label>
-              <Select value={form.origin} onValueChange={(v) => upd('origin', v)}>
-                <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
-                  {ORIGINS.map((o) => (
-                    <SelectItem key={o.id} value={o.id} className="text-slate-800 dark:text-slate-200">
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Prioridade
-              </label>
-              <Select value={form.priority} onValueChange={(v) => upd('priority', v)}>
-                <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
-                  {PRIORITIES.map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="text-slate-800 dark:text-slate-200">
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Responsavel
-            </label>
-            <Select value={form.assignee || '__none__'} onValueChange={(v) => upd('assignee', v === '__none__' ? null : v)}>
-              <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
-                <SelectValue placeholder="Sem responsavel" />
-              </SelectTrigger>
-              <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
-                <SelectItem value="__none__" className="text-slate-500 dark:text-slate-400">
-                  Sem responsavel
-                </SelectItem>
-                {modalUsers.map((u) => (
-                  <SelectItem key={u.id} value={u.name || u.email} className="text-slate-800 dark:text-slate-200">
-                    {u.name || u.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Status
-            </label>
-            <div className="flex gap-1 mt-1.5">
-              {STATUSES.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => {
-                    upd('status', s.id)
-                    if (s.id === 'concluida') upd('dateDone', todayStr())
-                    else upd('dateDone', null)
-                  }}
-                  className={`flex-1 py-2 px-0.5 rounded-md border text-[10px] font-medium transition-colors ${
-                    form.status === s.id
-                      ? 'border-blue-500 bg-blue-500/10 text-blue-500 dark:text-blue-400'
-                      : 'border-slate-200/60 dark:border-slate-700/30 bg-white/60 dark:bg-slate-800/30 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600/40'
-                  }`}
-                >
-                  {s.icon} {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Data Entrada
-              </label>
-              <Input
-                type="date"
-                value={form.dateIn}
-                onChange={(e) => upd('dateIn', e.target.value)}
-                className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Prazo
-              </label>
-              <Input
-                type="date"
-                value={form.deadline || ''}
-                onChange={(e) => upd('deadline', e.target.value || null)}
-                className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Descricao
-            </label>
-            <Textarea
-              value={form.description || ''}
-              onChange={(e) => upd('description', e.target.value)}
-              placeholder="Detalhes, contexto, proximo passo..."
-              rows={3}
-              className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500 resize-y"
-            />
-          </div>
-        </div>
-
-        <div className="flex gap-2 mt-4 justify-end">
-          {!isNew && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (form.id) onDelete(form.id)
-              }}
-              className="mr-auto border-red-300 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 dark:hover:text-red-300"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Excluir
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="border-slate-700 text-slate-400 hover:bg-slate-800"
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={() => form.title.trim() && onSave(form)}
-            disabled={!form.title.trim()}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            {isNew ? 'Criar' : 'Salvar'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// ─── Kanban Card ─────────────────────────────────────────────
-
-function KanbanCard({ d, onClick }: { d: Demanda; onClick: (d: Demanda) => void }) {
-  const origin = ORIGINS.find((o) => o.id === d.origin)
-  const prio = PRIORITIES.find((p) => p.id === d.priority)
-  const isOverdue = d.deadline && d.status !== 'concluida' && toDateStr(d.deadline) < todayStr()
-
-  return (
-    <div
-      onClick={() => onClick(d)}
-      className={`group bg-white dark:bg-slate-800 rounded-xl p-3 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md border border-slate-200 dark:border-slate-700 shadow-sm`}
-      style={{ borderLeftWidth: 3, borderLeftColor: origin?.color || '#8899aa' }}
-    >
-      <div className="flex justify-between items-start gap-2 mb-1.5">
-        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-tight flex-1">
-          {d.title}
-        </span>
-        {prio && (
-          <span
-            className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0"
-            style={{ background: prio.color + '22', color: prio.color }}
-          >
-            {prio.label}
-          </span>
-        )}
-      </div>
-      {d.assignee && (
-        <div className="text-[10px] text-slate-400 mb-1 truncate">
-          → {d.assignee}
-        </div>
-      )}
-      <div className="flex justify-between items-center">
-        <span className="text-[11px] font-semibold" style={{ color: origin?.color }}>
-          {origin?.label}
-        </span>
-        {d.deadline && (
-          <span className={`text-[10px] ${isOverdue ? 'text-blue-500 dark:text-blue-400' : 'text-slate-500'}`}>
-            {isOverdue ? '⚠ ' : ''}
-            {new Date(d.deadline).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-          </span>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ─── Kanban Column ───────────────────────────────────────────
-
-function KanbanColumn({
-  status,
-  items,
-  onClickCard,
-}: {
-  status: Status
-  items: Demanda[]
-  onClickCard: (d: Demanda) => void
-}) {
-  return (
-    <div className="flex-1 min-w-[180px]">
-      <div className="flex items-center gap-2 mb-3 px-1">
-        <span className="text-base">{status.icon}</span>
-        <span className="text-[12px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-100">
-          {status.label}
-        </span>
-        <span className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[11px] font-bold px-2 py-0.5 rounded-full">
-          {items.length}
-        </span>
-      </div>
-      <div className="flex flex-col gap-2 min-h-[60px] max-h-[55vh] overflow-y-auto pr-1">
-        {items.map((d) => (
-          <KanbanCard key={d.id} d={d} onClick={onClickCard} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── Gantt Chart ─────────────────────────────────────────────
-
-type TimeRange = 'hours' | 'days' | 'weeks' | 'months'
-
-const TIME_RANGE_CONFIG: Record<TimeRange, { label: string; daysSpan: number; tickHours: number; tickFormat: Intl.DateTimeFormatOptions }> = {
-  hours: { label: 'Horas', daysSpan: 1, tickHours: 3, tickFormat: { hour: '2-digit', minute: '2-digit' } },
-  days: { label: 'Dias', daysSpan: 14, tickHours: 24, tickFormat: { day: '2-digit', month: 'short' } },
-  weeks: { label: 'Semanas', daysSpan: 60, tickHours: 24 * 7, tickFormat: { day: '2-digit', month: 'short' } },
-  months: { label: 'Meses', daysSpan: 180, tickHours: 24 * 30, tickFormat: { month: 'short', year: '2-digit' } },
-}
-
-function GanttChart({ demandas, timeRange }: { demandas: Demanda[]; timeRange: TimeRange }) {
-  const activeDemandas = demandas.filter((d) => d.status !== 'concluida')
-
-  if (activeDemandas.length === 0) {
-    return (
-      <div className="text-slate-500 text-sm text-center py-5">
-        Nenhuma demanda ativa para exibir no Gantt
-      </div>
-    )
-  }
-
-  const config = TIME_RANGE_CONFIG[timeRange]
-  const DAY_MS = 86400000
-  const now = Date.now()
-
-  // Window: center on today, span based on timeRange
-  const halfSpan = (config.daysSpan / 2) * DAY_MS
-  const minDate = new Date(now - halfSpan)
-  const maxDate = new Date(now + halfSpan)
-  const totalMs = maxDate.getTime() - minDate.getTime()
-
-  const todayPos = ((now - minDate.getTime()) / totalMs) * 100
-
-  // Generate tick marks
-  const ticks: Date[] = []
-  const tickMs = config.tickHours * 3600000
-  const firstTick = new Date(minDate)
-
-  // Align first tick to clean boundary
-  if (timeRange === 'hours') {
-    const h = firstTick.getHours()
-    firstTick.setHours(h - (h % config.tickHours) + config.tickHours, 0, 0, 0)
-  } else if (timeRange === 'months') {
-    firstTick.setDate(1)
-    firstTick.setHours(0, 0, 0, 0)
-  } else if (timeRange === 'weeks') {
-    const day = firstTick.getDay()
-    const diff = day === 0 ? -6 : 1 - day
-    firstTick.setDate(firstTick.getDate() + diff)
-    firstTick.setHours(0, 0, 0, 0)
-  } else {
-    firstTick.setHours(0, 0, 0, 0)
-  }
-
-  const cursor = new Date(firstTick)
-  while (cursor <= maxDate) {
-    if (cursor >= minDate) {
-      ticks.push(new Date(cursor))
-    }
-    if (timeRange === 'months') {
-      cursor.setMonth(cursor.getMonth() + 1)
-    } else {
-      cursor.setTime(cursor.getTime() + tickMs)
-    }
-  }
-
-  // Filter demandas that overlap with visible window
-  const visibleDemandas = activeDemandas.filter((dem) => {
-    const start = new Date(dem.dateIn).getTime()
-    const end = dem.deadline ? new Date(dem.deadline).getTime() : start + DAY_MS * 7
-    return end >= minDate.getTime() && start <= maxDate.getTime()
-  })
-
-  if (visibleDemandas.length === 0) {
-    return (
-      <div className="text-slate-500 text-sm text-center py-5">
-        Nenhuma demanda neste periodo
-      </div>
-    )
-  }
-
-  const rowCount = visibleDemandas.length
-
-  return (
-    <div className="overflow-x-auto relative w-full">
-      <div className="relative min-w-[500px]">
-        {/* Tick headers */}
-        <div className="flex border-b border-blue-100/60 dark:border-slate-700/30 mb-1">
-          <div className="w-[200px] shrink-0 p-1.5" />
-          <div className="flex-1 relative h-7">
-            {ticks.map((t, i) => {
-              const pos = ((t.getTime() - minDate.getTime()) / totalMs) * 100
-              return (
-                <span
-                  key={i}
-                  className="absolute text-[10px] text-slate-600 dark:text-slate-400 font-semibold whitespace-nowrap" /* tick labels */
-                  style={{ left: `${pos}%`, top: 6 }}
-                >
-                  {t.toLocaleDateString('pt-BR', config.tickFormat)}
-                </span>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Vertical grid lines at each tick */}
-        {ticks.map((t, i) => {
-          const pos = ((t.getTime() - minDate.getTime()) / totalMs) * 100
-          return (
-            <div
-              key={`grid-${i}`}
-              className="absolute top-8 bottom-0 w-px bg-blue-200/40 dark:bg-slate-600/30 pointer-events-none"
-              style={{ left: `calc(200px + (100% - 200px) * ${pos} / 100)` }}
-            />
-          )
-        })}
-
-        {/* Today line */}
-        {todayPos >= 0 && todayPos <= 100 && (
-          <div
-            className="absolute top-8 bottom-0 w-0.5 bg-blue-500 opacity-60 z-10"
-            style={{ left: `calc(200px + (100% - 200px) * ${todayPos} / 100)` }}
-          />
-        )}
-
-        {/* Rows */}
-        {visibleDemandas.map((dem) => {
-          const origin = ORIGINS.find((o) => o.id === dem.origin)
-          const startDate = new Date(dem.dateIn)
-          const endDate = dem.deadline
-            ? new Date(dem.deadline)
-            : new Date(startDate.getTime() + DAY_MS * 7)
-
-          // Clamp to visible range
-          const clampedStart = Math.max(startDate.getTime(), minDate.getTime())
-          const clampedEnd = Math.min(endDate.getTime(), maxDate.getTime())
-
-          const startPos = ((clampedStart - minDate.getTime()) / totalMs) * 100
-          const width = Math.max(((clampedEnd - clampedStart) / totalMs) * 100, 1)
-          const isOverdue = dem.deadline && toDateStr(dem.deadline) < todayStr()
-          const isBlocked = dem.status === 'bloqueada'
-          const barColor = origin?.color || '#8899aa'
-
-          return (
-            <div key={dem.id} className="flex items-center h-9 border-b border-blue-100/60 dark:border-slate-700/30">
-              <div
-                className="w-[200px] shrink-0 px-2 text-[13px] text-slate-800 dark:text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap"
-                title={dem.title}
-              >
-                {dem.title}
-              </div>
-              <div className="flex-1 relative h-full">
-                <div
-                  className="absolute top-1.5 h-6 rounded transition-all"
-                  style={{
-                    left: `${startPos}%`,
-                    width: `${width}%`,
-                    background: isBlocked
-                      ? `repeating-linear-gradient(45deg, ${barColor}33, ${barColor}33 4px, transparent 4px, transparent 8px)`
-                      : `${barColor}44`,
-                    border: `1px solid ${isOverdue ? '#ef4444' : barColor}88`,
-                  }}
-                >
-                  <div
-                    className="h-full rounded-sm transition-all duration-300"
-                    style={{
-                      background: isOverdue
-                        ? `linear-gradient(90deg, ${barColor}88, #ef444466)`
-                        : `${barColor}66`,
-                      width:
-                        dem.status === 'em_andamento'
-                          ? '60%'
-                          : dem.status === 'selecionada'
-                          ? '10%'
-                          : dem.status === 'concluida'
-                          ? '100%'
-                          : '5%',
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ─── List View Table ────────────────────────────────────────
-
-type SortableField = 'title' | 'status' | 'priority' | 'deadline' | 'origin' | 'assignee'
-
-const STATUS_ORDER: Record<string, number> = {
-  solicitada: 0,
-  selecionada: 1,
-  em_andamento: 2,
-  concluida: 3,
-  bloqueada: 4,
-}
-
-const PRIORITY_ORDER: Record<string, number> = {
-  alta: 0,
-  media: 1,
-  baixa: 2,
-}
-
-function SortIcon({ field, sortField, sortDir }: { field: SortableField; sortField: SortableField; sortDir: 'asc' | 'desc' }) {
-  if (field !== sortField) return <ArrowUp className="h-3 w-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-  return sortDir === 'asc'
-    ? <ArrowUp className="h-3 w-3 text-blue-500" />
-    : <ArrowDown className="h-3 w-3 text-blue-500" />
-}
-
-function ListViewTable({
-  demandas,
-  onClickRow,
-  sortField,
-  sortDir,
-  onSort,
-}: {
-  demandas: Demanda[]
-  onClickRow: (d: Demanda) => void
-  sortField: SortableField
-  sortDir: 'asc' | 'desc'
-  onSort: (field: SortableField) => void
-}) {
-  const sorted = [...demandas].sort((a, b) => {
-    let cmp = 0
-    switch (sortField) {
-      case 'title':
-        cmp = a.title.localeCompare(b.title, 'pt-BR')
-        break
-      case 'status':
-        cmp = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99)
-        break
-      case 'priority':
-        cmp = (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99)
-        break
-      case 'deadline':
-        cmp = (a.deadline || '9999').localeCompare(b.deadline || '9999')
-        break
-      case 'origin':
-        cmp = a.origin.localeCompare(b.origin, 'pt-BR')
-        break
-      case 'assignee':
-        cmp = (a.assignee || 'zzz').localeCompare(b.assignee || 'zzz', 'pt-BR')
-        break
-    }
-    return sortDir === 'asc' ? cmp : -cmp
-  })
-
-  const originMap = Object.fromEntries(ORIGINS.map((o) => [o.id, o]))
-  const prioMap = Object.fromEntries(PRIORITIES.map((p) => [p.id, p]))
-  const today = todayStr()
-
-  const columns: { key: SortableField; label: string }[] = [
-    { key: 'title', label: 'Titulo' },
-    { key: 'origin', label: 'Origem' },
-    { key: 'priority', label: 'Prioridade' },
-    { key: 'status', label: 'Status' },
-    { key: 'assignee', label: 'Responsavel' },
-    { key: 'deadline', label: 'Prazo' },
-  ]
-
-  return (
-    <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-100 dark:bg-slate-800">
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    onClick={() => onSort(col.key)}
-                    className="group cursor-pointer px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                  >
-                    <span className="inline-flex items-center gap-1">
-                      {col.label}
-                      <SortIcon field={col.key} sortField={sortField} sortDir={sortDir} />
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-sm text-slate-400">
-                    Nenhuma demanda encontrada
-                  </td>
-                </tr>
-              ) : (
-                sorted.map((d, i) => {
-                  const origin = originMap[d.origin]
-                  const prio = prioMap[d.priority]
-                  const isOverdue = d.deadline && d.status !== 'concluida' && toDateStr(d.deadline) < today
-                  return (
-                    <tr
-                      key={d.id}
-                      onClick={() => onClickRow(d)}
-                      className={`cursor-pointer transition-colors hover:bg-blue-50 dark:hover:bg-slate-700/30 border-b border-slate-100 dark:border-slate-700/50 ${
-                        i % 2 === 1 ? 'bg-slate-50 dark:bg-slate-800/30' : ''
-                      }`}
-                    >
-                      <td className="px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100 max-w-[300px] truncate">
-                        {d.title}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className="font-semibold" style={{ color: origin?.color }}>
-                          {origin?.label || d.origin}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className="font-semibold" style={{ color: prio?.color }}>
-                          {prio?.label || d.priority}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={d.status} />
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                        {d.assignee || <span className="text-slate-400 italic">--</span>}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {d.deadline ? (
-                          <span className={isOverdue ? 'text-red-500 font-semibold' : 'text-slate-600 dark:text-slate-300'}>
-                            {isOverdue && '! '}
-                            {new Date(d.deadline).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 italic">--</span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ─── Main Page ───────────────────────────────────────────────
+import { ImportModal } from '@/components/demandas/import-modal'
+import { DemandaModal } from '@/components/demandas/demanda-modal'
+import { KanbanCard } from '@/components/demandas/kanban-card'
+import { KanbanColumn } from '@/components/demandas/kanban-column'
+import { GanttChart, TIME_RANGE_CONFIG, type TimeRange } from '@/components/demandas/gantt-chart'
+import { ListViewTable, type SortableField } from '@/components/demandas/list-view-table'
+import { useWipLimits } from '@/hooks/use-wip-limits'
+import { WipSettingsPopover } from '@/components/demandas/wip-settings-popover'
+import { BlockedLane } from '@/components/demandas/blocked-lane'
 
 export default function DemandasPage() {
   const { data: session } = useSession()
@@ -1026,8 +41,16 @@ export default function DemandasPage() {
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
   const [kanbanOpen, setKanbanOpen] = useState(true)
   const [timelineOpen, setTimelineOpen] = useState(true)
-  const [sortField, setSortField] = useState<'title' | 'status' | 'priority' | 'deadline' | 'origin' | 'assignee'>('title')
+  const [sortField, setSortField] = useState<SortableField>('title')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [highlightedCardId, setHighlightedCardId] = useState<string | null>(null)
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const { limits: wipLimits, setLimit: setWipLimit, getLimit: getWipLimit, userLimits: wipUserLimits, setUserLimit: setWipUserLimit, getUserLimit: getWipUserLimit } = useWipLimits()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { distance: 8 } })
+  )
 
   const fetchDemandas = useCallback(async () => {
     try {
@@ -1045,10 +68,17 @@ export default function DemandasPage() {
 
   useEffect(() => {
     fetchDemandas()
-    // Auto-refresh a cada 30s para modo TV/board compartilhado
     const interval = setInterval(fetchDemandas, 30000)
     return () => clearInterval(interval)
   }, [fetchDemandas])
+
+  // Clear highlight after 2s
+  useEffect(() => {
+    if (highlightedCardId) {
+      const timer = setTimeout(() => setHighlightedCardId(null), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [highlightedCardId])
 
   const handleSave = async (form: DemandaForm) => {
     try {
@@ -1093,6 +123,95 @@ export default function DemandasPage() {
     setModalOpen(true)
   }
 
+  const handleBarClick = (demandaId: string) => {
+    setViewMode('kanban')
+    setHighlightedCardId(demandaId)
+    // Scroll to card after view switches
+    setTimeout(() => {
+      const el = document.querySelector(`[data-demanda-id="${demandaId}"]`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
+  }
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string)
+  }
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveDragId(null)
+    const { active, over } = event
+    if (!over) return
+
+    const demandaId = active.id as string
+    const overId = over.id as string
+    const demanda = demandas.find((d) => d.id === demandaId)
+    if (!demanda) return
+
+    // Determine target status — blocked-* zones mean "bloqueada" with previousStatus
+    const isBlockedZone = overId.startsWith('blocked-')
+    const newStatus = isBlockedZone ? 'bloqueada' : overId
+    const previousStatus = isBlockedZone ? overId.replace('blocked-', '') : null
+
+    if (demanda.status === newStatus && !isBlockedZone) return
+
+    // Check WIP limit per column (advisory — warn but allow)
+    if (!isBlockedZone) {
+      const wipLimit = getWipLimit(newStatus)
+      const currentCount = demandas.filter((d) => d.status === newStatus).length
+      if (wipLimit && currentCount >= wipLimit) {
+        toast.warning(`Coluna "${STATUSES.find((s) => s.id === newStatus)?.label}" esta no limite WIP (${currentCount}/${wipLimit})`)
+      }
+    }
+
+    // Check WIP limit per user (advisory — warn but allow)
+    if (demanda.assignee && newStatus !== 'concluida' && newStatus !== 'bloqueada') {
+      const userWipLimit = getWipUserLimit(demanda.assignee)
+      const userActiveCount = demandas.filter(
+        (d) => d.assignee === demanda.assignee && d.status !== 'concluida' && d.status !== 'bloqueada' && d.id !== demandaId
+      ).length
+      if (userWipLimit && userActiveCount >= userWipLimit) {
+        toast.warning(`${demanda.assignee} esta no limite WIP pessoal (${userActiveCount}/${userWipLimit})`)
+      }
+    }
+
+    // Optimistic update
+    const updatedDemandas = demandas.map((d) => {
+      if (d.id !== demandaId) return d
+      return {
+        ...d,
+        status: newStatus,
+        previousStatus: isBlockedZone ? previousStatus : (newStatus !== 'bloqueada' ? null : d.previousStatus),
+        dateDone: newStatus === 'concluida' ? todayStr() : null,
+      }
+    })
+    setDemandas(updatedDemandas)
+
+    // Persist to API
+    try {
+      const res = await fetch('/api/demandas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: demandaId,
+          status: newStatus,
+          dateDone: newStatus === 'concluida' ? todayStr() : null,
+        }),
+      })
+      const json = await res.json()
+      if (!json.success) {
+        setDemandas(demandas)
+        toast.error('Erro ao mover demanda')
+      }
+    } catch {
+      setDemandas(demandas)
+      toast.error('Erro ao mover demanda')
+    }
+  }
+
+  const activeDemanda = activeDragId ? demandas.find((d) => d.id === activeDragId) : null
+
   // Lista unica de responsaveis
   const assignees = useMemo(() => {
     const set = new Set<string>()
@@ -1109,6 +228,10 @@ export default function DemandasPage() {
       if (filterAssignee === '__mine__') return d.assignee === userName
       return d.assignee === filterAssignee
     })
+
+  // Bloqueada lane: separate blocked from normal columns
+  const KANBAN_STATUSES = STATUSES.filter((s) => s.id !== 'bloqueada')
+  const blockedDemandas = filtered.filter((d) => d.status === 'bloqueada')
 
   const stats = {
     total: demandas.length,
@@ -1182,7 +305,7 @@ export default function DemandasPage() {
             />
           </CardContent>
         </Card>
-        <DemandaModal demanda={editingDemanda} open={modalOpen} onOpenChange={(open) => { setModalOpen(open); if (!open) setEditingDemanda(null) }} onSave={handleSave} onDelete={handleDelete} />
+        <DemandaModal demanda={editingDemanda} open={modalOpen} onOpenChange={(open) => { setModalOpen(open); if (!open) setEditingDemanda(null) }} onSave={handleSave} onDelete={handleDelete} onSubtaskChange={fetchDemandas} />
         <ImportModal open={importModalOpen} onOpenChange={setImportModalOpen} onImported={fetchDemandas} />
       </div>
     )
@@ -1196,7 +319,7 @@ export default function DemandasPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
             Demandas
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">
             Kanban e timeline de demandas
           </p>
         </div>
@@ -1262,7 +385,7 @@ export default function DemandasPage() {
               <div className="text-2xl font-bold" style={{ color: s.color }}>
                 {s.value}
               </div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mt-0.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mt-0.5">
                 {s.label}
               </div>
             </CardContent>
@@ -1274,7 +397,7 @@ export default function DemandasPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Origem */}
         <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 mr-1">Origem:</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 mr-1">Origem:</span>
           <button
             onClick={() => setFilterOrigin('all')}
             className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
@@ -1303,7 +426,7 @@ export default function DemandasPage() {
 
         {/* Responsavel */}
         <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 mr-1">Responsavel:</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 mr-1">Responsavel:</span>
           <button
             onClick={() => setFilterAssignee('all')}
             className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
@@ -1342,31 +465,57 @@ export default function DemandasPage() {
 
       {/* Kanban / List View */}
       {viewMode === 'kanban' ? (
-        <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+        <Card className="bg-slate-50 dark:bg-slate-800/40 rounded-xl shadow-sm shadow-slate-900/[0.04] border border-slate-200/80 dark:border-slate-700/25">
           <CardContent className="p-4">
-            <button
-              onClick={() => setKanbanOpen(!kanbanOpen)}
-              className="flex items-center gap-2 mb-4 cursor-pointer group"
-            >
-              <ChevronDown className={`h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-transform duration-200 ${kanbanOpen ? '' : '-rotate-90'}`} />
-              <span className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                Kanban
-              </span>
-              <span className="text-xs text-slate-400 font-medium">
-                {filtered.length} demanda{filtered.length !== 1 ? 's' : ''}
-              </span>
-            </button>
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => setKanbanOpen(!kanbanOpen)}
+                className="flex items-center gap-2 cursor-pointer group"
+              >
+                <ChevronDown className={`h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-transform duration-200 ${kanbanOpen ? '' : '-rotate-90'}`} />
+                <span className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                  Kanban
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  {filtered.length} demanda{filtered.length !== 1 ? 's' : ''}
+                </span>
+              </button>
+              {kanbanOpen && (
+                <WipSettingsPopover limits={wipLimits} onSetLimit={setWipLimit} userLimits={wipUserLimits} onSetUserLimit={setWipUserLimit} assignees={assignees} />
+              )}
+            </div>
             {kanbanOpen && (
-              <div className="flex gap-3 overflow-x-auto">
-                {STATUSES.map((s) => (
-                  <KanbanColumn
-                    key={s.id}
-                    status={s}
-                    items={filtered.filter((d) => d.status === s.id)}
+              <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                <div className="flex gap-3 overflow-x-auto">
+                  {KANBAN_STATUSES.map((s, index) => (
+                    <KanbanColumn
+                      key={s.id}
+                      status={s}
+                      items={filtered.filter((d) => d.status === s.id)}
+                      onClickCard={openEdit}
+                      isLast={index === KANBAN_STATUSES.length - 1}
+                      highlightedCardId={highlightedCardId}
+                      wipLimit={getWipLimit(s.id)}
+                    />
+                  ))}
+                </div>
+
+                {/* Bloqueada Lane */}
+                {blockedDemandas.length > 0 && (
+                  <BlockedLane
+                    demandas={blockedDemandas}
+                    kanbanStatuses={KANBAN_STATUSES}
                     onClickCard={openEdit}
+                    highlightedCardId={highlightedCardId}
                   />
-                ))}
-              </div>
+                )}
+
+                <DragOverlay>
+                  {activeDemanda ? (
+                    <KanbanCard d={activeDemanda} onClick={() => {}} isDragOverlay />
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             )}
           </CardContent>
         </Card>
@@ -1388,7 +537,7 @@ export default function DemandasPage() {
       )}
 
       {/* Gantt */}
-      <Card className="bg-blue-50 dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+      <Card className="bg-blue-50 dark:bg-slate-800/40 rounded-xl shadow-sm shadow-slate-900/[0.04] border border-slate-200/80 dark:border-slate-700/25">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-4">
             <button
@@ -1399,7 +548,7 @@ export default function DemandasPage() {
               <span className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Timeline
               </span>
-              <span className="text-[11px] text-slate-500">— demandas ativas</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">— demandas ativas</span>
             </button>
             {timelineOpen && (
               <div className="flex gap-1">
@@ -1421,7 +570,7 @@ export default function DemandasPage() {
           </div>
           {timelineOpen && (
             <div className="max-h-[50vh] overflow-y-auto">
-              <GanttChart demandas={filtered} timeRange={timeRange} />
+              <GanttChart demandas={filtered} timeRange={timeRange} onBarClick={handleBarClick} />
             </div>
           )}
         </CardContent>
@@ -1437,6 +586,7 @@ export default function DemandasPage() {
         }}
         onSave={handleSave}
         onDelete={handleDelete}
+        onSubtaskChange={fetchDemandas}
       />
 
       <ImportModal

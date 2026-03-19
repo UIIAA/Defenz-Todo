@@ -17,6 +17,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
       include: {
         user: { select: { name: true, email: true } },
+        subtasks: { orderBy: { position: 'asc' } },
       },
     })
 
@@ -92,6 +93,18 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Handle previousStatus for bloqueada lane
+    const previousStatusUpdate: Record<string, unknown> = {}
+    if (data.status !== undefined && data.status !== current.status) {
+      if (data.status === 'bloqueada') {
+        // Moving to bloqueada: save where it came from
+        previousStatusUpdate.previousStatus = current.status
+      } else if (current.status === 'bloqueada') {
+        // Unblocking: clear previousStatus
+        previousStatusUpdate.previousStatus = null
+      }
+    }
+
     const demanda = await db.demanda.update({
       where: { id },
       data: {
@@ -104,6 +117,7 @@ export async function PUT(request: NextRequest) {
         ...(data.dateIn !== undefined && { dateIn: new Date(data.dateIn) }),
         ...(data.deadline !== undefined && { deadline: data.deadline ? new Date(data.deadline) : null }),
         ...(data.dateDone !== undefined && { dateDone: data.dateDone ? new Date(data.dateDone) : null }),
+        ...previousStatusUpdate,
         version: { increment: 1 },
       },
     })
