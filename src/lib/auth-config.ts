@@ -26,8 +26,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Email and password required')
         }
 
-        const user = await db.user.findUnique({
-          where: { email: credentials.email }
+        const emailNormalized = credentials.email.toLowerCase().trim()
+
+        const user = await db.user.findFirst({
+          where: { email: { equals: emailNormalized, mode: 'insensitive' } }
         })
 
         if (!user || !user.password) {

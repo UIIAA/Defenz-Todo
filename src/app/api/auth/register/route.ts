@@ -69,6 +69,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const emailNormalized = email.toLowerCase().trim()
+
     if (password.length < 6) {
       return NextResponse.json(
         { error: 'A senha deve ter no minimo 6 caracteres' },
@@ -76,9 +78,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email }
+    // Check if user already exists (case-insensitive)
+    const existingUser = await db.user.findFirst({
+      where: { email: { equals: emailNormalized, mode: 'insensitive' } }
     })
 
     if (existingUser) {
@@ -91,10 +93,10 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Create user with role from invite
+    // Create user with role from invite (email always lowercase)
     const user = await db.user.create({
       data: {
-        email,
+        email: emailNormalized,
         password: hashedPassword,
         name: name || email.split('@')[0],
         role: invite.role || 'user',
