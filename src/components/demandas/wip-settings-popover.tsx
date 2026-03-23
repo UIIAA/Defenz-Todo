@@ -44,7 +44,7 @@ export function WipSettingsPopover({
         <Settings2 className="h-4 w-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-3 w-60">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-3 w-60 max-w-[calc(100vw-3rem)]">
           {hasUserSection && (
             <div className="flex gap-1 mb-3">
               <button

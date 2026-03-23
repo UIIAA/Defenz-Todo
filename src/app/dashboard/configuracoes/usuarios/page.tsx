@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Users, Plus, Copy, Check, Link2, Clock, Mail, Pencil, Trash2, X } from 'lucide-react'
+import { Users, Plus, Copy, Check, Link2, Clock, Mail, Pencil, Trash2, X, KeyRound, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface UserInfo {
@@ -69,6 +69,14 @@ export default function UsuariosPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<UserInfo | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  // Password reset state
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+  const [passwordUser, setPasswordUser] = useState<UserInfo | null>(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [resettingPassword, setResettingPassword] = useState(false)
 
   const userRole = (session?.user as { role?: string })?.role || ''
   const userId = (session?.user as { id?: string })?.id || ''
@@ -213,6 +221,47 @@ export default function UsuariosPage() {
     }
   }
 
+  // Password reset handlers
+  const openPasswordDialog = (u: UserInfo) => {
+    setPasswordUser(u)
+    setNewPassword('')
+    setConfirmPassword('')
+    setShowPassword(false)
+    setPasswordDialogOpen(true)
+  }
+
+  const handleResetPassword = async () => {
+    if (!passwordUser) return
+    if (newPassword.length < 6) {
+      toast.error('Senha deve ter pelo menos 6 caracteres')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas nao coincidem')
+      return
+    }
+    setResettingPassword(true)
+    try {
+      const res = await fetch(`/api/users/${passwordUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Senha redefinida com sucesso')
+        setPasswordDialogOpen(false)
+        setPasswordUser(null)
+      } else {
+        toast.error(data.error || 'Erro ao redefinir senha')
+      }
+    } catch {
+      toast.error('Erro ao redefinir senha')
+    } finally {
+      setResettingPassword(false)
+    }
+  }
+
   const handleRevokeInvite = async (inviteId: string) => {
     try {
       const res = await fetch(`/api/invites?id=${inviteId}`, { method: 'DELETE' })
@@ -247,7 +296,7 @@ export default function UsuariosPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
             <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -284,10 +333,10 @@ export default function UsuariosPage() {
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700">
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Nome</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Email</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Cargo</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Email</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Cargo</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Role</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Data cadastro</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Data cadastro</th>
                     <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Acoes</th>
                   </tr>
                 </thead>
@@ -295,8 +344,8 @@ export default function UsuariosPage() {
                   {users.map((u) => (
                     <tr key={u.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
                       <td className="py-3 px-4 text-sm font-medium text-slate-800 dark:text-slate-200">{u.name || '--'}</td>
-                      <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-300">{u.email}</td>
-                      <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-300">{u.position || '--'}</td>
+                      <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-300 hidden sm:table-cell">{u.email}</td>
+                      <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-300 hidden sm:table-cell">{u.position || '--'}</td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                           u.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
@@ -306,7 +355,7 @@ export default function UsuariosPage() {
                           {u.role}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(u.createdAt)}</td>
+                      <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400 hidden sm:table-cell">{formatDate(u.createdAt)}</td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
@@ -317,6 +366,15 @@ export default function UsuariosPage() {
                             title="Editar usuario"
                           >
                             <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openPasswordDialog(u)}
+                            className="h-8 w-8 p-0 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer"
+                            title="Redefinir senha"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" />
                           </Button>
                           {u.id !== userId && (
                             <Button
@@ -364,9 +422,9 @@ export default function UsuariosPage() {
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Email</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Role</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Status</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Link</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Criado por</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Data criacao</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Link</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Criado por</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Data criacao</th>
                     <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Acoes</th>
                   </tr>
                 </thead>
@@ -393,7 +451,7 @@ export default function UsuariosPage() {
                             {status.label}
                           </span>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 hidden sm:table-cell">
                           {!inv.usedAt && new Date(inv.expiresAt) > new Date() && (
                             <Button
                               variant="ghost"
@@ -406,10 +464,10 @@ export default function UsuariosPage() {
                             </Button>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400">
+                        <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400 hidden sm:table-cell">
                           {inv.createdByUser?.name || inv.createdByUser?.email || '--'}
                         </td>
-                        <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(inv.createdAt)}</td>
+                        <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400 hidden sm:table-cell">{formatDate(inv.createdAt)}</td>
                         <td className="py-3 px-4 text-right">
                           {status.label === 'Pendente' && (
                             <Button
@@ -435,7 +493,7 @@ export default function UsuariosPage() {
 
       {/* Invite Dialog */}
       <Dialog open={dialogOpen} onOpenChange={handleCloseDialog}>
-        <DialogContent className="sm:max-w-[480px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+        <DialogContent className="sm:max-w-[480px] max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <DialogHeader>
             <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
               Convidar Usuario
@@ -536,7 +594,7 @@ export default function UsuariosPage() {
 
       {/* Edit User Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[480px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+        <DialogContent className="sm:max-w-[480px] max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <DialogHeader>
             <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
               Editar Usuario
@@ -607,9 +665,86 @@ export default function UsuariosPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Password Reset Dialog */}
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[420px] max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-amber-600 dark:text-amber-400 text-lg font-bold">
+              Redefinir Senha
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 dark:text-slate-400 text-sm">
+              {passwordUser?.name || passwordUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-slate-600 dark:text-slate-300 font-medium text-sm">Nova senha</Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Minimo 6 caracteres"
+                  className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-600 dark:text-slate-300 font-medium text-sm">Confirmar senha</Label>
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Repita a senha"
+                className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100"
+              />
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-red-500">As senhas nao coincidem</p>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setPasswordDialogOpen(false)}
+                className="flex-1 cursor-pointer"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleResetPassword}
+                disabled={resettingPassword || newPassword.length < 6 || newPassword !== confirmPassword}
+                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
+              >
+                {resettingPassword ? (
+                  <span className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Redefinindo...
+                  </span>
+                ) : (
+                  <>
+                    <KeyRound className="h-4 w-4 mr-1.5" />
+                    Redefinir
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[420px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+        <DialogContent className="sm:max-w-[420px] max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <DialogHeader>
             <DialogTitle className="text-red-600 dark:text-red-400 text-lg font-bold">
               Remover Usuario

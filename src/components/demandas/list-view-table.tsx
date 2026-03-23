@@ -98,18 +98,21 @@ export function ListViewTable({
           <table className="w-full">
             <thead>
               <tr className="bg-slate-100 dark:bg-slate-800">
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    onClick={() => onSort(col.key)}
-                    className="group cursor-pointer px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                  >
-                    <span className="inline-flex items-center gap-1">
-                      {col.label}
-                      <SortIcon field={col.key} sortField={sortField} sortDir={sortDir} />
-                    </span>
-                  </th>
-                ))}
+                {columns.map((col) => {
+                  const hiddenOnMobile = ['origin', 'classification', 'priority', 'assignee'].includes(col.key)
+                  return (
+                    <th
+                      key={col.key}
+                      onClick={() => onSort(col.key)}
+                      className={`group cursor-pointer px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors${hiddenOnMobile ? ' hidden sm:table-cell' : ''}`}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {col.label}
+                        <SortIcon field={col.key} sortField={sortField} sortDir={sortDir} />
+                      </span>
+                    </th>
+                  )
+                })}
               </tr>
             </thead>
             <tbody>
@@ -135,12 +138,12 @@ export function ListViewTable({
                       <td className="px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100 max-w-[300px] truncate">
                         {d.title}
                       </td>
-                      <td className="px-4 py-3 text-sm">
+                      <td className="px-4 py-3 text-sm hidden sm:table-cell">
                         <span className="font-semibold" style={{ color: origin?.color }}>
                           {origin?.label || d.origin}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm">
+                      <td className="px-4 py-3 text-sm hidden sm:table-cell">
                         {d.classification ? (
                           <span
                             className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
@@ -152,7 +155,7 @@ export function ListViewTable({
                           <span className="text-slate-400 italic">--</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm">
+                      <td className="px-4 py-3 text-sm hidden sm:table-cell">
                         <span className="font-semibold" style={{ color: prio?.color }}>
                           {prio?.label || d.priority}
                         </span>
@@ -160,7 +163,7 @@ export function ListViewTable({
                       <td className="px-4 py-3">
                         <StatusBadge status={d.status} />
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 hidden sm:table-cell">
                         {d.assignee || <span className="text-slate-400 italic">--</span>}
                       </td>
                       <td className="px-4 py-3 text-sm">

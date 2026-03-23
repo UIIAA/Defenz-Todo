@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users, Home } from 'lucide-react'
@@ -17,6 +18,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [demandasOpen, setDemandasOpen] = useState(true)
   const [configOpen, setConfigOpen] = useState(false)
@@ -25,6 +27,21 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
   const { data: session, status } = useSession()
+  const prevPathnameRef = useRef(pathname)
+
+  // Mobile: sidebar starts closed
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false)
+    else setSidebarOpen(true)
+  }, [isMobile])
+
+  // Mobile: auto-close sidebar on navigation
+  useEffect(() => {
+    if (isMobile && pathname !== prevPathnameRef.current) {
+      setSidebarOpen(false)
+    }
+    prevPathnameRef.current = pathname
+  }, [pathname, isMobile])
 
   const userRole = (session?.user as { role?: string })?.role || ''
   const isAdmin = ['admin', 'gerencia'].includes(userRole)
@@ -98,8 +115,19 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-sky-50/50 to-blue-100/60 dark:bg-slate-900 transition-colors">
       <div className="flex">
+        {/* Mobile backdrop */}
+        {isMobile && sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 transition-opacity"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
         {/* Sidebar - always dark navy */}
-        <aside className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'} transition-all duration-300 bg-[#1C2536] min-h-screen`}>
+        <aside className={`${
+          isMobile
+            ? `fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+            : `${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'} transition-all duration-300`
+        } bg-[#1C2536] min-h-screen`}>
           <div className="flex flex-col h-full">
             {/* Logo */}
             <div className="p-5 border-b border-white/10">

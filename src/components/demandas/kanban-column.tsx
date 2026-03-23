@@ -29,7 +29,7 @@ export function KanbanColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[180px] rounded-lg p-1 transition-all${!isLast ? ' border-r border-dashed border-slate-200/60 dark:border-slate-600/40 pr-3' : ''}${isOver ? ' ring-2 ring-blue-400/50 bg-blue-50/30 dark:bg-blue-900/10' : ''}${isOverLimit ? ' border-red-300 dark:border-red-700' : ''}`}
+      className={`flex-1 min-w-[140px] sm:min-w-[180px] rounded-lg p-1 transition-all${!isLast ? ' border-r border-dashed border-slate-200/60 dark:border-slate-600/40 pr-3' : ''}${isOver ? ' ring-2 ring-blue-400/50 bg-blue-50/30 dark:bg-blue-900/10' : ''}${isOverLimit ? ' border-red-300 dark:border-red-700' : ''}`}
     >
       <div className="flex items-center gap-2 mb-3 px-1">
         <span className="text-base">{status.icon}</span>

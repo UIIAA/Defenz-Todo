@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { createAuditLog, diffChanges } from '@/lib/audit'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
+import bcrypt from 'bcryptjs'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -16,7 +17,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params
     const body = await request.json()
-    const { name, role, position } = body as { name?: string; role?: string; position?: string }
+    const { name, role, position, password } = body as { name?: string; role?: string; position?: string; password?: string }
 
     const target = await db.user.findUnique({ where: { id } })
     if (!target) {
@@ -37,10 +38,16 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       throw new ApiError('Apenas admin pode promover para admin', 403)
     }
 
+    // Password validation
+    if (password !== undefined && password.length < 6) {
+      throw new ApiError('Senha deve ter pelo menos 6 caracteres', 400)
+    }
+
     const updateData: Record<string, string> = {}
     if (name !== undefined) updateData.name = name
     if (role !== undefined) updateData.role = role
     if (position !== undefined) updateData.position = position
+    if (password) updateData.password = await bcrypt.hash(password, 10)
 
     const updated = await db.user.update({
       where: { id },
@@ -54,13 +61,18 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       ['name', 'role', 'position']
     )
 
+    // Log password change separately (don't log actual values)
+    const auditChanges = password
+      ? { ...(changes || {}), password: { from: '***', to: '(redefinida)' } }
+      : changes
+
     await createAuditLog({
       action: 'UPDATE',
       entityType: 'User',
       entityId: id,
       userId,
       userEmail: (user as { email: string }).email,
-      changes,
+      changes: auditChanges,
     })
 
     return successResponse(updated)

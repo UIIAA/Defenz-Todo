@@ -51,6 +51,7 @@ export function DemandaModal({
   const [modalUsers, setModalUsers] = useState<{ id: string; name: string | null; email: string }[]>([])
   const [subtasks, setSubtasks] = useState<Subtask[]>([])
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
+  const [saving, setSaving] = useState(false)
   const isNew = !demanda
 
   useEffect(() => {
@@ -156,7 +157,7 @@ export function DemandaModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
+      <DialogContent className="sm:max-w-[480px] max-w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
         <DialogHeader>
           <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
             {isNew ? 'Nova Demanda' : 'Editar Demanda'}
@@ -176,7 +177,7 @@ export function DemandaModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Origem
@@ -262,7 +263,7 @@ export function DemandaModal({
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Status
             </label>
-            <div className="flex gap-1 mt-1.5">
+            <div className="grid grid-cols-3 sm:flex gap-1.5 mt-1.5">
               {STATUSES.map((s) => (
                 <button
                   key={s.id}
@@ -283,7 +284,7 @@ export function DemandaModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Data Entrada
@@ -350,7 +351,7 @@ export function DemandaModal({
                     </span>
                     <button
                       onClick={() => deleteSubtask(st.id)}
-                      className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all cursor-pointer"
+                      className="sm:opacity-0 sm:group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all cursor-pointer"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -400,11 +401,19 @@ export function DemandaModal({
             Cancelar
           </Button>
           <Button
-            onClick={() => form.title.trim() && onSave(form)}
-            disabled={!form.title.trim()}
+            onClick={async () => {
+              if (!form.title.trim() || saving) return
+              setSaving(true)
+              try {
+                await onSave(form)
+              } finally {
+                setSaving(false)
+              }
+            }}
+            disabled={!form.title.trim() || saving}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            {isNew ? 'Criar' : 'Salvar'}
+            {saving ? 'Salvando...' : isNew ? 'Criar' : 'Salvar'}
           </Button>
         </div>
       </DialogContent>

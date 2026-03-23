@@ -151,7 +151,7 @@ export function GanttChart({
     return (
       <div key={dem.id} className="flex items-center h-9 border-b border-blue-100/60 dark:border-slate-700/30">
         <div
-          className={`w-[200px] shrink-0 px-2 pl-6 text-[13px] text-slate-800 dark:text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap${onBarClick ? ' cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors' : ''}`}
+          className={`w-[120px] sm:w-[200px] shrink-0 px-2 pl-6 text-[13px] text-slate-800 dark:text-slate-200 font-medium overflow-hidden text-ellipsis whitespace-nowrap${onBarClick ? ' cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors' : ''}`}
           title={dem.title}
           onClick={onBarClick ? () => onBarClick(dem.id) : undefined}
         >
@@ -194,10 +194,10 @@ export function GanttChart({
 
   return (
     <div className="overflow-x-auto relative w-full">
-      <div className="relative min-w-[500px]">
+      <div className="relative min-w-[360px] sm:min-w-[500px]">
         {/* Tick headers */}
         <div className="flex border-b border-blue-100/60 dark:border-slate-700/30 mb-1">
-          <div className="w-[200px] shrink-0 p-1.5" />
+          <div className="w-[120px] sm:w-[200px] shrink-0 p-1.5" />
           <div className="flex-1 relative h-7">
             {ticks.map((t, i) => {
               const pos = ((t.getTime() - minDate.getTime()) / totalMs) * 100
@@ -245,7 +245,7 @@ export function GanttChart({
                 style={{ backgroundColor: group.color + '10' }}
                 onClick={() => toggleGroup(group.id)}
               >
-                <div className="w-[200px] shrink-0 px-2 flex items-center gap-1.5">
+                <div className="w-[120px] sm:w-[200px] shrink-0 px-2 flex items-center gap-1.5">
                   {isCollapsed ? (
                     <ChevronRight className="h-3.5 w-3.5" style={{ color: group.color }} />
                   ) : (

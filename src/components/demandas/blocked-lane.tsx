@@ -24,7 +24,7 @@ function BlockedDropZone({
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[180px] min-h-[60px] rounded-lg p-1 transition-all ${
+      className={`flex-1 min-w-[140px] sm:min-w-[180px] min-h-[60px] rounded-lg p-1 transition-all ${
         isOver
           ? 'ring-2 ring-red-400/50 bg-red-50/30 dark:bg-red-900/10'
           : isEmpty

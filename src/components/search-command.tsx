@@ -75,7 +75,7 @@ export function SearchCommand({
       onOpenChange={setOpen}
       title="Buscar"
       description="Busque demandas ou navegue pelo sistema"
-      className="rounded-xl shadow-2xl max-w-lg mx-auto !top-[30%] !translate-y-0"
+      className="rounded-xl shadow-2xl max-w-[calc(100vw-2rem)] sm:max-w-lg mx-auto !top-[30%] !translate-y-0"
       showCloseButton={false}
     >
       <CommandInput placeholder="Buscar demandas, paginas..." />

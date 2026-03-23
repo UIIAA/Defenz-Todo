@@ -293,8 +293,8 @@ export default function DemandasPage() {
       <div className="p-6 max-w-full overflow-hidden">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Demandas</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">Kanban e timeline de demandas</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Demandas</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-200 mt-0.5 dark:drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Kanban e timeline de demandas</p>
           </div>
         </div>
         <Card className="bg-white dark:bg-slate-800 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.04)] border border-slate-200 dark:border-slate-700">
@@ -317,16 +317,16 @@ export default function DemandasPage() {
   return (
     <div className="p-6 space-y-5 max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
             Demandas
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">
+          <p className="text-sm text-slate-600 dark:text-slate-200 mt-0.5 dark:drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
             Kanban e timeline de demandas
           </p>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           {/* View Toggle */}
           <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
             <button
@@ -357,13 +357,13 @@ export default function DemandasPage() {
             onClick={() => setImportModalOpen(true)}
             className="border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            <Upload className="h-4 w-4 mr-1.5" />
-            Importar
+            <Upload className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Importar</span>
             <kbd className="ml-1.5 text-[10px] bg-slate-200 dark:bg-slate-600 px-1 py-0.5 rounded text-slate-500 dark:text-slate-300 hidden sm:inline">I</kbd>
           </Button>
           <Button onClick={openNew} className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Plus className="h-4 w-4 mr-1.5" />
-            Nova Demanda
+            <Plus className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Nova Demanda</span>
             <kbd className="ml-1.5 text-[10px] bg-white/20 px-1 py-0.5 rounded hidden sm:inline">N</kbd>
           </Button>
         </div>
@@ -552,7 +552,7 @@ export default function DemandasPage() {
               <span className="text-[11px] text-slate-500 dark:text-slate-400">— demandas ativas</span>
             </button>
             {timelineOpen && (
-              <div className="flex gap-1">
+              <div className="flex gap-1 flex-wrap">
                 {(['hours', 'days', 'weeks', 'months'] as TimeRange[]).map((range) => (
                   <button
                     key={range}

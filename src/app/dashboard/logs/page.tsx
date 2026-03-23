@@ -167,9 +167,9 @@ export default function LogsPage() {
                   <tr className="border-b border-slate-200 dark:border-slate-700/20">
                     <th className="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Data</th>
                     <th className="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Acao</th>
-                    <th className="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo</th>
+                    <th className="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">Tipo</th>
                     <th className="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Usuario</th>
-                    <th className="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Alteracoes</th>
+                    <th className="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">Alteracoes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -190,11 +190,11 @@ export default function LogsPage() {
                             {actionInfo.label}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-xs font-medium">{log.entityType}</td>
+                        <td className="py-3 px-3 text-xs font-medium hidden sm:table-cell">{log.entityType}</td>
                         <td className="py-3 px-3 text-xs">
                           <span className="font-medium">{log.user.name || log.userEmail}</span>
                         </td>
-                        <td className="py-3 px-3 max-w-[300px]">
+                        <td className="py-3 px-3 max-w-[300px] hidden sm:table-cell">
                           <ChangesDisplay changes={log.changes} />
                         </td>
                       </tr>

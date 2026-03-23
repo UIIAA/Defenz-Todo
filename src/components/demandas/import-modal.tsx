@@ -202,7 +202,7 @@ export function ImportModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
+      <DialogContent className="sm:max-w-[520px] max-w-[calc(100vw-2rem)] bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
         <DialogHeader>
           <DialogTitle className="text-blue-600 dark:text-blue-400 text-lg font-bold">
             Importar Demandas
@@ -236,7 +236,7 @@ export function ImportModal({
         </div>
 
         {/* Default origin/priority */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Origem padrao
