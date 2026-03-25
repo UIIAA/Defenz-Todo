@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Plus, Upload, ChevronDown, LayoutGrid, List, ClipboardList } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Plus, Upload, ChevronDown, LayoutGrid, List, ClipboardList, X } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { toast } from 'sonner'
@@ -273,6 +275,22 @@ export default function DemandasPage() {
     concluidas: filtered.filter((d) => d.status === 'concluida').length,
   }
 
+  const activeFilterCount = [
+    filterOrigin !== 'all',
+    filterAssignee !== 'all',
+    filterClassification !== 'all',
+    filterPeriod !== 'all',
+  ].filter(Boolean).length
+
+  const clearAllFilters = () => {
+    setFilterOrigin('all')
+    setFilterAssignee('all')
+    setFilterClassification('all')
+    setFilterPeriod('all')
+    setCustomFrom('')
+    setCustomTo('')
+  }
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -423,143 +441,105 @@ export default function DemandasPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-wrap gap-3 items-center">
         {/* Origem */}
-        <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mr-1">Origem:</span>
-          <button
-            onClick={() => setFilterOrigin('all')}
-            className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
-              filterOrigin === 'all'
-                ? 'bg-blue-500 text-white shadow-sm font-semibold'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
-            }`}
-          >
-            Todas
-          </button>
-          {ORIGINS.map((o) => (
-            <button
-              key={o.id}
-              onClick={() => setFilterOrigin(o.id)}
-              className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
-                filterOrigin === o.id
-                  ? 'shadow-sm font-semibold'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
-              }`}
-              style={filterOrigin === o.id ? { background: o.color, color: 'white' } : undefined}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
+        <Select value={filterOrigin} onValueChange={setFilterOrigin}>
+          <SelectTrigger className="w-[140px] h-9 text-xs">
+            <SelectValue placeholder="Origem" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas origens</SelectItem>
+            {ORIGINS.map((o) => (
+              <SelectItem key={o.id} value={o.id}>
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: o.color }} />
+                  {o.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Responsavel */}
-        <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mr-1">Responsavel:</span>
-          <button
-            onClick={() => setFilterAssignee('all')}
-            className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
-              filterAssignee === 'all'
-                ? 'bg-blue-500 text-white shadow-sm font-semibold'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
-            }`}
-          >
-            Todos
-          </button>
-          <button
-            onClick={() => setFilterAssignee('__mine__')}
-            className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
-              filterAssignee === '__mine__'
-                ? 'bg-blue-500 text-white shadow-sm font-semibold'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
-            }`}
-          >
-            Minhas
-          </button>
-          {assignees.map((name) => (
-            <button
-              key={name}
-              onClick={() => setFilterAssignee(name)}
-              className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
-                filterAssignee === name
-                  ? 'bg-slate-700 text-white shadow-sm font-semibold dark:bg-slate-300 dark:text-slate-900'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
-              }`}
-            >
-              {name}
-            </button>
-          ))}
-        </div>
+        <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+          <SelectTrigger className="w-[180px] h-9 text-xs">
+            <SelectValue placeholder="Responsavel" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="__mine__">Minhas</SelectItem>
+            {assignees.map((name) => (
+              <SelectItem key={name} value={name}>{name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Classificacao */}
-        <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mr-1">Classificacao:</span>
-          <button
-            onClick={() => setFilterClassification('all')}
-            className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
-              filterClassification === 'all'
-                ? 'bg-blue-500 text-white shadow-sm font-semibold'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
-            }`}
-          >
-            Todas
-          </button>
-          {CLASSIFICATIONS.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setFilterClassification(c.id)}
-              className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
-                filterClassification === c.id
-                  ? 'shadow-sm font-semibold'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
-              }`}
-              style={filterClassification === c.id ? { background: c.color, color: 'white' } : undefined}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
+        <Select value={filterClassification} onValueChange={setFilterClassification}>
+          <SelectTrigger className="w-[170px] h-9 text-xs">
+            <SelectValue placeholder="Classificacao" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas classificacoes</SelectItem>
+            {CLASSIFICATIONS.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: c.color }} />
+                  {c.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Periodo */}
-        <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mr-1">Periodo:</span>
-          {([
-            { id: 'all', label: 'Todas' },
-            { id: 'this_week', label: 'Esta semana' },
-            { id: 'last_week', label: 'Semana passada' },
-            { id: 'this_month', label: 'Este mes' },
-            { id: 'custom', label: 'Personalizado' },
-          ] as const).map((p) => (
+        <Select value={filterPeriod} onValueChange={(v) => setFilterPeriod(v as PeriodFilter)}>
+          <SelectTrigger className="w-[160px] h-9 text-xs">
+            <SelectValue placeholder="Periodo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todo periodo</SelectItem>
+            <SelectItem value="this_week">Esta semana</SelectItem>
+            <SelectItem value="last_week">Semana passada</SelectItem>
+            <SelectItem value="this_month">Este mes</SelectItem>
+            <SelectItem value="custom">Personalizado</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Date inputs for custom period */}
+        {filterPeriod === 'custom' && (
+          <>
+            <input
+              type="date"
+              value={customFrom}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs px-2 py-1.5 h-9"
+            />
+            <span className="text-xs text-slate-500">ate</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs px-2 py-1.5 h-9"
+            />
+          </>
+        )}
+
+        {/* Active filters indicator + Clear */}
+        {activeFilterCount > 0 && (
+          <>
+            <Badge variant="secondary" className="text-xs h-7">
+              {activeFilterCount} filtro{activeFilterCount > 1 ? 's' : ''}
+            </Badge>
             <button
-              key={p.id}
-              onClick={() => setFilterPeriod(p.id)}
-              className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
-                filterPeriod === p.id
-                  ? 'bg-blue-500 text-white shadow-sm font-semibold'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
-              }`}
+              onClick={clearAllFilters}
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-500 transition-colors cursor-pointer"
             >
-              {p.label}
+              <X className="h-3 w-3" />
+              Limpar
             </button>
-          ))}
-          {filterPeriod === 'custom' && (
-            <>
-              <input
-                type="date"
-                value={customFrom}
-                onChange={(e) => setCustomFrom(e.target.value)}
-                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs px-2 py-1.5"
-              />
-              <span className="text-xs text-slate-500">ate</span>
-              <input
-                type="date"
-                value={customTo}
-                onChange={(e) => setCustomTo(e.target.value)}
-                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs px-2 py-1.5"
-              />
-            </>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {/* Kanban / List View */}
