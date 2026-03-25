@@ -23,6 +23,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Users, Plus, Copy, Check, Link2, Clock, Mail, Pencil, Trash2, X, KeyRound, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatDate } from '@/lib/date'
 
 interface UserInfo {
   id: string
@@ -283,13 +284,6 @@ export default function UsuariosPage() {
     return { label: 'Pendente', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' }
   }
 
-  const formatDate = (d: string) => {
-    return new Date(d).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    })
-  }
 
   if (!isAdmin) return null
 

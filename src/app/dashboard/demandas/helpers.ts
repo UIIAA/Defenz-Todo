@@ -36,13 +36,9 @@ export const CLASSIFICATIONS: Classification[] = [
   { id: 'estrategico', label: 'Estrategico', color: '#ef4444' },
 ]
 
-export const toDateStr = (d: string | Date | null): string => {
-  if (!d) return ''
-  const date = typeof d === 'string' ? new Date(d) : d
-  return date.toISOString().split('T')[0]
-}
-
-export const todayStr = () => new Date().toISOString().split('T')[0]
+import { toDateStr as _toDateStr, todayStr as _todayStr, getWeekRange, getLastWeekRange, getMonthRange } from '@/lib/date'
+export const toDateStr = _toDateStr
+export const todayStr = _todayStr
 
 export interface Subtask {
   id: string
@@ -63,12 +59,75 @@ export interface Demanda {
   assignee: string | null
   previousStatus?: string | null
   dateIn: string
+  dateStarted: string | null
   deadline: string | null
   dateDone: string | null
   subtasks?: Subtask[]
 }
 
 export type DemandaForm = Omit<Demanda, 'id'> & { id?: string }
+
+export function filterByAssignee(
+  demandas: Demanda[],
+  filterAssignee: string,
+  userName: string,
+  userEmail: string
+): Demanda[] {
+  if (filterAssignee === 'all') return demandas
+  if (filterAssignee === '__mine__') {
+    const nameLower = userName.toLowerCase()
+    const emailLower = userEmail.toLowerCase()
+    return demandas.filter((d) => {
+      const assigneeLower = d.assignee?.toLowerCase() || ''
+      return (
+        (nameLower && assigneeLower === nameLower) ||
+        (emailLower && assigneeLower === emailLower)
+      )
+    })
+  }
+  return demandas.filter(
+    (d) => d.assignee?.toLowerCase() === filterAssignee.toLowerCase()
+  )
+}
+
+export type PeriodFilter = 'all' | 'this_week' | 'last_week' | 'this_month' | 'custom'
+
+export function filterByPeriod(
+  demandas: Demanda[],
+  period: PeriodFilter,
+  customFrom?: string,
+  customTo?: string
+): Demanda[] {
+  if (period === 'all') return demandas
+
+  let from: string
+  let to: string
+
+  if (period === 'custom') {
+    from = customFrom || ''
+    to = customTo || ''
+  } else if (period === 'this_week') {
+    const range = getWeekRange()
+    from = range.from
+    to = range.to
+  } else if (period === 'last_week') {
+    const range = getLastWeekRange()
+    from = range.from
+    to = range.to
+  } else {
+    const range = getMonthRange()
+    from = range.from
+    to = range.to
+  }
+
+  return demandas.filter((d) => {
+    const isConcluida = d.status === 'concluida'
+    const dateField = isConcluida ? d.dateDone : d.dateIn
+    if (!dateField) return false
+    const dateStr = dateField.slice(0, 10) // YYYY-MM-DD
+    return dateStr >= from && dateStr <= to
+  })
+}
 
 export const emptyForm = (): DemandaForm => ({
   title: '',
@@ -80,6 +139,7 @@ export const emptyForm = (): DemandaForm => ({
   assignee: null,
   previousStatus: null,
   dateIn: todayStr(),
+  dateStarted: null,
   deadline: '',
   dateDone: null,
 })

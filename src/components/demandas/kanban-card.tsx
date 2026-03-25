@@ -1,6 +1,7 @@
 'use client'
 
 import { useDraggable } from '@dnd-kit/core'
+import { formatDateShort } from '@/lib/date'
 import {
   ORIGINS,
   PRIORITIES,
@@ -88,7 +89,7 @@ export function KanbanCard({
         {d.deadline && (
           <span className={`text-[10px] ${isOverdue ? 'text-blue-500 dark:text-blue-400' : 'text-slate-500'}`}>
             {isOverdue ? '⚠ ' : ''}
-            {new Date(d.deadline).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+            {formatDateShort(d.deadline)}
           </span>
         )}
       </div>

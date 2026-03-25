@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Loader2, ChevronLeft, ChevronRight, FileText, Plus, Pencil, Trash2, Upload } from 'lucide-react'
+import { formatDateTime } from '@/lib/date'
 
 interface AuditLog {
   id: string
@@ -179,10 +180,7 @@ export default function LogsPage() {
                     return (
                       <tr key={log.id} className="border-b border-slate-100 dark:border-blue-900/10 hover:bg-blue-50/30 dark:hover:bg-white/5 transition-colors">
                         <td className="py-3 px-3 whitespace-nowrap text-xs text-muted-foreground font-mono">
-                          {new Date(log.createdAt).toLocaleDateString('pt-BR', {
-                            day: '2-digit', month: '2-digit', year: '2-digit',
-                            hour: '2-digit', minute: '2-digit',
-                          })}
+                          {formatDateTime(log.createdAt)}
                         </td>
                         <td className="py-3 px-3">
                           <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold ${actionInfo.color}`}>

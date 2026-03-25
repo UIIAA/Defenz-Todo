@@ -28,12 +28,12 @@ export function GanttChart({
   timeRange: TimeRange
   onBarClick?: (demandaId: string) => void
 }) {
-  const activeDemandas = demandas.filter((d) => d.status !== 'concluida')
+  const activeDemandas = demandas.filter((d) => d.status === 'selecionada' || d.status === 'em_andamento')
 
   if (activeDemandas.length === 0) {
     return (
       <div className="text-slate-500 text-sm text-center py-5">
-        Nenhuma demanda ativa para exibir no Gantt
+        Nenhuma demanda selecionada ou em andamento
       </div>
     )
   }
@@ -94,14 +94,17 @@ export function GanttChart({
     })
   }
 
-  // Filter demandas that overlap with visible window, sorted by dateIn ascending
+  // Filter demandas that overlap with visible window, sorted by start date ascending
+  const getStartDate = (dem: Demanda) =>
+    (dem.status === 'em_andamento' && dem.dateStarted) ? dem.dateStarted : dem.dateIn
+
   const visibleDemandas = activeDemandas
     .filter((dem) => {
-      const start = new Date(dem.dateIn).getTime()
+      const start = new Date(getStartDate(dem)).getTime()
       const end = dem.deadline ? new Date(dem.deadline).getTime() : start + DAY_MS * 7
       return end >= minDate.getTime() && start <= maxDate.getTime()
     })
-    .sort((a, b) => new Date(a.dateIn).getTime() - new Date(b.dateIn).getTime())
+    .sort((a, b) => new Date(getStartDate(a)).getTime() - new Date(getStartDate(b)).getTime())
 
   if (visibleDemandas.length === 0) {
     return (
@@ -134,7 +137,7 @@ export function GanttChart({
 
   const renderBar = (dem: typeof visibleDemandas[0]) => {
     const origin = ORIGINS.find((o) => o.id === dem.origin)
-    const startDate = new Date(dem.dateIn)
+    const startDate = new Date(getStartDate(dem))
     const endDate = dem.deadline
       ? new Date(dem.deadline)
       : new Date(startDate.getTime() + DAY_MS * 7)
@@ -207,7 +210,7 @@ export function GanttChart({
                   className="absolute text-[10px] text-slate-600 dark:text-slate-400 font-semibold whitespace-nowrap"
                   style={{ left: `${pos}%`, top: 6 }}
                 >
-                  {t.toLocaleDateString('pt-BR', config.tickFormat)}
+                  {t.toLocaleDateString('pt-BR', { ...config.tickFormat, timeZone: 'America/Sao_Paulo' })}
                 </span>
               )
             })}

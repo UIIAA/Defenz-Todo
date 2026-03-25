@@ -6,8 +6,9 @@ describe('toDateStr', () => {
     expect(toDateStr('2025-01-15T12:00:00.000Z')).toBe('2025-01-15')
   })
 
-  it('converts Date object', () => {
-    expect(toDateStr(new Date('2025-03-01'))).toBe('2025-03-01')
+  it('converts Date object (SP timezone)', () => {
+    // new Date('2025-03-01T12:00:00Z') is noon UTC = 9am SP = still March 1st
+    expect(toDateStr(new Date('2025-03-01T12:00:00Z'))).toBe('2025-03-01')
   })
 
   it('returns empty string for null', () => {
@@ -16,10 +17,9 @@ describe('toDateStr', () => {
 })
 
 describe('todayStr', () => {
-  it('returns today formatted as YYYY-MM-DD', () => {
+  it('returns today formatted as YYYY-MM-DD in SP timezone', () => {
     const result = todayStr()
     expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/)
-    expect(result).toBe(new Date().toISOString().split('T')[0])
   })
 })
 

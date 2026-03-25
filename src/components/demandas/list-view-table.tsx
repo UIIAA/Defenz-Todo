@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowUp, ArrowDown } from 'lucide-react'
 import { StatusBadge } from '@/components/status-badge'
+import { formatDateShortYear } from '@/lib/date'
 import {
   ORIGINS,
   PRIORITIES,
@@ -170,7 +171,7 @@ export function ListViewTable({
                         {d.deadline ? (
                           <span className={isOverdue ? 'text-red-500 font-semibold' : 'text-slate-600 dark:text-slate-300'}>
                             {isOverdue && '! '}
-                            {new Date(d.deadline).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {formatDateShortYear(d.deadline)}
                           </span>
                         ) : (
                           <span className="text-slate-400 italic">--</span>

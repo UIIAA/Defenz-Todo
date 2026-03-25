@@ -5,7 +5,7 @@ import { handleApiError, createdResponse, successResponse, ApiError } from '@/li
 import { createDemandaSchema, updateDemandaSchema } from '@/lib/validations/demanda'
 import { createAuditLog, diffChanges } from '@/lib/audit'
 
-const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'assignee', 'deadline', 'dateDone']
+const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'assignee', 'deadline', 'dateDone', 'dateStarted']
 
 export async function GET() {
   try {
@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
         classification: data.classification || null,
         assignee: data.assignee || null,
         dateIn: data.dateIn ? new Date(data.dateIn) : new Date(),
+        dateStarted: data.status === 'em_andamento' ? new Date() : null,
         deadline: data.deadline ? new Date(data.deadline) : null,
         dateDone: data.dateDone ? new Date(data.dateDone) : null,
         userId: user.id,
@@ -106,11 +107,26 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Lifecycle dates: dateStarted + reopen logic
+    const lifecycleUpdate: Record<string, unknown> = {}
+
+    if (data.status === 'em_andamento' && current.dateStarted === null) {
+      lifecycleUpdate.dateStarted = new Date()
+    }
+
+    if (current.status === 'concluida' && data.status && data.status !== 'concluida') {
+      lifecycleUpdate.dateDone = null
+      const dateStr = new Date().toLocaleDateString('pt-BR', {
+        timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric'
+      })
+      lifecycleUpdate.description = (current.description || '') + `\n\n* Reaberta em ${dateStr}`
+    }
+
     const demanda = await db.demanda.update({
       where: { id },
       data: {
         ...(data.title !== undefined && { title: data.title }),
-        ...(data.description !== undefined && { description: data.description }),
+        ...(data.description !== undefined && !lifecycleUpdate.description && { description: data.description }),
         ...(data.origin !== undefined && { origin: data.origin }),
         ...(data.status !== undefined && { status: data.status }),
         ...(data.priority !== undefined && { priority: data.priority }),
@@ -118,8 +134,9 @@ export async function PUT(request: NextRequest) {
         ...(data.assignee !== undefined && { assignee: data.assignee || null }),
         ...(data.dateIn !== undefined && { dateIn: new Date(data.dateIn) }),
         ...(data.deadline !== undefined && { deadline: data.deadline ? new Date(data.deadline) : null }),
-        ...(data.dateDone !== undefined && { dateDone: data.dateDone ? new Date(data.dateDone) : null }),
+        ...(data.dateDone !== undefined && !('dateDone' in lifecycleUpdate) && { dateDone: data.dateDone ? new Date(data.dateDone) : null }),
         ...previousStatusUpdate,
+        ...lifecycleUpdate,
         version: { increment: 1 },
       },
     })

@@ -715,6 +715,7 @@ model Demanda {
   assignee       String?   // Pessoa designada para a demanda
   previousStatus String?   // Status anterior quando bloqueada (para lane horizontal)
   dateIn         DateTime  @default(now())
+  dateStarted    DateTime?
   deadline    DateTime?
   dateDone    DateTime?
   version     Int       @default(1) // Optimistic locking

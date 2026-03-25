@@ -11,11 +11,15 @@ import { toast } from 'sonner'
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useSensor, useSensors, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core'
 import {
   ORIGINS,
+  CLASSIFICATIONS,
   STATUSES,
   toDateStr,
   todayStr,
+  filterByAssignee,
+  filterByPeriod,
   type Demanda,
   type DemandaForm,
+  type PeriodFilter,
 } from './helpers'
 
 import { ImportModal } from '@/components/demandas/import-modal'
@@ -36,6 +40,7 @@ export default function DemandasPage() {
   const [importModalOpen, setImportModalOpen] = useState(false)
   const [editingDemanda, setEditingDemanda] = useState<Demanda | null>(null)
   const [filterOrigin, setFilterOrigin] = useState('all')
+  const [filterClassification, setFilterClassification] = useState('all')
   const [filterAssignee, setFilterAssignee] = useState('all')
   const [timeRange, setTimeRange] = useState<TimeRange>('weeks')
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
@@ -43,6 +48,9 @@ export default function DemandasPage() {
   const [timelineOpen, setTimelineOpen] = useState(true)
   const [sortField, setSortField] = useState<SortableField>('title')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [filterPeriod, setFilterPeriod] = useState<PeriodFilter>('all')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
   const [highlightedCardId, setHighlightedCardId] = useState<string | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const { limits: wipLimits, setLimit: setWipLimit, getLimit: getWipLimit, userLimits: wipUserLimits, setUserLimit: setWipUserLimit, getUserLimit: getWipUserLimit } = useWipLimits()
@@ -179,6 +187,9 @@ export default function DemandasPage() {
       }
     }
 
+    // Detect reopen (concluida -> any other status)
+    const isReopen = demanda.status === 'concluida' && newStatus !== 'concluida'
+
     // Optimistic update
     const updatedDemandas = demandas.map((d) => {
       if (d.id !== demandaId) return d
@@ -186,10 +197,15 @@ export default function DemandasPage() {
         ...d,
         status: newStatus,
         previousStatus: isBlockedZone ? previousStatus : (newStatus !== 'bloqueada' ? null : d.previousStatus),
-        dateDone: newStatus === 'concluida' ? todayStr() : null,
+        dateStarted: (newStatus === 'em_andamento' && !d.dateStarted) ? todayStr() : d.dateStarted,
+        dateDone: newStatus === 'concluida' ? todayStr() : (isReopen ? null : d.dateDone),
       }
     })
     setDemandas(updatedDemandas)
+
+    if (isReopen) {
+      toast.info('Demanda reaberta — registrado no historico')
+    }
 
     // Persist to API
     try {
@@ -206,6 +222,9 @@ export default function DemandasPage() {
       if (!json.success) {
         setDemandas(demandas)
         toast.error('Erro ao mover demanda')
+      } else if (isReopen) {
+        // Re-fetch to sync server-side description changes
+        fetchDemandas()
       }
     } catch {
       setDemandas(demandas)
@@ -223,28 +242,35 @@ export default function DemandasPage() {
   }, [demandas])
 
   const userName = session?.user?.name || ''
+  const userEmail = session?.user?.email || ''
 
-  const filtered = demandas
-    .filter((d) => filterOrigin === 'all' || d.origin === filterOrigin)
-    .filter((d) => {
-      if (filterAssignee === 'all') return true
-      if (filterAssignee === '__mine__') return d.assignee === userName
-      return d.assignee === filterAssignee
-    })
+  const filtered = filterByPeriod(
+    filterByAssignee(
+      demandas
+        .filter((d) => filterOrigin === 'all' || d.origin === filterOrigin)
+        .filter((d) => filterClassification === 'all' || d.classification === filterClassification),
+      filterAssignee,
+      userName,
+      userEmail
+    ),
+    filterPeriod,
+    customFrom,
+    customTo
+  )
 
   // Bloqueada lane: separate blocked from normal columns
   const KANBAN_STATUSES = STATUSES.filter((s) => s.id !== 'bloqueada')
   const blockedDemandas = filtered.filter((d) => d.status === 'bloqueada')
 
   const stats = {
-    total: demandas.length,
-    ativas: demandas.filter((d) => d.status === 'em_andamento').length,
-    selecionadas: demandas.filter((d) => d.status === 'selecionada').length,
-    pendentes: demandas.filter((d) => d.status === 'solicitada').length,
-    atrasadas: demandas.filter(
+    total: filtered.length,
+    ativas: filtered.filter((d) => d.status === 'em_andamento').length,
+    selecionadas: filtered.filter((d) => d.status === 'selecionada').length,
+    pendentes: filtered.filter((d) => d.status === 'solicitada').length,
+    atrasadas: filtered.filter(
       (d) => d.deadline && toDateStr(d.deadline) < todayStr() && d.status !== 'concluida'
     ).length,
-    concluidas: demandas.filter((d) => d.status === 'concluida').length,
+    concluidas: filtered.filter((d) => d.status === 'concluida').length,
   }
 
   // Keyboard shortcuts
@@ -463,6 +489,76 @@ export default function DemandasPage() {
               {name}
             </button>
           ))}
+        </div>
+
+        {/* Classificacao */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mr-1">Classificacao:</span>
+          <button
+            onClick={() => setFilterClassification('all')}
+            className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
+              filterClassification === 'all'
+                ? 'bg-blue-500 text-white shadow-sm font-semibold'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
+            }`}
+          >
+            Todas
+          </button>
+          {CLASSIFICATIONS.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setFilterClassification(c.id)}
+              className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
+                filterClassification === c.id
+                  ? 'shadow-sm font-semibold'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
+              }`}
+              style={filterClassification === c.id ? { background: c.color, color: 'white' } : undefined}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Periodo */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mr-1">Periodo:</span>
+          {([
+            { id: 'all', label: 'Todas' },
+            { id: 'this_week', label: 'Esta semana' },
+            { id: 'last_week', label: 'Semana passada' },
+            { id: 'this_month', label: 'Este mes' },
+            { id: 'custom', label: 'Personalizado' },
+          ] as const).map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setFilterPeriod(p.id)}
+              className={`rounded-full px-3 py-1.5 text-xs transition-colors cursor-pointer ${
+                filterPeriod === p.id
+                  ? 'bg-blue-500 text-white shadow-sm font-semibold'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+          {filterPeriod === 'custom' && (
+            <>
+              <input
+                type="date"
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs px-2 py-1.5"
+              />
+              <span className="text-xs text-slate-500">ate</span>
+              <input
+                type="date"
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs px-2 py-1.5"
+              />
+            </>
+          )}
         </div>
       </div>
 

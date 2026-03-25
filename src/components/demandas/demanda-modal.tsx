@@ -75,6 +75,7 @@ export function DemandaModal({
         classification: demanda.classification || null,
         assignee: demanda.assignee || '',
         dateIn: toDateStr(demanda.dateIn),
+        dateStarted: demanda.dateStarted || null,
         deadline: toDateStr(demanda.deadline),
         dateDone: demanda.dateDone ? toDateStr(demanda.dateDone) : null,
       })
@@ -308,6 +309,12 @@ export function DemandaModal({
               />
             </div>
           </div>
+
+          {!isNew && demanda?.dateStarted && (
+            <p className="text-xs text-slate-400 mt-1">
+              Iniciada em {toDateStr(demanda.dateStarted)}
+            </p>
+          )}
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
