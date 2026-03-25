@@ -86,12 +86,24 @@ export function KanbanCard({
         <span className="text-[11px] font-semibold" style={{ color: origin?.color }}>
           {origin?.label}
         </span>
-        {d.deadline && (
-          <span className={`text-[10px] ${isOverdue ? 'text-blue-500 dark:text-blue-400' : 'text-slate-500'}`}>
-            {isOverdue ? '⚠ ' : ''}
-            {formatDateShort(d.deadline)}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {d.status === 'em_andamento' && d.dateStarted && (
+            <span className="text-[9px] text-slate-400" title="Iniciada em">
+              ⚡ {formatDateShort(d.dateStarted)}
+            </span>
+          )}
+          {d.status === 'concluida' && d.dateDone && (
+            <span className="text-[9px] text-emerald-500" title="Concluida em">
+              ✅ {formatDateShort(d.dateDone)}
+            </span>
+          )}
+          {d.deadline && (
+            <span className={`text-[10px] ${isOverdue ? 'text-blue-500 dark:text-blue-400' : 'text-slate-500'}`}>
+              {isOverdue ? '⚠ ' : ''}
+              {formatDateShort(d.deadline)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )

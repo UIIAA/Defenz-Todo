@@ -310,10 +310,19 @@ export function DemandaModal({
             </div>
           </div>
 
-          {!isNew && demanda?.dateStarted && (
-            <p className="text-xs text-slate-400 mt-1">
-              Iniciada em {toDateStr(demanda.dateStarted)}
-            </p>
+          {/* Lifecycle dates */}
+          {!isNew && (demanda?.dateIn || demanda?.dateStarted || demanda?.dateDone) && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 mt-1">
+              {demanda?.dateIn && (
+                <span>📥 Criada: {toDateStr(demanda.dateIn)}</span>
+              )}
+              {demanda?.dateStarted && (
+                <span>⚡ Iniciada: {toDateStr(demanda.dateStarted)}</span>
+              )}
+              {demanda?.dateDone && (
+                <span>✅ Concluida: {toDateStr(demanda.dateDone)}</span>
+              )}
+            </div>
           )}
 
           <div>
