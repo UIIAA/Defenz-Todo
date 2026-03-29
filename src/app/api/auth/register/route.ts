@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Create user with role from invite (email always lowercase)
+    // Create user with role and company from invite (email always lowercase)
     const user = await db.user.create({
       data: {
         email: emailNormalized,
@@ -101,8 +101,20 @@ export async function POST(request: NextRequest) {
         name: name || email.split('@')[0],
         role: invite.role || 'user',
         position: position || null,
+        companyId: invite.companyId || null,
+        department: invite.department || null,
       }
     })
+
+    // Create UserTeam entries from invite teamIds
+    if (invite.teamIds && invite.teamIds.length > 0) {
+      await db.userTeam.createMany({
+        data: invite.teamIds.map((teamId) => ({
+          userId: user.id,
+          teamId,
+        })),
+      })
+    }
 
     // Mark token as used
     await db.inviteToken.update({

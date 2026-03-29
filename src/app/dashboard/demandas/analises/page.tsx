@@ -36,7 +36,10 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
+import { useSession } from 'next-auth/react'
 import { toDateStr, todayStr, CLASSIFICATIONS } from '../helpers'
+import { TeamSelector } from '@/components/team-selector'
+import { CompanySelector } from '@/components/company-selector'
 
 interface Demanda {
   id: string
@@ -61,16 +64,33 @@ const ORIGINS = [
 ]
 
 export default function DemandasAnalisesPage() {
+  const { data: session } = useSession()
   const [allDemandas, setAllDemandas] = useState<Demanda[]>([])
   const [filterAssignee, setFilterAssignee] = useState('all')
   const [filterOrigin, setFilterOrigin] = useState('all')
   const [filterPriority, setFilterPriority] = useState('all')
   const [filterClassification, setFilterClassification] = useState('all')
+  const [filterCompany, setFilterCompany] = useState('all')
+  const [filterTeam, setFilterTeam] = useState('all')
+
+  const userRole = session?.user?.role || ''
+  const isAdmin = userRole === 'admin'
+  const isGerencia = userRole === 'gerencia'
+  const isAdminOrGerencia = isAdmin || isGerencia
+  const userTeamIds = (session?.user as { teamIds?: string[] })?.teamIds || []
 
   useEffect(() => {
     const fetchDemandas = async () => {
       try {
-        const res = await fetch('/api/demandas')
+        const params = new URLSearchParams()
+        if (isAdmin && filterCompany !== 'all') {
+          params.set('companyId', filterCompany)
+        }
+        if (filterTeam !== 'all') {
+          params.set('teamId', filterTeam)
+        }
+        const url = `/api/demandas${params.toString() ? `?${params}` : ''}`
+        const res = await fetch(url)
         const json = await res.json()
         if (json.success) setAllDemandas(json.data)
       } catch (err) {
@@ -78,7 +98,7 @@ export default function DemandasAnalisesPage() {
       }
     }
     fetchDemandas()
-  }, [])
+  }, [isAdmin, filterCompany, filterTeam])
 
   // Lista unica de assignees
   const assignees = useMemo(() => {
@@ -196,7 +216,7 @@ export default function DemandasAnalisesPage() {
 
   const unclassifiedCount = useMemo(() => demandas.filter((d) => !d.classification).length, [demandas])
 
-  const hasFilters = filterAssignee !== 'all' || filterOrigin !== 'all' || filterPriority !== 'all' || filterClassification !== 'all'
+  const hasFilters = filterAssignee !== 'all' || filterOrigin !== 'all' || filterPriority !== 'all' || filterClassification !== 'all' || filterCompany !== 'all' || filterTeam !== 'all'
 
   return (
     <div className="space-y-6 p-6">
@@ -230,6 +250,8 @@ export default function DemandasAnalisesPage() {
                   setFilterOrigin('all')
                   setFilterPriority('all')
                   setFilterClassification('all')
+                  setFilterCompany('all')
+                  setFilterTeam('all')
                 }}
                 className="text-xs text-red-500 hover:text-red-400 ml-auto"
               >
@@ -237,7 +259,34 @@ export default function DemandasAnalisesPage() {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {/* Empresa (admin only) */}
+            {isAdmin && (
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
+                  Empresa
+                </label>
+                <CompanySelector value={filterCompany} onChange={(v) => { setFilterCompany(v); setFilterTeam('all') }} />
+              </div>
+            )}
+            {/* Equipe (admin/gerencia) */}
+            {isAdminOrGerencia && (
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
+                  Equipe
+                </label>
+                <TeamSelector value={filterTeam} onChange={setFilterTeam} companyId={isAdmin ? filterCompany : undefined} />
+              </div>
+            )}
+            {/* Equipe (user com múltiplas equipes) */}
+            {!isAdminOrGerencia && userTeamIds.length > 1 && (
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
+                  Equipe
+                </label>
+                <TeamSelector value={filterTeam} onChange={setFilterTeam} />
+              </div>
+            )}
             <div>
               <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
                 Responsavel

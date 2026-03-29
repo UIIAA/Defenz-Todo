@@ -54,17 +54,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, role: inviteRole } = body
+    const { email, role: inviteRole, companyId, teamIds, department } = body
 
     const token = crypto.randomUUID()
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
+
+    // companyId: usa o enviado pelo admin ou herda do criador
+    const resolvedCompanyId = companyId || (user as { companyId?: string }).companyId || null
 
     const invite = await db.inviteToken.create({
       data: {
         token,
         email: email || null,
         role: inviteRole || 'user',
+        companyId: resolvedCompanyId,
+        teamIds: teamIds || [],
+        department: department || null,
         expiresAt,
         createdBy: (user as { id: string }).id,
       },

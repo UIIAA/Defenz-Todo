@@ -1,0 +1,171 @@
+import { NextRequest } from 'next/server'
+import { db } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
+import { handleApiError, successResponse, createdResponse, ApiError } from '@/lib/api-helpers'
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) throw new ApiError('Nao autorizado', 401)
+
+    const companyFilter = new URL(request.url).searchParams.get('companyId')
+
+    let where: Record<string, unknown> = {}
+
+    if (user.role === 'admin') {
+      // Admin: lista todas, opcionalmente por empresa
+      if (companyFilter && companyFilter !== 'all') {
+        where = { companyId: companyFilter }
+      }
+    } else if (user.role === 'gerencia') {
+      // Gerencia: lista equipes da sua empresa
+      where = { companyId: user.companyId }
+    } else {
+      // User: lista apenas suas equipes
+      const teamIds = user.teamIds || []
+      where = { id: { in: teamIds } }
+    }
+
+    const teams = await db.team.findMany({
+      where,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        companyId: true,
+        company: { select: { name: true } },
+        _count: { select: { members: true, demandas: true } },
+      },
+    })
+
+    return successResponse(teams)
+  } catch (error) {
+    return handleApiError(error)
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) throw new ApiError('Nao autorizado', 401)
+
+    // Somente admin/gerencia podem criar equipes
+    if (!['admin', 'gerencia'].includes(user.role)) {
+      throw new ApiError('Sem permissao', 403)
+    }
+
+    const body = await request.json()
+    const { name, companyId } = body as { name?: string; companyId?: string }
+
+    if (!name || !name.trim()) {
+      throw new ApiError('Nome da equipe e obrigatorio', 400)
+    }
+
+    // Resolve companyId: admin pode escolher, gerencia usa a sua
+    const resolvedCompanyId = user.role === 'admin' && companyId
+      ? companyId
+      : user.companyId
+
+    if (!resolvedCompanyId) {
+      throw new ApiError('Empresa nao encontrada', 400)
+    }
+
+    const team = await db.team.create({
+      data: {
+        name: name.trim(),
+        companyId: resolvedCompanyId,
+      },
+      select: {
+        id: true,
+        name: true,
+        companyId: true,
+        company: { select: { name: true } },
+        _count: { select: { members: true, demandas: true } },
+      },
+    })
+
+    return createdResponse(team, 'Equipe criada com sucesso')
+  } catch (error) {
+    return handleApiError(error)
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) throw new ApiError('Nao autorizado', 401)
+
+    if (!['admin', 'gerencia'].includes(user.role)) {
+      throw new ApiError('Sem permissao', 403)
+    }
+
+    const body = await request.json()
+    const { id, name } = body as { id?: string; name?: string }
+
+    if (!id) throw new ApiError('ID e obrigatorio', 400)
+    if (!name || !name.trim()) throw new ApiError('Nome e obrigatorio', 400)
+
+    const existing = await db.team.findUnique({ where: { id } })
+    if (!existing) throw new ApiError('Equipe nao encontrada', 404)
+
+    // Gerencia so pode editar equipes da sua empresa
+    if (user.role === 'gerencia' && existing.companyId !== user.companyId) {
+      throw new ApiError('Sem permissao', 403)
+    }
+
+    const team = await db.team.update({
+      where: { id },
+      data: { name: name.trim() },
+      select: {
+        id: true,
+        name: true,
+        companyId: true,
+        company: { select: { name: true } },
+        _count: { select: { members: true, demandas: true } },
+      },
+    })
+
+    return successResponse(team, 'Equipe atualizada')
+  } catch (error) {
+    return handleApiError(error)
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) throw new ApiError('Nao autorizado', 401)
+
+    if (!['admin', 'gerencia'].includes(user.role)) {
+      throw new ApiError('Sem permissao', 403)
+    }
+
+    const id = new URL(request.url).searchParams.get('id')
+    if (!id) throw new ApiError('ID e obrigatorio', 400)
+
+    const existing = await db.team.findUnique({
+      where: { id },
+      select: { id: true, name: true, companyId: true, _count: { select: { members: true, demandas: true } } },
+    })
+    if (!existing) throw new ApiError('Equipe nao encontrada', 404)
+
+    // Gerencia so pode deletar equipes da sua empresa
+    if (user.role === 'gerencia' && existing.companyId !== user.companyId) {
+      throw new ApiError('Sem permissao', 403)
+    }
+
+    // Nao permite deletar equipe com membros ou demandas
+    if (existing._count.members > 0 || existing._count.demandas > 0) {
+      throw new ApiError(
+        `Nao e possivel remover equipe com ${existing._count.members} membro(s) e ${existing._count.demandas} demanda(s). Mova-os primeiro.`,
+        400
+      )
+    }
+
+    await db.team.delete({ where: { id } })
+
+    return successResponse(null, 'Equipe removida')
+  } catch (error) {
+    return handleApiError(error)
+  }
+}

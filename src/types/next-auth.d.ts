@@ -6,25 +6,34 @@ import { JWT, DefaultJWT } from 'next-auth/jwt'
  *
  * Estende os tipos padrão para incluir campos customizados:
  * - user.id: ID único do usuário no banco
- * - user.role: Papel do usuário no sistema (admin, user, etc)
+ * - user.role: Papel do usuário no sistema (admin, user, gerencia)
+ * - user.companyId/companyName: Empresa do usuário
+ * - user.teamIds: IDs das equipes do usuário
+ * - user.department: Departamento informativo
  */
 
 declare module 'next-auth' {
-  /**
-   * Estende a interface User retornada no callback authorize()
-   */
   interface User extends DefaultUser {
     id: string
     role: string
+    companyId?: string
+    companyName?: string
+    companyLogoUrl?: string
+    companyAccentColor?: string
+    teamIds?: string[]
+    department?: string
   }
 
-  /**
-   * Estende a interface Session disponível no cliente e servidor
-   */
   interface Session extends DefaultSession {
     user: {
       id: string
       role: string
+      companyId?: string
+      companyName?: string
+      companyLogoUrl?: string
+      companyAccentColor?: string
+      teamIds?: string[]
+      department?: string
       name?: string | null
       email?: string | null
       image?: string | null
@@ -33,11 +42,14 @@ declare module 'next-auth' {
 }
 
 declare module 'next-auth/jwt' {
-  /**
-   * Estende a interface JWT token
-   */
   interface JWT extends DefaultJWT {
     id: string
     role: string
+    companyId?: string
+    companyName?: string
+    companyLogoUrl?: string
+    companyAccentColor?: string
+    teamIds?: string[]
+    department?: string
   }
 }

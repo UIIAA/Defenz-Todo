@@ -24,6 +24,20 @@ export const PRIORITIES: Priority[] = [
   { id: 'baixa', label: 'Baixa', color: '#3b82f6' },
 ]
 
+// Departamentos (areas da empresa) — usados em User.department
+export const DEPARTMENTS: Classification[] = [
+  { id: 'vendas', label: 'Vendas', color: '#f59e0b' },
+  { id: 'gerencia', label: 'Gerencia', color: '#8b5cf6' },
+  { id: 'marketing', label: 'Marketing', color: '#ec4899' },
+  { id: 'financeiro', label: 'Financeiro', color: '#10b981' },
+  { id: 'operacional', label: 'Operacional', color: '#6366f1' },
+  { id: 'tecnologia', label: 'Tecnologia', color: '#06b6d4' },
+  { id: 'administrativo', label: 'Administrativo', color: '#64748b' },
+  { id: 'rh', label: 'RH', color: '#f97316' },
+  { id: 'juridico', label: 'Juridico', color: '#94a3b8' },
+  { id: 'estrategico', label: 'Estrategico', color: '#ef4444' },
+]
+
 export const CLASSIFICATIONS: Classification[] = [
   { id: 'marketing', label: 'Marketing', color: '#ec4899' },
   { id: 'administrativo', label: 'Administrativo', color: '#8b5cf6' },

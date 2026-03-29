@@ -21,6 +21,8 @@ export const savedDemanda = {
   deadline: new Date('2025-02-15'),
   dateDone: null,
   userId: 'user-test-123',
+  companyId: 'company-defenz',
+  teamId: 'team-geral',
   createdAt: new Date('2025-01-15'),
   updatedAt: new Date('2025-01-15'),
 }

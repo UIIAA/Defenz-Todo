@@ -7,13 +7,15 @@ describe('Usuarios page responsive', () => {
   const filePath = path.resolve(__dirname, '../page.tsx')
   const source = fs.readFileSync(filePath, 'utf-8')
 
-  it('tabela users esconde Email, Cargo, Data no mobile', () => {
+  it('tabela users esconde Email, Empresa, Equipe, Departamento no mobile', () => {
     // Email column header should have hidden sm:table-cell
     expect(source).toContain('hidden sm:table-cell">Email')
-    // Cargo column header should have hidden sm:table-cell
-    expect(source).toContain('hidden sm:table-cell">Cargo')
-    // Data cadastro column header should have hidden sm:table-cell
-    expect(source).toContain('hidden sm:table-cell">Data cadastro')
+    // Empresa column header should have hidden md:table-cell
+    expect(source).toContain('hidden md:table-cell">Empresa')
+    // Equipe(s) column header should have hidden md:table-cell
+    expect(source).toContain('hidden md:table-cell">Equipe(s)')
+    // Departamento column header should have hidden lg:table-cell
+    expect(source).toContain('hidden lg:table-cell">Departamento')
   })
 
   it('tabela invites esconde Criado por, Data, Link no mobile', () => {

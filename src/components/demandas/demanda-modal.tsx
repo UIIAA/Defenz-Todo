@@ -31,6 +31,7 @@ import {
   type DemandaForm,
   type Subtask,
 } from '@/app/dashboard/demandas/helpers'
+import { formatDate } from '@/lib/date'
 
 export function DemandaModal({
   demanda,
@@ -314,13 +315,13 @@ export function DemandaModal({
           {!isNew && (demanda?.dateIn || demanda?.dateStarted || demanda?.dateDone) && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 mt-1">
               {demanda?.dateIn && (
-                <span>📥 Criada: {toDateStr(demanda.dateIn)}</span>
+                <span>📥 Criada: {formatDate(demanda.dateIn)}</span>
               )}
               {demanda?.dateStarted && (
-                <span>⚡ Iniciada: {toDateStr(demanda.dateStarted)}</span>
+                <span>⚡ Iniciada: {formatDate(demanda.dateStarted)}</span>
               )}
               {demanda?.dateDone && (
-                <span>✅ Concluida: {toDateStr(demanda.dateDone)}</span>
+                <span>✅ Concluida: {formatDate(demanda.dateDone)}</span>
               )}
             </div>
           )}

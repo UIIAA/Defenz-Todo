@@ -33,6 +33,8 @@ import { ListViewTable, type SortableField } from '@/components/demandas/list-vi
 import { useWipLimits } from '@/hooks/use-wip-limits'
 import { WipSettingsPopover } from '@/components/demandas/wip-settings-popover'
 import { BlockedLane } from '@/components/demandas/blocked-lane'
+import { TeamSelector } from '@/components/team-selector'
+import { CompanySelector } from '@/components/company-selector'
 
 export default function DemandasPage() {
   const { data: session } = useSession()
@@ -53,6 +55,8 @@ export default function DemandasPage() {
   const [filterPeriod, setFilterPeriod] = useState<PeriodFilter>('all')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
+  const [filterCompany, setFilterCompany] = useState('all')
+  const [filterTeam, setFilterTeam] = useState('all')
   const [highlightedCardId, setHighlightedCardId] = useState<string | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const { limits: wipLimits, setLimit: setWipLimit, getLimit: getWipLimit, userLimits: wipUserLimits, setUserLimit: setWipUserLimit, getUserLimit: getWipUserLimit } = useWipLimits()
@@ -62,9 +66,26 @@ export default function DemandasPage() {
     useSensor(TouchSensor, { activationConstraint: { distance: 8 } })
   )
 
+  const userRole = session?.user?.role || ''
+  const isAdmin = userRole === 'admin'
+  const isGerencia = userRole === 'gerencia'
+  const isAdminOrGerencia = isAdmin || isGerencia
+
+  // Active team: used when creating demandas
+  const userTeamIds = (session?.user as { teamIds?: string[] })?.teamIds || []
+  const activeTeamId = filterTeam !== 'all' ? filterTeam : (userTeamIds.length === 1 ? userTeamIds[0] : undefined)
+
   const fetchDemandas = useCallback(async () => {
     try {
-      const res = await fetch('/api/demandas')
+      const params = new URLSearchParams()
+      if (isAdmin && filterCompany !== 'all') {
+        params.set('companyId', filterCompany)
+      }
+      if (filterTeam !== 'all') {
+        params.set('teamId', filterTeam)
+      }
+      const url = `/api/demandas${params.toString() ? `?${params}` : ''}`
+      const res = await fetch(url)
       const json = await res.json()
       if (json.success) {
         setDemandas(json.data)
@@ -74,7 +95,7 @@ export default function DemandasPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [isAdmin, filterCompany, filterTeam])
 
   useEffect(() => {
     fetchDemandas()
@@ -93,10 +114,12 @@ export default function DemandasPage() {
   const handleSave = async (form: DemandaForm) => {
     try {
       const method = form.id ? 'PUT' : 'POST'
+      // For new demandas, attach the active team
+      const payload = form.id ? form : { ...form, teamId: activeTeamId }
       const res = await fetch('/api/demandas', {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
       const json = await res.json()
       if (json.success) {
@@ -280,6 +303,8 @@ export default function DemandasPage() {
     filterAssignee !== 'all',
     filterClassification !== 'all',
     filterPeriod !== 'all',
+    filterCompany !== 'all',
+    filterTeam !== 'all',
   ].filter(Boolean).length
 
   const clearAllFilters = () => {
@@ -287,6 +312,8 @@ export default function DemandasPage() {
     setFilterAssignee('all')
     setFilterClassification('all')
     setFilterPeriod('all')
+    setFilterCompany('all')
+    setFilterTeam('all')
     setCustomFrom('')
     setCustomTo('')
   }
@@ -442,6 +469,21 @@ export default function DemandasPage() {
 
       {/* Filter Bar */}
       <div className="flex flex-wrap gap-3 items-center">
+        {/* Empresa (admin only) */}
+        {isAdmin && (
+          <CompanySelector value={filterCompany} onChange={(v) => { setFilterCompany(v); setFilterTeam('all') }} />
+        )}
+
+        {/* Equipe (admin/gerencia — scoped by company) */}
+        {isAdminOrGerencia && (
+          <TeamSelector value={filterTeam} onChange={setFilterTeam} companyId={isAdmin ? filterCompany : undefined} />
+        )}
+
+        {/* Equipe (user com múltiplas equipes) */}
+        {!isAdminOrGerencia && userTeamIds.length > 1 && (
+          <TeamSelector value={filterTeam} onChange={setFilterTeam} />
+        )}
+
         {/* Origem */}
         <Select value={filterOrigin} onValueChange={setFilterOrigin}>
           <SelectTrigger className="w-[140px] h-9 text-xs">

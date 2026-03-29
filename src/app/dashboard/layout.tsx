@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users, Home } from 'lucide-react'
+import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users, UsersRound, Home } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { DefenzLogoIcon } from '@/components/defenz-logo'
 import { UserAvatar } from '@/components/user-avatar'
@@ -45,6 +45,8 @@ export default function DashboardLayout({
 
   const userRole = (session?.user as { role?: string })?.role || ''
   const isAdmin = ['admin', 'gerencia'].includes(userRole)
+  const companyLogoUrl = (session?.user as { companyLogoUrl?: string })?.companyLogoUrl
+  const companyAccentColor = (session?.user as { companyAccentColor?: string })?.companyAccentColor
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -113,7 +115,10 @@ export default function DashboardLayout({
     }`
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-sky-50/50 to-blue-100/60 dark:bg-slate-900 transition-colors">
+    <div
+      className="min-h-screen bg-gradient-to-br from-white via-sky-50/50 to-blue-100/60 dark:bg-slate-900 transition-colors"
+      style={companyAccentColor ? { '--primary': companyAccentColor } as React.CSSProperties : undefined}
+    >
       <div className="flex">
         {/* Mobile backdrop */}
         {isMobile && sidebarOpen && (
@@ -132,16 +137,22 @@ export default function DashboardLayout({
             {/* Logo */}
             <div className="p-5 border-b border-white/10">
               <div className="flex items-center gap-2.5">
-                <DefenzLogoIcon size={30} className="shrink-0 brightness-0 invert" />
-                {sidebarOpen && (
-                  <Image
-                    src="/defenz-text-blue.png"
-                    alt="DEFENZ"
-                    width={100}
-                    height={19}
-                    className="brightness-0 invert"
-                    priority
-                  />
+                {companyLogoUrl ? (
+                  <img src={companyLogoUrl} alt="Logo" className="h-8 w-auto shrink-0 object-contain" />
+                ) : (
+                  <>
+                    <DefenzLogoIcon size={30} className="shrink-0 brightness-0 invert" />
+                    {sidebarOpen && (
+                      <Image
+                        src="/defenz-text-blue.png"
+                        alt="DEFENZ"
+                        width={100}
+                        height={19}
+                        className="brightness-0 invert"
+                        priority
+                      />
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -208,6 +219,10 @@ export default function DashboardLayout({
                       <a href="/dashboard/configuracoes/usuarios" className={navItemClass('/dashboard/configuracoes/usuarios')}>
                         <Users className="h-4 w-4" />
                         <span>Usuarios</span>
+                      </a>
+                      <a href="/dashboard/configuracoes/equipes" className={navItemClass('/dashboard/configuracoes/equipes')}>
+                        <UsersRound className="h-4 w-4" />
+                        <span>Equipes</span>
                       </a>
                       <a href="/dashboard/configuracoes/perfil" className={navItemClass('/dashboard/configuracoes/perfil')}>
                         <User className="h-4 w-4" />

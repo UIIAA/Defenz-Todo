@@ -17,9 +17,15 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params
     const body = await request.json()
-    const { name, role, position, password } = body as { name?: string; role?: string; position?: string; password?: string }
+    const { name, role, position, department, password, companyId, teamIds } = body as {
+      name?: string; role?: string; position?: string; department?: string;
+      password?: string; companyId?: string; teamIds?: string[]
+    }
 
-    const target = await db.user.findUnique({ where: { id } })
+    const target = await db.user.findUnique({
+      where: { id },
+      include: { teams: { select: { teamId: true } } },
+    })
     if (!target) {
       throw new ApiError('Usuario nao encontrado', 404)
     }
@@ -43,22 +49,42 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       throw new ApiError('Senha deve ter pelo menos 6 caracteres', 400)
     }
 
-    const updateData: Record<string, string> = {}
+    const updateData: Record<string, unknown> = {}
     if (name !== undefined) updateData.name = name
     if (role !== undefined) updateData.role = role
     if (position !== undefined) updateData.position = position
+    if (department !== undefined) updateData.department = department
+    if (companyId !== undefined) updateData.companyId = companyId || null
     if (password) updateData.password = await bcrypt.hash(password, 10)
 
     const updated = await db.user.update({
       where: { id },
       data: updateData,
-      select: { id: true, name: true, email: true, role: true, position: true, createdAt: true },
+      select: { id: true, name: true, email: true, role: true, position: true, department: true, companyId: true, createdAt: true },
     })
 
+    // Update team memberships if provided
+    if (teamIds !== undefined) {
+      const currentTeamIds = target.teams.map((t) => t.teamId)
+      const toAdd = teamIds.filter((tid) => !currentTeamIds.includes(tid))
+      const toRemove = currentTeamIds.filter((tid) => !teamIds.includes(tid))
+
+      if (toRemove.length > 0) {
+        await db.userTeam.deleteMany({
+          where: { userId: id, teamId: { in: toRemove } },
+        })
+      }
+      if (toAdd.length > 0) {
+        await db.userTeam.createMany({
+          data: toAdd.map((teamId) => ({ userId: id, teamId })),
+        })
+      }
+    }
+
     const changes = diffChanges(
-      { name: target.name, role: target.role, position: target.position },
-      { name: updated.name, role: updated.role, position: updated.position },
-      ['name', 'role', 'position']
+      { name: target.name, role: target.role, position: target.position, department: target.department, companyId: target.companyId },
+      { name: updated.name, role: updated.role, position: updated.position, department: updated.department, companyId: updated.companyId },
+      ['name', 'role', 'position', 'department', 'companyId']
     )
 
     // Log password change separately (don't log actual values)

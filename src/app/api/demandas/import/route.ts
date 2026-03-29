@@ -12,6 +12,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { items } = importSchema.parse(body)
 
+    // activeTeamId from body or user's single team
+    const activeTeamId = body.teamId || (user.teamIds && user.teamIds.length === 1 ? user.teamIds[0] : null)
+
     const created = await db.demanda.createMany({
       data: items.map((item) => ({
         title: item.title,
@@ -24,6 +27,8 @@ export async function POST(request: NextRequest) {
         deadline: item.deadline ? new Date(item.deadline) : null,
         dateDone: null,
         userId: user.id,
+        companyId: user.companyId || null,
+        teamId: activeTeamId || null,
       })),
     })
 

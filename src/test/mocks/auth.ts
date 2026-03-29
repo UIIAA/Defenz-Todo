@@ -5,6 +5,10 @@ export const mockUser = {
   name: 'Test User',
   email: 'test@example.com',
   role: 'admin',
+  companyId: 'company-defenz',
+  companyName: 'Defenz',
+  teamIds: ['team-geral'],
+  department: undefined,
 }
 
 const getCurrentUser = vi.fn()

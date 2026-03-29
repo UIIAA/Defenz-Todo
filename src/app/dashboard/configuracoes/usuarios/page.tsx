@@ -21,9 +21,24 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Users, Plus, Copy, Check, Link2, Clock, Mail, Pencil, Trash2, X, KeyRound, Eye, EyeOff } from 'lucide-react'
+import { Users, Plus, Copy, Check, Link2, Clock, Mail, Pencil, Trash2, X, KeyRound, Eye, EyeOff, Building2, UsersRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate } from '@/lib/date'
+import { DEPARTMENTS } from '@/app/dashboard/demandas/helpers'
+
+interface CompanyInfo {
+  id: string
+  name: string
+  _count: { users: number; teams: number }
+}
+
+interface TeamInfo {
+  id: string
+  name: string
+  companyId: string
+  company?: { name: string }
+  _count: { members: number; demandas: number }
+}
 
 interface UserInfo {
   id: string
@@ -31,6 +46,11 @@ interface UserInfo {
   email: string
   role: string
   position: string | null
+  department: string | null
+  companyId: string | null
+  companyName: string | null
+  teamIds: string[]
+  teamNames: string[]
   createdAt: string
 }
 
@@ -54,6 +74,11 @@ export default function UsuariosPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('user')
+  const [inviteCompany, setInviteCompany] = useState('')
+  const [inviteTeams, setInviteTeams] = useState<string[]>([])
+  const [inviteDepartment, setInviteDepartment] = useState('')
+  const [companies, setCompanies] = useState<CompanyInfo[]>([])
+  const [teams, setTeams] = useState<TeamInfo[]>([])
   const [creating, setCreating] = useState(false)
   const [generatedLink, setGeneratedLink] = useState('')
   const [copied, setCopied] = useState(false)
@@ -64,6 +89,9 @@ export default function UsuariosPage() {
   const [editName, setEditName] = useState('')
   const [editRole, setEditRole] = useState('')
   const [editPosition, setEditPosition] = useState('')
+  const [editDepartment, setEditDepartment] = useState('')
+  const [editCompany, setEditCompany] = useState('')
+  const [editTeams, setEditTeams] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
   // Delete user state
@@ -85,21 +113,41 @@ export default function UsuariosPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [usersRes, invitesRes] = await Promise.all([
+      const fetches = [
         fetch('/api/users'),
         fetch('/api/invites'),
-      ])
+        fetch('/api/teams'),
+      ]
+      // Admin can also see companies
+      if (userRole === 'admin') {
+        fetches.push(fetch('/api/companies'))
+      }
+
+      const [usersRes, invitesRes, teamsRes, companiesRes] = await Promise.all(fetches)
       const usersData = await usersRes.json()
       const invitesData = await invitesRes.json()
+      const teamsData = await teamsRes.json()
 
       if (usersData.success) setUsers(usersData.data)
       if (invitesData.success) setInvites(invitesData.data)
+      if (teamsData.success) {
+        setTeams(teamsData.data)
+      }
+      if (companiesRes) {
+        const companiesData = await companiesRes.json()
+        if (companiesData.success) {
+          setCompanies(companiesData.data)
+          if (companiesData.data.length > 0 && !inviteCompany) {
+            setInviteCompany(companiesData.data[0].id)
+          }
+        }
+      }
     } catch {
       toast.error('Erro ao carregar dados')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [userRole])
 
   useEffect(() => {
     if (!isAdmin) {
@@ -118,6 +166,9 @@ export default function UsuariosPage() {
         body: JSON.stringify({
           email: inviteEmail || undefined,
           role: inviteRole,
+          companyId: inviteCompany || undefined,
+          teamIds: inviteTeams.length > 0 ? inviteTeams : undefined,
+          department: inviteDepartment || undefined,
         }),
       })
       const data = await res.json()
@@ -152,6 +203,9 @@ export default function UsuariosPage() {
     if (!open) {
       setInviteEmail('')
       setInviteRole('user')
+      setInviteCompany(companies.length > 0 ? companies[0].id : '')
+      setInviteTeams([])
+      setInviteDepartment('')
       setGeneratedLink('')
       setCopied(false)
     }
@@ -163,6 +217,9 @@ export default function UsuariosPage() {
     setEditName(u.name || '')
     setEditRole(u.role)
     setEditPosition(u.position || '')
+    setEditDepartment(u.department || '')
+    setEditCompany(u.companyId || '')
+    setEditTeams(u.teamIds || [])
     setEditDialogOpen(true)
   }
 
@@ -177,6 +234,9 @@ export default function UsuariosPage() {
           name: editName,
           role: editRole,
           position: editPosition,
+          department: editDepartment || null,
+          companyId: editCompany || null,
+          teamIds: editTeams,
         }),
       })
       const data = await res.json()
@@ -328,9 +388,10 @@ export default function UsuariosPage() {
                   <tr className="border-b border-slate-200 dark:border-slate-700">
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Nome</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Email</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Cargo</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Role</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Data cadastro</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Empresa</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Equipe(s)</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Departamento</th>
                     <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Acoes</th>
                   </tr>
                 </thead>
@@ -339,7 +400,6 @@ export default function UsuariosPage() {
                     <tr key={u.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
                       <td className="py-3 px-4 text-sm font-medium text-slate-800 dark:text-slate-200">{u.name || '--'}</td>
                       <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-300 hidden sm:table-cell">{u.email}</td>
-                      <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-300 hidden sm:table-cell">{u.position || '--'}</td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                           u.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
@@ -349,7 +409,41 @@ export default function UsuariosPage() {
                           {u.role}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400 hidden sm:table-cell">{formatDate(u.createdAt)}</td>
+                      <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-300 hidden md:table-cell">
+                        {u.companyName ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400">
+                            <Building2 className="h-3 w-3" />
+                            {u.companyName}
+                          </span>
+                        ) : <span className="text-slate-400">--</span>}
+                      </td>
+                      <td className="py-3 px-4 hidden md:table-cell">
+                        {u.teamNames && u.teamNames.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {u.teamNames.map((tn, i) => (
+                              <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                {tn}
+                              </span>
+                            ))}
+                          </div>
+                        ) : <span className="text-slate-400 text-sm">--</span>}
+                      </td>
+                      <td className="py-3 px-4 hidden lg:table-cell">
+                        {u.department ? (
+                          (() => {
+                            const dept = DEPARTMENTS.find(d => d.id === u.department)
+                            return dept ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: dept.color }} />
+                                {dept.label}
+                              </span>
+                            ) : <span className="text-slate-400">--</span>
+                          })()
+                        ) : (
+                          <span className="text-slate-400">--</span>
+                        )}
+                      </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
@@ -526,6 +620,82 @@ export default function UsuariosPage() {
                 </Select>
               </div>
 
+              {/* Empresa (admin only — gerencia herda a sua) */}
+              {userRole === 'admin' && companies.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-slate-600 dark:text-slate-300 flex items-center gap-2 font-medium text-sm">
+                    <Building2 className="h-4 w-4 text-blue-500" />
+                    Empresa
+                  </Label>
+                  <Select value={inviteCompany} onValueChange={(v) => { setInviteCompany(v); setInviteTeams([]) }}>
+                    <SelectTrigger className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                      {companies.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Equipes (multi-select via checkboxes) */}
+              {teams.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-slate-600 dark:text-slate-300 flex items-center gap-2 font-medium text-sm">
+                    <UsersRound className="h-4 w-4 text-blue-500" />
+                    Equipes
+                    <span className="text-slate-400 font-normal text-xs">(opcional)</span>
+                  </Label>
+                  <div className="space-y-1 max-h-32 overflow-y-auto rounded-md border border-slate-200 dark:border-slate-700 p-2 bg-white/80 dark:bg-slate-900/40">
+                    {teams
+                      .filter((t) => !inviteCompany || t.companyId === inviteCompany)
+                      .map((t) => (
+                        <label key={t.id} className="flex items-center gap-2 cursor-pointer py-1 px-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                          <input
+                            type="checkbox"
+                            checked={inviteTeams.includes(t.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setInviteTeams((prev) => [...prev, t.id])
+                              } else {
+                                setInviteTeams((prev) => prev.filter((id) => id !== t.id))
+                              }
+                            }}
+                            className="rounded border-slate-300 dark:border-slate-600 text-blue-500"
+                          />
+                          <span className="text-sm text-slate-700 dark:text-slate-200">{t.name}</span>
+                          <span className="text-xs text-slate-400">({t._count.members})</span>
+                        </label>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label className="text-slate-600 dark:text-slate-300 flex items-center gap-2 font-medium text-sm">
+                  <Users className="h-4 w-4 text-blue-500" />
+                  Departamento
+                  <span className="text-slate-400 font-normal text-xs">(opcional)</span>
+                </Label>
+                <Select value={inviteDepartment} onValueChange={setInviteDepartment}>
+                  <SelectTrigger className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    {DEPARTMENTS.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        <span className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
+                          {d.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
                 <Clock className="h-3.5 w-3.5" />
                 O convite expira em 7 dias
@@ -619,6 +789,25 @@ export default function UsuariosPage() {
             </div>
 
             <div className="space-y-2">
+              <Label className="text-slate-600 dark:text-slate-300 font-medium text-sm">Departamento</Label>
+              <Select value={editDepartment} onValueChange={setEditDepartment}>
+                <SelectTrigger className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                  <SelectValue placeholder="Nenhum" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                  {DEPARTMENTS.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
+                        {d.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label className="text-slate-600 dark:text-slate-300 font-medium text-sm">Role</Label>
               <Select value={editRole} onValueChange={setEditRole}>
                 <SelectTrigger className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
@@ -631,6 +820,58 @@ export default function UsuariosPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Empresa */}
+            {companies.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-slate-600 dark:text-slate-300 flex items-center gap-2 font-medium text-sm">
+                  <Building2 className="h-4 w-4 text-indigo-500" />
+                  Empresa
+                </Label>
+                <Select value={editCompany} onValueChange={(v) => { setEditCompany(v); setEditTeams([]) }}>
+                  <SelectTrigger className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+                    <SelectValue placeholder="Nenhuma" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    {companies.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Equipes */}
+            {teams.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-slate-600 dark:text-slate-300 flex items-center gap-2 font-medium text-sm">
+                  <UsersRound className="h-4 w-4 text-blue-500" />
+                  Equipes
+                </Label>
+                <div className="space-y-1 max-h-32 overflow-y-auto rounded-md border border-slate-200 dark:border-slate-700 p-2 bg-white/80 dark:bg-slate-900/40">
+                  {teams
+                    .filter((t) => !editCompany || t.companyId === editCompany)
+                    .map((t) => (
+                      <label key={t.id} className="flex items-center gap-2 cursor-pointer py-1 px-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <input
+                          type="checkbox"
+                          checked={editTeams.includes(t.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditTeams((prev) => [...prev, t.id])
+                            } else {
+                              setEditTeams((prev) => prev.filter((id) => id !== t.id))
+                            }
+                          }}
+                          className="rounded border-slate-300 dark:border-slate-600 text-blue-500"
+                        />
+                        <span className="text-sm text-slate-700 dark:text-slate-200">{t.name}</span>
+                        <span className="text-xs text-slate-400">({t._count.members})</span>
+                      </label>
+                    ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-2 pt-2">
               <Button

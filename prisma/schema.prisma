@@ -11,6 +11,49 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ============================================================
+// MULTI-TENANT: Company > Team hierarchy
+// ============================================================
+
+model Company {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  logoUrl     String?   // URL da logo da empresa (ex: https://cdn.example.com/logo.png)
+  accentColor String?   // Cor accent hex (ex: #2563eb)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  users       User[]
+  teams       Team[]
+  demandas    Demanda[]
+  invites     InviteToken[]
+}
+
+model Team {
+  id        String     @id @default(cuid())
+  name      String
+  companyId String
+  company   Company    @relation(fields: [companyId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  members   UserTeam[]
+  demandas  Demanda[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model UserTeam {
+  id     String @id @default(cuid())
+  userId String
+  teamId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@index([userId])
+  @@index([teamId])
+}
+
 model User {
   id                      String                   @id @default(cuid())
   email                   String                   @unique
@@ -18,10 +61,14 @@ model User {
   password                String
   role                    String                   @default("user")
   position                String?                  // Cargo/funcao
+  companyId               String?
+  company                 Company?                 @relation(fields: [companyId], references: [id])
+  department              String?                  // vendas, gerencia, marketing, operacional, financeiro, tecnologia, rh, juridico, estrategico
   emailVerified           DateTime?
   image                   String?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
+  teams                   UserTeam[]
   activities              Activity[]
   auditLogs               AuditLog[]
   accounts                Account[]
@@ -36,7 +83,7 @@ model User {
   salesMetrics            SalesMetric[]
   activityInsights        ActivityInsight[]
   businessMetrics         BusinessMetric[]
-  
+
   // CRM Relations
   clients                 Client[]
   opportunities           Opportunity[]
@@ -47,6 +94,7 @@ model User {
   inviteTokens            InviteToken[]
 
   @@index([email])
+  @@index([companyId])
 }
 
 // ============================================================
@@ -61,7 +109,7 @@ model Client {
   company   String?
   segment   String?  // Ex: Varejo, Indústria, Tecnologia
   notes     String?
-  
+
   // Campos Executivos
   licenseCount Int?
   invoiceValue Float?
@@ -69,16 +117,16 @@ model Client {
   billingDate  DateTime?
   origin       String?
   salesCycle   String?
-  
+
   marketingList   MarketingList? @relation(fields: [marketingListId], references: [id])
   marketingListId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  
+
   opportunities Opportunity[]
 
   @@index([userId])
@@ -94,12 +142,12 @@ model Opportunity {
   value       Decimal? @default(0)
   probability Int?     @default(0) // 0-100%
   priority    String   @default("medium") // low, medium, high
-  
+
   expectedCloseDate DateTime?
-  
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   // Campos Executivos
   responsibleExecutive String?
   licenseCount         Int?
@@ -112,13 +160,13 @@ model Opportunity {
 
   marketingList   MarketingList? @relation(fields: [marketingListId], references: [id])
   marketingListId String?
-  
+
   userId      String
   user        User     @relation(fields: [userId], references: [id])
-  
+
   clientId    String
   client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  
+
   interactions      Interaction[]
   activities        Activity[]
   dailyActivityLogs DailyActivityLog[]
@@ -133,13 +181,13 @@ model Interaction {
   type      String   // call, email, whatsapp, meeting, note
   content   String   // Resumo da interação
   date      DateTime @default(now())
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  
+
   opportunityId String
   opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
@@ -198,12 +246,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? 
-  access_token      String? 
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? 
+  id_token          String?
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -240,7 +288,7 @@ model NotificationPreferences {
   activityDeleted     Boolean  @default(true)
   dailyDigest         Boolean  @default(false)
   weeklyReport        Boolean  @default(false)
-  
+
   // CRM Notifications
   opportunityWon      Boolean  @default(true)
   opportunityLost     Boolean  @default(true)
@@ -344,7 +392,7 @@ model BusinessMetric {
   userId  String
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String? 
+  notes   String?
   version Int     @default(1)
 
   createdAt DateTime @default(now())
@@ -372,14 +420,14 @@ model ActivityInsight {
   // Métricas de NEGÓCIO identificadas pela IA
   // Ex: "Tempo de Resposta", "Produtividade", "Taxa de Conversão"
   // Estrutura: [{ name, category, impact, confidence, explanation }]
-  businessMetrics     Json 
+  businessMetrics     Json
   businessMetricScore Int // Score agregado 0-100
 
   // ========== M&A METRICS (Valorização) ==========
   // Métricas de M&A identificadas pela IA
   // Ex: "ARR", "Churn", "LTV:CAC", "EBITDA", "NPS"
   // Estrutura: [{ name, type, impact, confidence, explanation }]
-  maMetrics Json 
+  maMetrics Json
   maScore   Int // Score agregado 0-100
 
   // ========== SCORES AGREGADOS ==========
@@ -724,6 +772,10 @@ model Demanda {
 
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id])
   subtasks  Subtask[]
 
   createdAt DateTime @default(now())
@@ -735,6 +787,8 @@ model Demanda {
   @@index([deadline])
   @@index([assignee])
   @@index([classification])
+  @@index([companyId])
+  @@index([teamId])
   @@map("demandas")
 }
 
@@ -757,16 +811,21 @@ model Subtask {
 // ============================================================
 
 model InviteToken {
-  id        String    @id @default(cuid())
-  token     String    @unique
-  email     String?   // Email pre-definido (opcional)
-  role      String    @default("user")
-  usedAt    DateTime? // null = nao usado
-  expiresAt DateTime
-  createdBy String
-  creator   User      @relation(fields: [createdBy], references: [id])
-  createdAt DateTime  @default(now())
+  id         String    @id @default(cuid())
+  token      String    @unique
+  email      String?   // Email pre-definido (opcional)
+  role       String    @default("user")
+  companyId  String?   // Empresa do convite — novo usuario herda
+  company    Company?  @relation(fields: [companyId], references: [id])
+  teamIds    String[]  // IDs das equipes para vincular (pode ser multiplas)
+  department String?   // Departamento do convite — novo usuario herda
+  usedAt     DateTime? // null = nao usado
+  expiresAt  DateTime
+  createdBy  String
+  creator    User      @relation(fields: [createdBy], references: [id])
+  createdAt  DateTime  @default(now())
 
   @@index([token])
   @@index([createdBy])
+  @@index([companyId])
 }

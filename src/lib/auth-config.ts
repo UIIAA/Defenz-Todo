@@ -9,7 +9,7 @@ import bcrypt from 'bcryptjs'
  * IMPORTANTE:
  * - Usa CredentialsProvider (incompatível com PrismaAdapter)
  * - Sessions baseadas em JWT (não em banco de dados)
- * - Campos customizados: id, role
+ * - Campos customizados: id, role, companyId, companyName, teamIds, department
  */
 export const authOptions: NextAuthOptions = {
   // Note: PrismaAdapter is NOT compatible with CredentialsProvider
@@ -29,7 +29,13 @@ export const authOptions: NextAuthOptions = {
         const emailNormalized = credentials.email.toLowerCase().trim()
 
         const user = await db.user.findFirst({
-          where: { email: { equals: emailNormalized, mode: 'insensitive' } }
+          where: { email: { equals: emailNormalized, mode: 'insensitive' } },
+          include: {
+            company: { select: { id: true, name: true, logoUrl: true, accentColor: true } },
+            teams: {
+              select: { team: { select: { id: true } } },
+            },
+          },
         })
 
         if (!user || !user.password) {
@@ -49,7 +55,13 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role
+          role: user.role,
+          companyId: user.company?.id,
+          companyName: user.company?.name,
+          companyLogoUrl: user.company?.logoUrl || undefined,
+          companyAccentColor: user.company?.accentColor || undefined,
+          teamIds: user.teams.map((ut) => ut.team.id),
+          department: user.department || undefined,
         }
       }
     })
@@ -66,6 +78,12 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id
         token.role = user.role
+        token.companyId = (user as { companyId?: string }).companyId
+        token.companyName = (user as { companyName?: string }).companyName
+        token.companyLogoUrl = (user as { companyLogoUrl?: string }).companyLogoUrl
+        token.companyAccentColor = (user as { companyAccentColor?: string }).companyAccentColor
+        token.teamIds = (user as { teamIds?: string[] }).teamIds
+        token.department = (user as { department?: string }).department
       }
       return token
     },
@@ -73,6 +91,12 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.companyId = token.companyId as string | undefined
+        session.user.companyName = token.companyName as string | undefined
+        session.user.companyLogoUrl = token.companyLogoUrl as string | undefined
+        session.user.companyAccentColor = token.companyAccentColor as string | undefined
+        session.user.teamIds = token.teamIds as string[] | undefined
+        session.user.department = token.department as string | undefined
       }
       return session
     }

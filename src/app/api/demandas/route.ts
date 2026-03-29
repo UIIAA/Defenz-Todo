@@ -7,13 +7,48 @@ import { createAuditLog, diffChanges } from '@/lib/audit'
 
 const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'assignee', 'deadline', 'dateDone', 'dateStarted']
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) throw new ApiError('Nao autorizado', 401)
 
-    // Board compartilhado — retorna todas as demandas da equipe
+    const params = new URL(request.url).searchParams
+    const companyFilter = params.get('companyId')
+    const teamFilter = params.get('teamId')
+
+    const where: Record<string, unknown> = {}
+
+    if (user.role === 'admin') {
+      // Admin: vê tudo, com filtros opcionais
+      if (companyFilter && companyFilter !== 'all') {
+        where.companyId = companyFilter
+      }
+      if (teamFilter && teamFilter !== 'all') {
+        where.teamId = teamFilter
+      }
+    } else if (user.role === 'gerencia') {
+      // Gerencia: vê tudo da sua empresa
+      where.companyId = user.companyId
+      if (teamFilter && teamFilter !== 'all') {
+        where.teamId = teamFilter
+      }
+    } else {
+      // User: vê apenas demandas das suas equipes
+      const teamIds = user.teamIds || []
+      if (teamIds.length > 0) {
+        if (teamFilter && teamFilter !== 'all' && teamIds.includes(teamFilter)) {
+          where.teamId = teamFilter
+        } else {
+          where.teamId = { in: teamIds }
+        }
+      } else {
+        // User sem equipe: não vê nada
+        return successResponse([])
+      }
+    }
+
     const demandas = await db.demanda.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         user: { select: { name: true, email: true } },
@@ -35,6 +70,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const data = createDemandaSchema.parse(body)
 
+    // activeTeamId vem do body (equipe ativa selecionada na UI)
+    const activeTeamId = body.teamId || (user.teamIds && user.teamIds.length === 1 ? user.teamIds[0] : null)
+
     const demanda = await db.demanda.create({
       data: {
         title: data.title,
@@ -49,6 +87,8 @@ export async function POST(request: NextRequest) {
         deadline: data.deadline ? new Date(data.deadline) : null,
         dateDone: data.dateDone ? new Date(data.dateDone) : null,
         userId: user.id,
+        companyId: user.companyId || null,
+        teamId: activeTeamId || null,
       },
     })
 
@@ -75,12 +115,27 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { id, updatedAt, ...data } = updateDemandaSchema.parse(body)
 
-    // Board colaborativo — qualquer usuario pode editar qualquer demanda
     const current = await db.demanda.findUnique({
       where: { id },
     })
 
     if (!current) throw new ApiError('Recurso nao encontrado', 404)
+
+    // Authorization: 3 níveis
+    if (user.role === 'admin') {
+      // Admin: pode tudo
+    } else if (user.role === 'gerencia') {
+      // Gerencia: só demandas da sua empresa
+      if (current.companyId !== user.companyId) {
+        throw new ApiError('Sem permissao', 403)
+      }
+    } else {
+      // User: só demandas das suas equipes
+      const teamIds = user.teamIds || []
+      if (!current.teamId || !teamIds.includes(current.teamId)) {
+        throw new ApiError('Sem permissao', 403)
+      }
+    }
 
     // Optimistic locking via updatedAt
     if (updatedAt) {
@@ -173,12 +228,25 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id')
     if (!id) throw new ApiError('ID e obrigatorio', 400)
 
-    // Board colaborativo — qualquer usuario pode excluir
     const demanda = await db.demanda.findUnique({
       where: { id },
     })
 
     if (!demanda) throw new ApiError('Recurso nao encontrado', 404)
+
+    // Authorization: 3 níveis
+    if (user.role === 'admin') {
+      // Admin: pode tudo
+    } else if (user.role === 'gerencia') {
+      if (demanda.companyId !== user.companyId) {
+        throw new ApiError('Sem permissao', 403)
+      }
+    } else {
+      const teamIds = user.teamIds || []
+      if (!demanda.teamId || !teamIds.includes(demanda.teamId)) {
+        throw new ApiError('Sem permissao', 403)
+      }
+    }
 
     await db.demanda.delete({
       where: { id },

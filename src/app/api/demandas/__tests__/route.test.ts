@@ -17,23 +17,81 @@ describe('GET /api/demandas', () => {
 
   it('returns 401 without authentication', async () => {
     mockUnauthenticated()
-    const res = await GET()
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
+    const res = await GET(req)
     expect(res.status).toBe(401)
   })
 
-  it('returns demandas for authenticated user', async () => {
+  it('returns demandas for authenticated admin (all companies/teams)', async () => {
     mockAuthenticated()
     mockDb.demanda.findMany.mockResolvedValue(demandaList)
-    const res = await GET()
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
+    const res = await GET(req)
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.success).toBe(true)
     expect(body.data).toHaveLength(demandaList.length)
-    expect(body.data[0].id).toBe(demandaList[0].id)
+    // Admin sem filtro = ve tudo (where vazio)
     expect(mockDb.demanda.findMany).toHaveBeenCalledWith({
+      where: {},
       orderBy: { createdAt: 'desc' },
       include: { user: { select: { name: true, email: true } }, subtasks: { orderBy: { position: 'asc' } } },
     })
+  })
+
+  it('filters by companyId for admin when param provided', async () => {
+    mockAuthenticated()
+    mockDb.demanda.findMany.mockResolvedValue([demandaList[0]])
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas?companyId=company-other' })
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+    expect(mockDb.demanda.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { companyId: 'company-other' } })
+    )
+  })
+
+  it('filters by teamId for admin when param provided', async () => {
+    mockAuthenticated()
+    mockDb.demanda.findMany.mockResolvedValue([demandaList[0]])
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas?teamId=team-other' })
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+    expect(mockDb.demanda.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { teamId: 'team-other' } })
+    )
+  })
+
+  it('restricts gerencia to own company', async () => {
+    mockAuthenticated({ role: 'gerencia', companyId: 'company-defenz' })
+    mockDb.demanda.findMany.mockResolvedValue(demandaList)
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+    expect(mockDb.demanda.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { companyId: 'company-defenz' } })
+    )
+  })
+
+  it('restricts user to own teamIds', async () => {
+    mockAuthenticated({ role: 'user', teamIds: ['team-geral'] })
+    mockDb.demanda.findMany.mockResolvedValue(demandaList)
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+    expect(mockDb.demanda.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { teamId: { in: ['team-geral'] } } })
+    )
+  })
+
+  it('returns empty for user with no teams', async () => {
+    mockAuthenticated({ role: 'user', teamIds: [] })
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.data).toEqual([])
+    // Should NOT call findMany
+    expect(mockDb.demanda.findMany).not.toHaveBeenCalled()
   })
 })
 
@@ -97,6 +155,19 @@ describe('POST /api/demandas', () => {
     expect(createCall.data.origin).toBe('outra')
     expect(createCall.data.status).toBe('solicitada')
     expect(createCall.data.priority).toBe('media')
+  })
+
+  it('sets companyId and teamId from user session', async () => {
+    mockAuthenticated({ companyId: 'company-defenz', teamIds: ['team-geral'] })
+    mockDb.demanda.create.mockResolvedValue(savedDemanda)
+    const req = createRequest('POST', {
+      body: { title: 'Test company' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    await POST(req)
+    const createCall = mockDb.demanda.create.mock.calls[0][0]
+    expect(createCall.data.companyId).toBe('company-defenz')
+    expect(createCall.data.teamId).toBe('team-geral')
   })
 
   it('creates demanda with null assignee (201)', async () => {
@@ -178,12 +249,11 @@ describe('PUT /api/demandas', () => {
     expect(res.status).toBe(400)
   })
 
-  // --- Optimistic locking tests (TDD — RED until implemented) ---
+  // --- Optimistic locking tests ---
 
   it('returns 200 when updatedAt matches current record', async () => {
     mockAuthenticated()
     const currentUpdatedAt = new Date('2025-01-15T00:00:00.000Z')
-    // findUnique returns the current record with matching updatedAt
     mockDb.demanda.findUnique.mockResolvedValue({
       ...savedDemanda,
       updatedAt: currentUpdatedAt,
@@ -210,7 +280,7 @@ describe('PUT /api/demandas', () => {
     mockAuthenticated()
     const currentRecord = {
       ...savedDemanda,
-      updatedAt: new Date('2025-01-20T00:00:00.000Z'), // DB has newer version
+      updatedAt: new Date('2025-01-20T00:00:00.000Z'),
     }
     mockDb.demanda.findUnique.mockResolvedValue(currentRecord)
 
@@ -218,7 +288,7 @@ describe('PUT /api/demandas', () => {
       body: {
         id: 'dem-001',
         title: 'Stale update',
-        updatedAt: '2025-01-15T00:00:00.000Z', // Client has older version
+        updatedAt: '2025-01-15T00:00:00.000Z',
       },
       url: 'http://localhost:3000/api/demandas',
     })
@@ -241,7 +311,6 @@ describe('PUT /api/demandas', () => {
     })
     const res = await PUT(req)
     expect(res.status).toBe(200)
-    // findUnique is called for audit diff but NOT for locking check
     expect(mockDb.demanda.findUnique).toHaveBeenCalled()
   })
 
@@ -307,6 +376,42 @@ describe('PUT /api/demandas', () => {
     expect(updateData.classification).toBeNull()
   })
 
+  // --- Authorization tests: 3 levels ---
+
+  it('returns 403 when user edits demanda from another team', async () => {
+    mockAuthenticated({ role: 'user', teamIds: ['team-geral'] })
+    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, teamId: 'team-other' })
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', title: 'Hacked' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 when gerencia edits demanda from another company', async () => {
+    mockAuthenticated({ role: 'gerencia', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, companyId: 'company-other' })
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', title: 'Hacked' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(403)
+  })
+
+  it('allows admin to edit any demanda', async () => {
+    mockAuthenticated({ role: 'admin' })
+    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, companyId: 'company-other', teamId: 'team-other' })
+    mockDb.demanda.update.mockResolvedValue({ ...savedDemanda, title: 'Admin edit' })
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', title: 'Admin edit' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+  })
+
   it('does not set previousStatus when moving between normal statuses', async () => {
     mockAuthenticated()
     const current = { ...savedDemanda, status: 'solicitada' }
@@ -331,6 +436,7 @@ describe('DELETE /api/demandas', () => {
 
   it('deletes demanda by id', async () => {
     mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
     mockDb.demanda.delete.mockResolvedValue(savedDemanda)
     const req = createRequest('DELETE', {
       searchParams: { id: 'dem-001' },
@@ -338,6 +444,28 @@ describe('DELETE /api/demandas', () => {
     })
     const res = await DELETE(req)
     expect(res.status).toBe(200)
+  })
+
+  it('returns 403 when user deletes demanda from another team', async () => {
+    mockAuthenticated({ role: 'user', teamIds: ['team-geral'] })
+    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, teamId: 'team-other' })
+    const req = createRequest('DELETE', {
+      searchParams: { id: 'dem-001' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await DELETE(req)
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 when gerencia deletes demanda from another company', async () => {
+    mockAuthenticated({ role: 'gerencia', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, companyId: 'company-other' })
+    const req = createRequest('DELETE', {
+      searchParams: { id: 'dem-001' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await DELETE(req)
+    expect(res.status).toBe(403)
   })
 
   it('returns 400 without id', async () => {
@@ -361,6 +489,7 @@ describe('DELETE /api/demandas', () => {
 
   it('scopes delete to userId', async () => {
     mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
     mockDb.demanda.delete.mockResolvedValue(savedDemanda)
     const req = createRequest('DELETE', {
       searchParams: { id: 'dem-001' },
