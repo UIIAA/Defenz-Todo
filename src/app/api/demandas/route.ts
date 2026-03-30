@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
       include: {
         user: { select: { name: true, email: true } },
         subtasks: { orderBy: { position: 'asc' } },
+        links: { orderBy: { position: 'asc' } },
       },
     })
 

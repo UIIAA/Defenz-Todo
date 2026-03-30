@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { mockDb } from '@/test/mocks/prisma'
 import { mockAuthenticated, mockUnauthenticated } from '@/test/mocks/auth'
 import { createRequest } from '@/test/mocks/next-server'
-import { GET, POST, PUT } from '../route'
+import { GET, POST, PUT, DELETE } from '../route'
 
 describe('Companies API', () => {
   beforeEach(() => {
@@ -29,10 +29,19 @@ describe('Companies API', () => {
       expect(json.data[1].logoUrl).toBeNull()
     })
 
-    it('403 para gerencia', async () => {
-      mockAuthenticated({ role: 'gerencia' })
+    it('gerencia ve apenas sua empresa', async () => {
+      mockAuthenticated({ role: 'gerencia', companyId: 'comp-1' })
+      const companies = [{ id: 'comp-1', name: 'Defenz', logoUrl: null, accentColor: null, _count: { users: 2, teams: 1 } }]
+      mockDb.company.findMany.mockResolvedValue(companies)
+
       const res = await GET()
-      expect(res.status).toBe(403)
+      const json = await res.json()
+
+      expect(res.status).toBe(200)
+      expect(json.success).toBe(true)
+      expect(mockDb.company.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'comp-1' } })
+      )
     })
 
     it('403 para user', async () => {
@@ -127,6 +136,31 @@ describe('Companies API', () => {
       expect(json.data.accentColor).toBe('#e11d48')
     })
 
+    it('gerencia atualiza branding da propria empresa', async () => {
+      mockAuthenticated({ role: 'gerencia', companyId: 'comp-1' })
+      mockDb.company.findUnique.mockResolvedValue({ id: 'comp-1', name: 'Defenz' })
+      mockDb.company.update.mockResolvedValue({
+        id: 'comp-1', name: 'Defenz', logoUrl: null, accentColor: '#ff0000',
+        _count: { users: 2, teams: 1 },
+      })
+
+      const req = createRequest('PUT', { body: { id: 'comp-1', accentColor: '#ff0000' } })
+      const res = await PUT(req)
+      const json = await res.json()
+
+      expect(res.status).toBe(200)
+      expect(json.success).toBe(true)
+    })
+
+    it('gerencia 403 para empresa de outro', async () => {
+      mockAuthenticated({ role: 'gerencia', companyId: 'comp-1' })
+      mockDb.company.findUnique.mockResolvedValue({ id: 'comp-2', name: 'Outra' })
+
+      const req = createRequest('PUT', { body: { id: 'comp-2', accentColor: '#ff0000' } })
+      const res = await PUT(req)
+      expect(res.status).toBe(403)
+    })
+
     it('400 com hex invalido', async () => {
       mockAuthenticated({ role: 'admin' })
       const req = createRequest('PUT', { body: { id: '1', accentColor: 'azul' } })
@@ -141,18 +175,52 @@ describe('Companies API', () => {
       expect(res.status).toBe(400)
     })
 
-    it('403 para gerencia', async () => {
-      mockAuthenticated({ role: 'gerencia' })
-      const req = createRequest('PUT', { body: { id: '1', accentColor: '#ff0000' } })
-      const res = await PUT(req)
-      expect(res.status).toBe(403)
-    })
-
     it('403 para user', async () => {
       mockAuthenticated({ role: 'user' })
       const req = createRequest('PUT', { body: { id: '1', accentColor: '#ff0000' } })
       const res = await PUT(req)
       expect(res.status).toBe(403)
+    })
+  })
+
+  // ──────── DELETE ────────
+  describe('DELETE', () => {
+    it('admin deleta empresa vazia', async () => {
+      mockAuthenticated({ role: 'admin' })
+      mockDb.company.findUnique.mockResolvedValue({ id: '1', name: 'Vazia', _count: { users: 0, teams: 0 } })
+      mockDb.company.delete.mockResolvedValue({})
+
+      const req = createRequest('DELETE', { url: 'http://localhost:3000/api/companies?id=1' })
+      const res = await DELETE(req)
+      const json = await res.json()
+
+      expect(res.status).toBe(200)
+      expect(json.success).toBe(true)
+    })
+
+    it('400 se empresa tem equipes', async () => {
+      mockAuthenticated({ role: 'admin' })
+      mockDb.company.findUnique.mockResolvedValue({ id: '1', name: 'Cheia', _count: { users: 0, teams: 3 } })
+
+      const req = createRequest('DELETE', { url: 'http://localhost:3000/api/companies?id=1' })
+      const res = await DELETE(req)
+      expect(res.status).toBe(400)
+    })
+
+    it('403 para gerencia', async () => {
+      mockAuthenticated({ role: 'gerencia' })
+      const req = createRequest('DELETE', { url: 'http://localhost:3000/api/companies?id=1' })
+      const res = await DELETE(req)
+      expect(res.status).toBe(403)
+    })
+
+    it('404 se empresa nao existe', async () => {
+      mockAuthenticated({ role: 'admin' })
+      mockDb.company.findUnique.mockResolvedValue(null)
+
+      const req = createRequest('DELETE', { url: 'http://localhost:3000/api/companies?id=nope' })
+      const res = await DELETE(req)
+      expect(res.status).toBe(404)
     })
   })
 })

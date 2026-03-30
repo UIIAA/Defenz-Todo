@@ -10,12 +10,17 @@ export async function GET() {
     const user = await getCurrentUser()
     if (!user) throw new ApiError('Nao autorizado', 401)
 
-    // Somente admin pode listar todas as empresas
-    if (user.role !== 'admin') {
+    if (!['admin', 'gerencia'].includes(user.role)) {
       throw new ApiError('Sem permissao', 403)
     }
 
+    // Admin ve todas; gerencia ve apenas sua empresa
+    const where = user.role === 'gerencia' && user.companyId
+      ? { id: user.companyId }
+      : {}
+
     const companies = await db.company.findMany({
+      where,
       orderBy: { name: 'asc' },
       select: {
         id: true,
@@ -82,7 +87,8 @@ export async function PUT(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) throw new ApiError('Nao autorizado', 401)
 
-    if (user.role !== 'admin') {
+    // Admin pode editar qualquer empresa; gerencia pode editar branding da sua
+    if (!['admin', 'gerencia'].includes(user.role)) {
       throw new ApiError('Sem permissao', 403)
     }
 
@@ -103,6 +109,26 @@ export async function PUT(request: NextRequest) {
     const existing = await db.company.findUnique({ where: { id } })
     if (!existing) throw new ApiError('Empresa nao encontrada', 404)
 
+    // Gerencia so pode editar branding da propria empresa
+    if (user.role === 'gerencia') {
+      if (id !== user.companyId) throw new ApiError('Sem permissao', 403)
+      // Gerencia nao pode renomear empresa
+      const data: Record<string, unknown> = {}
+      if (logoUrl !== undefined) data.logoUrl = logoUrl?.trim() || null
+      if (accentColor !== undefined) data.accentColor = accentColor || null
+
+      const company = await db.company.update({
+        where: { id },
+        data,
+        select: {
+          id: true, name: true, logoUrl: true, accentColor: true,
+          _count: { select: { users: true, teams: true } },
+        },
+      })
+      return successResponse(company, 'Branding atualizado')
+    }
+
+    // Admin: pode editar tudo
     const data: Record<string, unknown> = {}
     if (name !== undefined) data.name = name.trim()
     if (logoUrl !== undefined) data.logoUrl = logoUrl?.trim() || null
@@ -112,15 +138,45 @@ export async function PUT(request: NextRequest) {
       where: { id },
       data,
       select: {
-        id: true,
-        name: true,
-        logoUrl: true,
-        accentColor: true,
+        id: true, name: true, logoUrl: true, accentColor: true,
         _count: { select: { users: true, teams: true } },
       },
     })
 
     return successResponse(company, 'Empresa atualizada')
+  } catch (error) {
+    return handleApiError(error)
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) throw new ApiError('Nao autorizado', 401)
+
+    if (user.role !== 'admin') {
+      throw new ApiError('Sem permissao', 403)
+    }
+
+    const id = new URL(request.url).searchParams.get('id')
+    if (!id) throw new ApiError('ID e obrigatorio', 400)
+
+    const existing = await db.company.findUnique({
+      where: { id },
+      select: { id: true, name: true, _count: { select: { users: true, teams: true } } },
+    })
+    if (!existing) throw new ApiError('Empresa nao encontrada', 404)
+
+    if (existing._count.users > 0 || existing._count.teams > 0) {
+      throw new ApiError(
+        `Nao e possivel remover empresa com ${existing._count.users} usuario(s) e ${existing._count.teams} equipe(s). Mova-os primeiro.`,
+        400
+      )
+    }
+
+    await db.company.delete({ where: { id } })
+
+    return successResponse(null, 'Empresa removida')
   } catch (error) {
     return handleApiError(error)
   }

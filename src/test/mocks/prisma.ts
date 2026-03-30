@@ -38,6 +38,7 @@ export const mockDb = {
     findUnique: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
   },
   team: {
     findMany: vi.fn(),

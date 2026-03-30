@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Trash2, Plus, Check } from 'lucide-react'
+import { Trash2, Plus, Check, ExternalLink, Pencil, Link as LinkIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   ORIGINS,
@@ -30,6 +30,7 @@ import {
   type Demanda,
   type DemandaForm,
   type Subtask,
+  type DemandaLink,
 } from '@/app/dashboard/demandas/helpers'
 import { formatDate } from '@/lib/date'
 
@@ -52,6 +53,12 @@ export function DemandaModal({
   const [modalUsers, setModalUsers] = useState<{ id: string; name: string | null; email: string }[]>([])
   const [subtasks, setSubtasks] = useState<Subtask[]>([])
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
+  const [links, setLinks] = useState<DemandaLink[]>([])
+  const [newLinkLabel, setNewLinkLabel] = useState('')
+  const [newLinkUrl, setNewLinkUrl] = useState('')
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null)
+  const [editLinkLabel, setEditLinkLabel] = useState('')
+  const [editLinkUrl, setEditLinkUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const isNew = !demanda
 
@@ -81,11 +88,16 @@ export function DemandaModal({
         dateDone: demanda.dateDone ? toDateStr(demanda.dateDone) : null,
       })
       setSubtasks(demanda.subtasks || [])
+      setLinks(demanda.links || [])
     } else {
       setForm(emptyForm())
       setSubtasks([])
+      setLinks([])
     }
     setNewSubtaskTitle('')
+    setNewLinkLabel('')
+    setNewLinkUrl('')
+    setEditingLinkId(null)
   }, [demanda])
 
   const upd = (k: keyof DemandaForm, v: string | null) =>
@@ -154,6 +166,75 @@ export function DemandaModal({
     } catch {
       setSubtasks(prev)
       toast.error('Erro ao excluir subtask')
+    }
+  }
+
+  const normalizeUrl = (url: string) => {
+    const trimmed = url.trim()
+    if (!trimmed) return trimmed
+    if (!/^https?:\/\//i.test(trimmed)) return `https://${trimmed}`
+    return trimmed
+  }
+
+  const addLink = async () => {
+    if (!newLinkLabel.trim() || !newLinkUrl.trim() || !demanda?.id) return
+    const url = normalizeUrl(newLinkUrl)
+    try {
+      const res = await fetch(`/api/demandas/${demanda.id}/links`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: newLinkLabel.trim(), url }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setLinks((prev) => [...prev, json.data])
+        setNewLinkLabel('')
+        setNewLinkUrl('')
+      } else {
+        toast.error(json.error || 'Erro ao criar link')
+      }
+    } catch {
+      toast.error('Erro ao criar link')
+    }
+  }
+
+  const updateLink = async (linkId: string) => {
+    if (!demanda?.id || !editLinkLabel.trim() || !editLinkUrl.trim()) return
+    const url = normalizeUrl(editLinkUrl)
+    try {
+      const res = await fetch(`/api/demandas/${demanda.id}/links/${linkId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: editLinkLabel.trim(), url }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setLinks((prev) => prev.map((l) => l.id === linkId ? json.data : l))
+        setEditingLinkId(null)
+      } else {
+        toast.error(json.error || 'Erro ao atualizar link')
+      }
+    } catch {
+      toast.error('Erro ao atualizar link')
+    }
+  }
+
+  const deleteLink = async (linkId: string) => {
+    if (!demanda?.id) return
+    const prev = links
+    setLinks((l) => l.filter((lk) => lk.id !== linkId))
+    try {
+      const res = await fetch(`/api/demandas/${demanda.id}/links/${linkId}`, {
+        method: 'DELETE',
+      })
+      const json = await res.json()
+      if (!json.success) {
+        setLinks(prev)
+        toast.error('Erro ao excluir link')
+      }
+    } catch {
+      setLinks(prev)
+      toast.error('Erro ao excluir link')
     }
   }
 
@@ -393,6 +474,105 @@ export function DemandaModal({
                   <Plus className="h-3.5 w-3.5" />
                 </Button>
               </div>
+            </div>
+          )}
+
+          {/* Links section - only for existing demandas */}
+          {!isNew && (
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <LinkIcon className="inline h-3 w-3 mr-1" />
+                Links Uteis
+                {links.length > 0 && (
+                  <span className="ml-1 text-slate-300 dark:text-slate-500">
+                    ({links.length}/10)
+                  </span>
+                )}
+              </label>
+              <div className="mt-1.5 space-y-1.5">
+                {links.map((lk) => (
+                  <div key={lk.id} className="group">
+                    {editingLinkId === lk.id ? (
+                      <div className="flex flex-col gap-1.5">
+                        <Input
+                          value={editLinkLabel}
+                          onChange={(e) => setEditLinkLabel(e.target.value)}
+                          placeholder="Rotulo"
+                          className="text-sm bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100"
+                        />
+                        <div className="flex gap-2">
+                          <Input
+                            value={editLinkUrl}
+                            onChange={(e) => setEditLinkUrl(e.target.value)}
+                            placeholder="https://..."
+                            className="text-sm bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100"
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); updateLink(lk.id) } }}
+                          />
+                          <Button variant="outline" size="sm" onClick={() => updateLink(lk.id)} disabled={!editLinkLabel.trim() || !editLinkUrl.trim()} className="shrink-0 border-slate-200 dark:border-slate-700">
+                            <Check className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setEditingLinkId(null)} className="shrink-0 border-slate-200 dark:border-slate-700 text-slate-400">
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-blue-400" />
+                        <a
+                          href={lk.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 text-sm text-blue-500 dark:text-blue-400 hover:underline truncate"
+                          title={lk.url}
+                        >
+                          {lk.label}
+                        </a>
+                        <button
+                          onClick={() => { setEditingLinkId(lk.id); setEditLinkLabel(lk.label); setEditLinkUrl(lk.url) }}
+                          className="sm:opacity-0 sm:group-hover:opacity-100 text-slate-400 hover:text-blue-500 transition-all cursor-pointer"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => deleteLink(lk.id)}
+                          className="sm:opacity-0 sm:group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all cursor-pointer"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {links.length < 10 && (
+                <div className="flex flex-col gap-1.5 mt-2">
+                  <Input
+                    value={newLinkLabel}
+                    onChange={(e) => setNewLinkLabel(e.target.value)}
+                    placeholder="Rotulo do link (ex: Documento, Referencia...)"
+                    className="text-sm bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={newLinkUrl}
+                      onChange={(e) => setNewLinkUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="text-sm bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLink() } }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={addLink}
+                      disabled={!newLinkLabel.trim() || !newLinkUrl.trim()}
+                      className="shrink-0 border-slate-200 dark:border-slate-700"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -777,6 +777,7 @@ model Demanda {
   teamId    String?
   team      Team?    @relation(fields: [teamId], references: [id])
   subtasks  Subtask[]
+  links     DemandaLink[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -804,6 +805,20 @@ model Subtask {
 
   @@index([demandaId, position])
   @@map("subtasks")
+}
+
+model DemandaLink {
+  id        String   @id @default(cuid())
+  label     String
+  url       String
+  position  Int      @default(0)
+  demandaId String
+  demanda   Demanda  @relation(fields: [demandaId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([demandaId, position])
+  @@map("demanda_links")
 }
 
 // ============================================================

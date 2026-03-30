@@ -1,6 +1,7 @@
 'use client'
 
 import { useDraggable } from '@dnd-kit/core'
+import { Link as LinkIcon } from 'lucide-react'
 import { formatDateShort } from '@/lib/date'
 import {
   ORIGINS,
@@ -83,9 +84,17 @@ export function KanbanCard({
         </div>
       )}
       <div className="flex justify-between items-center">
-        <span className="text-[11px] font-semibold" style={{ color: origin?.color }}>
-          {origin?.label}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold" style={{ color: origin?.color }}>
+            {origin?.label}
+          </span>
+          {d.links && d.links.length > 0 && (
+            <span className="flex items-center gap-0.5 text-[9px] text-blue-400" title={`${d.links.length} link(s)`}>
+              <LinkIcon className="h-2.5 w-2.5" />
+              {d.links.length}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           {d.status === 'em_andamento' && d.dateStarted && (
             <span className="text-[9px] text-slate-400" title="Iniciada em">

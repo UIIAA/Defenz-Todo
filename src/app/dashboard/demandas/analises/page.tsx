@@ -37,6 +37,7 @@ import {
 } from 'recharts'
 
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { toDateStr, todayStr, CLASSIFICATIONS } from '../helpers'
 import { TeamSelector } from '@/components/team-selector'
 import { CompanySelector } from '@/components/company-selector'
@@ -65,6 +66,7 @@ const ORIGINS = [
 
 export default function DemandasAnalisesPage() {
   const { data: session } = useSession()
+  const router = useRouter()
   const [allDemandas, setAllDemandas] = useState<Demanda[]>([])
   const [filterAssignee, setFilterAssignee] = useState('all')
   const [filterOrigin, setFilterOrigin] = useState('all')
@@ -78,6 +80,12 @@ export default function DemandasAnalisesPage() {
   const isGerencia = userRole === 'gerencia'
   const isAdminOrGerencia = isAdmin || isGerencia
   const userTeamIds = (session?.user as { teamIds?: string[] })?.teamIds || []
+
+  useEffect(() => {
+    if (session && !isAdminOrGerencia) {
+      router.push('/dashboard/demandas')
+    }
+  }, [session, isAdminOrGerencia, router])
 
   useEffect(() => {
     const fetchDemandas = async () => {

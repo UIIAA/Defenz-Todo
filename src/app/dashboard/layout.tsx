@@ -188,10 +188,12 @@ export default function DashboardLayout({
                       <LayoutGrid className="h-4 w-4" />
                       <span>Kanban</span>
                     </a>
-                    <a href="/dashboard/demandas/analises" className={navItemClass('/dashboard/demandas/analises')}>
-                      <BarChart3 className="h-4 w-4" />
-                      <span>Analises</span>
-                    </a>
+                    {isAdmin && (
+                      <a href="/dashboard/demandas/analises" className={navItemClass('/dashboard/demandas/analises')}>
+                        <BarChart3 className="h-4 w-4" />
+                        <span>Analises</span>
+                      </a>
+                    )}
                   </div>
                 )}
               </div>
@@ -224,13 +226,17 @@ export default function DashboardLayout({
                         <UsersRound className="h-4 w-4" />
                         <span>Equipes</span>
                       </a>
-                      <a href="/dashboard/configuracoes/perfil" className={navItemClass('/dashboard/configuracoes/perfil')}>
-                        <User className="h-4 w-4" />
-                        <span>Perfil</span>
-                      </a>
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* Perfil - visivel para todos */}
+              {sidebarOpen && (
+                <a href="/dashboard/configuracoes/perfil" className={navItemClass('/dashboard/configuracoes/perfil')}>
+                  <User className="h-4 w-4" />
+                  <span>Meu Perfil</span>
+                </a>
               )}
             </nav>
 

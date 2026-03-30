@@ -35,7 +35,7 @@ describe('GET /api/demandas', () => {
     expect(mockDb.demanda.findMany).toHaveBeenCalledWith({
       where: {},
       orderBy: { createdAt: 'desc' },
-      include: { user: { select: { name: true, email: true } }, subtasks: { orderBy: { position: 'asc' } } },
+      include: { user: { select: { name: true, email: true } }, subtasks: { orderBy: { position: 'asc' } }, links: { orderBy: { position: 'asc' } } },
     })
   })
 

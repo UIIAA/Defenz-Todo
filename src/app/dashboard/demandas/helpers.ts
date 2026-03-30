@@ -62,6 +62,14 @@ export interface Subtask {
   demandaId: string
 }
 
+export interface DemandaLink {
+  id: string
+  label: string
+  url: string
+  position: number
+  demandaId: string
+}
+
 export interface Demanda {
   id: string
   title: string
@@ -77,6 +85,7 @@ export interface Demanda {
   deadline: string | null
   dateDone: string | null
   subtasks?: Subtask[]
+  links?: DemandaLink[]
 }
 
 export type DemandaForm = Omit<Demanda, 'id'> & { id?: string }
