@@ -189,10 +189,16 @@ export default function DashboardLayout({
                       <span>Kanban</span>
                     </a>
                     {isAdmin && (
-                      <a href="/dashboard/demandas/analises" className={navItemClass('/dashboard/demandas/analises')}>
-                        <BarChart3 className="h-4 w-4" />
-                        <span>Analises</span>
-                      </a>
+                      <>
+                        <a href="/dashboard/demandas/analises" className={navItemClass('/dashboard/demandas/analises')}>
+                          <BarChart3 className="h-4 w-4" />
+                          <span>Analises</span>
+                        </a>
+                        <a href="/dashboard/demandas/relatorio" className={navItemClass('/dashboard/demandas/relatorio')}>
+                          <FileText className="h-4 w-4" />
+                          <span>Relatorio</span>
+                        </a>
+                      </>
                     )}
                   </div>
                 )}
