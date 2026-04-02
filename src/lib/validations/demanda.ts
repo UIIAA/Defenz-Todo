@@ -12,6 +12,7 @@ export const createDemandaSchema = z.object({
   deadline: z.string().optional(),
   dateDone: z.string().nullable().optional(),
   dateStarted: z.string().nullable().optional(),
+  reminderDate: z.string().nullable().optional(),
 })
 
 export const updateDemandaSchema = createDemandaSchema.partial().extend({

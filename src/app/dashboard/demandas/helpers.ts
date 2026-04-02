@@ -84,6 +84,8 @@ export interface Demanda {
   dateStarted: string | null
   deadline: string | null
   dateDone: string | null
+  reminderDate: string | null
+  reminderSent: boolean
   subtasks?: Subtask[]
   links?: DemandaLink[]
 }
@@ -165,4 +167,6 @@ export const emptyForm = (): DemandaForm => ({
   dateStarted: null,
   deadline: '',
   dateDone: null,
+  reminderDate: null,
+  reminderSent: false,
 })

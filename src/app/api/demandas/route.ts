@@ -5,7 +5,7 @@ import { handleApiError, createdResponse, successResponse, ApiError } from '@/li
 import { createDemandaSchema, updateDemandaSchema } from '@/lib/validations/demanda'
 import { createAuditLog, diffChanges } from '@/lib/audit'
 
-const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'assignee', 'deadline', 'dateDone', 'dateStarted']
+const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'assignee', 'deadline', 'dateDone', 'dateStarted', 'reminderDate']
 
 export async function GET(request: NextRequest) {
   try {
@@ -191,6 +191,10 @@ export async function PUT(request: NextRequest) {
         ...(data.dateIn !== undefined && { dateIn: new Date(data.dateIn) }),
         ...(data.deadline !== undefined && { deadline: data.deadline ? new Date(data.deadline) : null }),
         ...(data.dateDone !== undefined && !('dateDone' in lifecycleUpdate) && { dateDone: data.dateDone ? new Date(data.dateDone) : null }),
+        ...(data.reminderDate !== undefined && {
+          reminderDate: data.reminderDate ? new Date(data.reminderDate) : null,
+          reminderSent: false, // Reset ao mudar data do lembrete
+        }),
         ...previousStatusUpdate,
         ...lifecycleUpdate,
         version: { increment: 1 },

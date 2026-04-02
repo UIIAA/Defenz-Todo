@@ -1,7 +1,7 @@
 'use client'
 
 import { useDraggable } from '@dnd-kit/core'
-import { Link as LinkIcon } from 'lucide-react'
+import { Link as LinkIcon, Bell } from 'lucide-react'
 import { formatDateShort } from '@/lib/date'
 import {
   ORIGINS,
@@ -27,6 +27,7 @@ export function KanbanCard({
   const prio = PRIORITIES.find((p) => p.id === d.priority)
   const classif = d.classification ? CLASSIFICATIONS.find((c) => c.id === d.classification) : null
   const isOverdue = d.deadline && d.status !== 'concluida' && toDateStr(d.deadline) < todayStr()
+  const hasReminderToday = d.reminderDate && d.status !== 'concluida' && toDateStr(d.reminderDate) <= todayStr()
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: d.id,
@@ -39,7 +40,7 @@ export function KanbanCard({
       ref={setNodeRef}
       data-demanda-id={d.id}
       onClick={() => { if (!isDragging) onClick(d) }}
-      className={`group bg-white dark:bg-slate-800/90 rounded-xl p-3 cursor-pointer transition-all border border-slate-200 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_6px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4),0_8px_24px_rgba(0,0,0,0.3)]${highlighted ? ' animate-highlight-shake' : ''}${isDragging ? ' opacity-50' : ' hover:-translate-y-0.5'}${isDragOverlay ? ' rotate-2 scale-105 shadow-xl' : ''}`}
+      className={`group bg-white dark:bg-slate-800/90 rounded-xl p-3 cursor-pointer transition-all border border-slate-200 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_6px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.2)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4),0_8px_24px_rgba(0,0,0,0.3)]${highlighted || hasReminderToday ? ' animate-highlight-shake' : ''}${isDragging ? ' opacity-50' : ' hover:-translate-y-0.5'}${isDragOverlay ? ' rotate-2 scale-105 shadow-xl' : ''}${hasReminderToday ? ' ring-2 ring-amber-400/60' : ''}`}
       style={{ borderLeftWidth: 3, borderLeftColor: origin?.color || '#8899aa' }}
       {...listeners}
       {...attributes}
@@ -92,6 +93,11 @@ export function KanbanCard({
             <span className="flex items-center gap-0.5 text-[9px] text-blue-400" title={`${d.links.length} link(s)`}>
               <LinkIcon className="h-2.5 w-2.5" />
               {d.links.length}
+            </span>
+          )}
+          {hasReminderToday && (
+            <span className="flex items-center text-[9px] text-amber-500 animate-pulse" title="Lembrete para hoje">
+              <Bell className="h-3 w-3" />
             </span>
           )}
         </div>

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Trash2, Plus, Check, ExternalLink, Pencil, Link as LinkIcon } from 'lucide-react'
+import { Trash2, Plus, Check, ExternalLink, Pencil, Link as LinkIcon, Bell } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   ORIGINS,
@@ -86,6 +86,8 @@ export function DemandaModal({
         dateStarted: demanda.dateStarted || null,
         deadline: toDateStr(demanda.deadline),
         dateDone: demanda.dateDone ? toDateStr(demanda.dateDone) : null,
+        reminderDate: demanda.reminderDate ? toDateStr(demanda.reminderDate) : null,
+        reminderSent: demanda.reminderSent ?? false,
       })
       setSubtasks(demanda.subtasks || [])
       setLinks(demanda.links || [])
@@ -389,6 +391,36 @@ export function DemandaModal({
                 onChange={(e) => upd('deadline', e.target.value || null)}
                 className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100"
               />
+            </div>
+          </div>
+
+          {/* Lembrete */}
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+              <Bell className="h-3 w-3" />
+              Lembrete
+              {form.reminderDate && form.reminderSent && (
+                <span className="text-emerald-500 font-normal normal-case ml-1">(enviado)</span>
+              )}
+            </label>
+            <div className="flex items-center gap-2 mt-1">
+              <Input
+                type="date"
+                value={form.reminderDate || ''}
+                onChange={(e) => upd('reminderDate', e.target.value || null)}
+                className="bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 flex-1"
+              />
+              {form.reminderDate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => upd('reminderDate', null)}
+                  className="text-slate-400 hover:text-red-500 h-8 px-2"
+                  title="Remover lembrete"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
           </div>
 

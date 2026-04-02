@@ -770,6 +770,9 @@ model Demanda {
 
   classification String?   // marketing, administrativo, vendas, financeiro, operacional, tecnologia, juridico, rh, estrategico
 
+  reminderDate  DateTime?            // Data do lembrete
+  reminderSent  Boolean   @default(false) // Ja enviou email de lembrete?
+
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   companyId String?
@@ -790,6 +793,7 @@ model Demanda {
   @@index([classification])
   @@index([companyId])
   @@index([teamId])
+  @@index([reminderDate, reminderSent])
   @@map("demandas")
 }
 
