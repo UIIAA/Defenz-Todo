@@ -35,44 +35,43 @@ function buildPrompt(demandas: Array<{
 }>, periodLabel: string): string {
   const context = demandas.map((d, i) => {
     const subtaskInfo = d.subtasks.length > 0
-      ? `Subtarefas: ${d.subtasks.filter(s => s.completed).length}/${d.subtasks.length} concluidas`
-      : ''
-    const linksInfo = d.links.length > 0
-      ? `Links: ${d.links.map(l => l.label).join(', ')}`
+      ? `Subtarefas: ${d.subtasks.filter(s => s.completed).length}/${d.subtasks.length}`
       : ''
     return [
-      `${i + 1}. **${d.title}**`,
-      d.description ? `   Descricao: ${d.description.slice(0, 300)}` : '',
+      `${i + 1}. ${d.title}`,
+      d.description ? `   Desc: ${d.description.slice(0, 200)}` : '',
       d.classification ? `   Area: ${d.classification}` : '',
-      d.assignee ? `   Responsavel: ${d.assignee}` : '',
-      d.dateDone ? `   Concluida em: ${d.dateDone.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}` : '',
+      d.assignee ? `   Resp: ${d.assignee}` : '',
       subtaskInfo ? `   ${subtaskInfo}` : '',
-      linksInfo ? `   ${linksInfo}` : '',
     ].filter(Boolean).join('\n')
-  }).join('\n\n')
+  }).join('\n')
 
-  return `Voce e um analista de negocios gerando um relatorio executivo profissional.
+  return `Analise estas ${demandas.length} demandas concluidas (${periodLabel}) e retorne APENAS um JSON valido, sem markdown, sem backticks.
 
-Com base nas ${demandas.length} demandas concluidas no periodo de ${periodLabel}, gere um relatorio executivo em portugues brasileiro formatado em Markdown.
+O JSON deve ter esta estrutura exata:
+{
+  "resumo": "2-3 paragrafos com visao geral do que foi entregue no periodo",
+  "areaEntregas": [
+    { "area": "Nome da Area", "entregas": ["entrega 1", "entrega 2"], "destaque": "frase curta do principal resultado" }
+  ],
+  "metricas": {
+    "total": numero,
+    "porArea": [{ "area": "nome", "count": numero }],
+    "porResponsavel": [{ "nome": "nome", "count": numero }],
+    "subtarefasConcluidas": numero
+  },
+  "destaques": ["frase 1 sobre entrega relevante", "frase 2"],
+  "observacoes": ["ponto de atencao 1", "ponto 2"]
+}
 
-O relatorio deve conter:
+Regras:
+- Portugues brasileiro, tom executivo
+- Nao invente dados
+- Se nao houver observacoes, retorne array vazio
+- Agrupe por classificacao/area das demandas
+- Seja preciso nos numeros
 
-## Estrutura
-1. **Resumo Executivo** — 2-3 paragrafos com visao geral do que foi entregue
-2. **Entregas por Area** — agrupe por classificacao/area, destaque as principais entregas
-3. **Metricas de Execucao** — total de tarefas, distribuicao por area, por responsavel
-4. **Destaques** — entregas mais relevantes ou complexas (com muitas subtarefas ou links)
-5. **Observacoes** — pontos de atencao se houver (tarefas sem descricao, subtarefas incompletas)
-
-## Regras
-- Tom profissional e objetivo, adequado para stakeholders e diretoria
-- Use bullet points e tabelas quando apropriado
-- Nao invente informacoes — use apenas os dados fornecidos
-- Se uma area nao tiver tarefas, nao mencione
-- Numeros e metricas devem ser precisos
-
-## Dados das Demandas Concluidas
-
+Dados:
 ${context}`
 }
 
@@ -87,11 +86,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { period, startDate, endDate, companyId, teamId } = body as {
-      period?: string
-      startDate?: string
-      endDate?: string
-      companyId?: string
-      teamId?: string
+      period?: string; startDate?: string; endDate?: string; companyId?: string; teamId?: string
     }
 
     if (!period || !VALID_PERIODS.includes(period as typeof VALID_PERIODS[number])) {
@@ -100,7 +95,6 @@ export async function POST(request: NextRequest) {
 
     const { start, end } = getPeriodDates(period, startDate, endDate)
 
-    // Role-based filtering
     const where: Record<string, unknown> = {
       status: 'concluida',
       dateDone: { gte: start, lte: end },
@@ -110,7 +104,6 @@ export async function POST(request: NextRequest) {
       if (companyId && companyId !== 'all') where.companyId = companyId
       if (teamId && teamId !== 'all') where.teamId = teamId
     } else {
-      // Gerencia: only own company
       where.companyId = user.companyId
       if (teamId && teamId !== 'all') where.teamId = teamId
     }
@@ -124,31 +117,47 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    const periodLabel = period === 'custom'
+      ? `${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`
+      : `ultimos ${period.replace('d', ' dias')}`
+
     if (demandas.length === 0) {
-      return successResponse(
-        { markdown: `# Relatorio Executivo\n\nNenhuma demanda concluida encontrada no periodo selecionado (${period === 'custom' ? `${startDate} a ${endDate}` : `ultimos ${period.replace('d', ' dias')}`}).` },
-        'Nenhuma demanda no periodo'
-      )
+      return successResponse({
+        report: null,
+        demandaCount: 0,
+        period: periodLabel,
+        message: 'Nenhuma demanda concluida no periodo',
+      })
     }
 
-    // Generate with Gemini
     if (!process.env.GEMINI_API_KEY) {
       throw new ApiError('GEMINI_API_KEY nao configurada', 500)
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-
-    const periodLabel = period === 'custom'
-      ? `${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`
-      : `ultimos ${period.replace('d', ' dias')}`
+    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
 
     const prompt = buildPrompt(demandas, periodLabel)
-
     const result = await model.generateContent(prompt)
-    const markdown = result.response.text()
+    const text = result.response.text()
 
-    return successResponse({ markdown, demandaCount: demandas.length, period: periodLabel })
+    // Parse JSON — strip markdown fences if present
+    const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
+    let report
+    try {
+      report = JSON.parse(cleaned)
+    } catch {
+      // Fallback: return raw text as resumo if JSON parse fails
+      report = {
+        resumo: cleaned,
+        areaEntregas: [],
+        metricas: { total: demandas.length, porArea: [], porResponsavel: [], subtarefasConcluidas: 0 },
+        destaques: [],
+        observacoes: [],
+      }
+    }
+
+    return successResponse({ report, demandaCount: demandas.length, period: periodLabel })
   } catch (error) {
     return handleApiError(error)
   }

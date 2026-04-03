@@ -5,8 +5,15 @@ import { createRequest } from '@/test/mocks/next-server'
 
 // Mock Gemini — must use function (not arrow) for constructor mock
 vi.mock('@google/generative-ai', () => {
+  const mockReport = JSON.stringify({
+    resumo: 'Resumo do periodo.',
+    areaEntregas: [{ area: 'Tecnologia', entregas: ['Login implementado'], destaque: 'Entrega principal' }],
+    metricas: { total: 2, porArea: [{ area: 'Tecnologia', count: 2 }], porResponsavel: [{ nome: 'Marcos', count: 2 }], subtarefasConcluidas: 3 },
+    destaques: ['Login com 2FA'],
+    observacoes: [],
+  })
   const mockGenerateContent = vi.fn().mockResolvedValue({
-    response: { text: () => '# Relatorio\n\nConteudo gerado pela IA.' },
+    response: { text: () => mockReport },
   })
   function MockGoogleGenerativeAI() {
     return {
@@ -64,11 +71,12 @@ describe('Executive Report API', () => {
 
     expect(res.status).toBe(200)
     expect(json.success).toBe(true)
-    expect(json.data.markdown).toContain('Relatorio')
+    expect(json.data.report).toBeDefined()
+    expect(json.data.report.resumo).toContain('Resumo')
     expect(json.data.demandaCount).toBe(2)
   })
 
-  it('retorna mensagem quando nao ha demandas', async () => {
+  it('retorna null quando nao ha demandas', async () => {
     mockAuthenticated({ role: 'admin' })
     mockDb.demanda.findMany.mockResolvedValue([])
 
@@ -77,7 +85,8 @@ describe('Executive Report API', () => {
     const json = await res.json()
 
     expect(res.status).toBe(200)
-    expect(json.data.markdown).toContain('Nenhuma demanda concluida')
+    expect(json.data.report).toBeNull()
+    expect(json.data.message).toContain('Nenhuma demanda')
   })
 
   it('403 para user normal', async () => {
