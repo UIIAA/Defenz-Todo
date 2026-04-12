@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, assertCompanyAccess } from '@/lib/auth'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { updateLinkSchema } from '@/lib/validations/demanda-link'
 import { createAuditLog } from '@/lib/audit'
@@ -17,8 +17,11 @@ export async function PUT(
 
     const existing = await db.demandaLink.findFirst({
       where: { id: linkId, demandaId },
+      include: { demanda: { select: { companyId: true } } },
     })
     if (!existing) throw new ApiError('Link nao encontrado', 404)
+
+    assertCompanyAccess(existing.demanda.companyId, user)
 
     const body = await request.json()
     const data = updateLinkSchema.parse(body)
@@ -62,8 +65,11 @@ export async function DELETE(
 
     const existing = await db.demandaLink.findFirst({
       where: { id: linkId, demandaId },
+      include: { demanda: { select: { companyId: true } } },
     })
     if (!existing) throw new ApiError('Link nao encontrado', 404)
+
+    assertCompanyAccess(existing.demanda.companyId, user)
 
     await db.demandaLink.delete({ where: { id: linkId } })
 

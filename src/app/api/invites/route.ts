@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { requireAuth, isAdmin } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import crypto from 'crypto'
 
@@ -16,7 +16,10 @@ export async function GET() {
       )
     }
 
+    const where = isAdmin(user) ? {} : { companyId: user.companyId ?? '__none__' }
+
     const invites = await db.inviteToken.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         creator: {
@@ -60,8 +63,17 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
 
-    // companyId: usa o enviado pelo admin ou herda do criador
-    const resolvedCompanyId = companyId || (user as { companyId?: string }).companyId || null
+    // companyId: admin pode especificar; gerencia é forçado à própria company
+    const resolvedCompanyId = isAdmin(user)
+      ? (companyId || user.companyId || null)
+      : (user.companyId || null)
+
+    if (!resolvedCompanyId && !isAdmin(user)) {
+      return NextResponse.json(
+        { error: 'Usuario sem empresa nao pode criar convites' },
+        { status: 403 }
+      )
+    }
 
     const invite = await db.inviteToken.create({
       data: {
@@ -119,6 +131,13 @@ export async function DELETE(request: NextRequest) {
     const invite = await db.inviteToken.findUnique({ where: { id } })
     if (!invite) {
       return NextResponse.json({ error: 'Convite nao encontrado' }, { status: 404 })
+    }
+
+    if (!isAdmin(user) && invite.companyId !== user.companyId) {
+      return NextResponse.json(
+        { error: 'Acesso negado: convite de outra empresa' },
+        { status: 403 }
+      )
     }
 
     // Only pending invites can be revoked

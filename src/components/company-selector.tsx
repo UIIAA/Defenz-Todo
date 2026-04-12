@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import {
   Select,
   SelectContent,
@@ -21,9 +22,12 @@ interface CompanySelectorProps {
 }
 
 export function CompanySelector({ value, onChange }: CompanySelectorProps) {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'admin'
   const [companies, setCompanies] = useState<Company[]>([])
 
   useEffect(() => {
+    if (!isAdmin) return
     const fetchCompanies = async () => {
       try {
         const res = await fetch('/api/companies')
@@ -36,8 +40,9 @@ export function CompanySelector({ value, onChange }: CompanySelectorProps) {
       }
     }
     fetchCompanies()
-  }, [])
+  }, [isAdmin])
 
+  if (!isAdmin) return null
   if (companies.length <= 1) return null
 
   return (

@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { requireAuth, isAdmin } from '@/lib/auth'
 
 export async function GET() {
   try {
-    await requireAuth()
+    const user = await requireAuth()
+
+    if (!['admin', 'gerencia'].includes(user.role)) {
+      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+    }
+
+    const where = isAdmin(user) ? {} : { companyId: user.companyId ?? '__none__' }
 
     const users = await db.user.findMany({
+      where,
       select: {
         id: true,
         name: true,
@@ -26,7 +33,6 @@ export async function GET() {
       orderBy: { name: 'asc' },
     })
 
-    // Flatten teams for easier consumption
     const data = users.map((u) => ({
       ...u,
       companyName: u.company?.name || null,

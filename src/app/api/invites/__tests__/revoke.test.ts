@@ -15,6 +15,7 @@ const pendingInvite = {
   token: 'abc-123',
   email: 'convidado@example.com',
   role: 'user',
+  companyId: 'company-defenz',
   usedAt: null,
   expiresAt: new Date(Date.now() + 7 * 86400000), // 7 days from now
   createdBy: 'user-test-123',
@@ -104,12 +105,23 @@ describe('DELETE /api/invites (revoke)', () => {
     expect(res.status).toBe(400)
   })
 
-  it('allows gerencia role to revoke', async () => {
-    mockAuthenticated({ role: 'gerencia' })
+  it('allows gerencia role to revoke invite from own company', async () => {
+    mockAuthenticated({ role: 'gerencia', companyId: 'company-defenz' })
     mockDb.inviteToken.findUnique.mockResolvedValue(pendingInvite)
     mockDb.inviteToken.delete.mockResolvedValue(pendingInvite)
 
     const res = await callDelete('inv-001')
     expect(res.status).toBe(200)
+  })
+
+  it('blocks gerencia from revoking invite of another company', async () => {
+    mockAuthenticated({ role: 'gerencia', companyId: 'company-defenz' })
+    mockDb.inviteToken.findUnique.mockResolvedValue({
+      ...pendingInvite,
+      companyId: 'company-cowcycling',
+    })
+
+    const res = await callDelete('inv-001')
+    expect(res.status).toBe(403)
   })
 })

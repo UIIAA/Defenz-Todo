@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, isAdmin } from '@/lib/auth'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { NextRequest } from 'next/server'
 
@@ -24,6 +24,12 @@ export async function GET(request: NextRequest) {
     if (action) where.action = action
     if (entityType) where.entityType = entityType
     if (userId) where.userId = userId
+
+    // Tenant isolation: gerencia só vê logs de usuários da própria company.
+    // AuditLog não tem companyId; scope via relação user.companyId.
+    if (!isAdmin(user)) {
+      where.user = { is: { companyId: user.companyId ?? '__none__' } }
+    }
 
     const [logs, total] = await Promise.all([
       db.auditLog.findMany({

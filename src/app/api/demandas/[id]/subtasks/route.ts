@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, assertCompanyAccess } from '@/lib/auth'
 import { handleApiError, createdResponse, ApiError } from '@/lib/api-helpers'
 import { createSubtaskSchema } from '@/lib/validations/subtask'
 import { createAuditLog } from '@/lib/audit'
@@ -17,6 +17,8 @@ export async function POST(
 
     const demanda = await db.demanda.findUnique({ where: { id: demandaId } })
     if (!demanda) throw new ApiError('Demanda nao encontrada', 404)
+
+    assertCompanyAccess(demanda.companyId, user)
 
     const body = await request.json()
     const data = createSubtaskSchema.parse(body)
