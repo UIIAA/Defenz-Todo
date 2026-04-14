@@ -1,16 +1,17 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-04-11
+**Last updated:** 2026-04-14
 **Version:** 0.2.0
 **Branch:** main
 
 ## Current focus
-Harness instalado + P0 tenant isolation ENTREGUE. Próximo: cleanup dos `.md` antigos no root.
+P0 bugfix de timezone entregue (datas perdiam 1 dia). Próximo: cleanup dos `.md` antigos no root.
 
 ## In progress
 (nenhum)
 
 ## Recently completed (last 5)
+- 2026-04-14 feature-bugfix-date-timezone — parseLocalDate() + fix em /api/demandas (298 testes)
 - 2026-04-11 feature-tenant-isolation — 6 rotas protegidas + testes (289 passando, build OK)
 - 2026-04-11 harness install — PROGRESS/SPEC/ARCHITECTURE/CHANGELOG + CLAUDE.md tighten
 - 2026-04-05 feature-executive-report — relatório executivo com slides via Gemini (1c3787c)

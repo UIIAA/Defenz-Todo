@@ -1,4 +1,29 @@
 const TZ = 'America/Sao_Paulo'
+const SP_OFFSET = '-03:00' // Brasil aboliu DST em 2019 — offset fixo
+
+/**
+ * Parseia input de data-only (YYYY-MM-DD) como meia-noite de São Paulo.
+ * ISO completo (com T) é passado direto para `new Date()`.
+ *
+ * Fix para bug onde `new Date("2026-04-13")` era interpretado como UTC,
+ * perdendo 1 dia ao renderizar em America/Sao_Paulo.
+ */
+export function parseLocalDate(
+  input: string | Date | null | undefined
+): Date | null {
+  if (!input) return null
+  if (input instanceof Date) return input
+  if (typeof input !== 'string' || input.trim() === '') return null
+
+  // Date-only (YYYY-MM-DD) → interpreta como meia-noite SP
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    return new Date(`${input}T00:00:00${SP_OFFSET}`)
+  }
+
+  // ISO completo ou outro formato — passa direto
+  const d = new Date(input)
+  return isNaN(d.getTime()) ? null : d
+}
 
 /** Format date for display: "23/03/26, 15:22" */
 export function formatDateTime(d: string | Date | null): string {

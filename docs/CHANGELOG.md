@@ -3,6 +3,9 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Fixed
+- **Bug de timezone em datas (P0)**: `dateIn`, `deadline`, `dateDone`, `reminderDate` perdiam 1 dia ao salvar porque `new Date("YYYY-MM-DD")` em Node interpreta como UTC midnight e renderiza um dia antes em America/Sao_Paulo. Novo helper `parseLocalDate()` em `src/lib/date.ts` parseia como meia-noite SP. Aplicado em POST e PUT `/api/demandas`. 9 testes novos (298 total).
+
 ### Security
 - **Tenant isolation fix (P0)**: gerencia/user agora são hard-scoped a `session.user.companyId`. Apenas admin cruza empresas. Corrigido em 6 rotas: `demandas/[id]/links`, `demandas/[id]/links/[linkId]`, `demandas/[id]/subtasks`, `demandas/[id]/subtasks/[subtaskId]`, `users`, `invites`, `audit-logs`. Helper central `assertCompanyAccess()` em `src/lib/auth.ts`.
 - `company-selector` agora só renderiza para `admin`.

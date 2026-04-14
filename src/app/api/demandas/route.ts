@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { handleApiError, createdResponse, successResponse, ApiError } from '@/lib/api-helpers'
 import { createDemandaSchema, updateDemandaSchema } from '@/lib/validations/demanda'
 import { createAuditLog, diffChanges } from '@/lib/audit'
+import { parseLocalDate } from '@/lib/date'
 
 const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'assignee', 'deadline', 'dateDone', 'dateStarted', 'reminderDate']
 
@@ -83,10 +84,10 @@ export async function POST(request: NextRequest) {
         priority: data.priority,
         classification: data.classification || null,
         assignee: data.assignee || null,
-        dateIn: data.dateIn ? new Date(data.dateIn) : new Date(),
+        dateIn: parseLocalDate(data.dateIn) ?? new Date(),
         dateStarted: data.status === 'em_andamento' ? new Date() : null,
-        deadline: data.deadline ? new Date(data.deadline) : null,
-        dateDone: data.dateDone ? new Date(data.dateDone) : null,
+        deadline: parseLocalDate(data.deadline),
+        dateDone: parseLocalDate(data.dateDone),
         userId: user.id,
         companyId: user.companyId || null,
         teamId: activeTeamId || null,
@@ -188,11 +189,11 @@ export async function PUT(request: NextRequest) {
         ...(data.priority !== undefined && { priority: data.priority }),
         ...(data.classification !== undefined && { classification: data.classification || null }),
         ...(data.assignee !== undefined && { assignee: data.assignee || null }),
-        ...(data.dateIn !== undefined && { dateIn: new Date(data.dateIn) }),
-        ...(data.deadline !== undefined && { deadline: data.deadline ? new Date(data.deadline) : null }),
-        ...(data.dateDone !== undefined && !('dateDone' in lifecycleUpdate) && { dateDone: data.dateDone ? new Date(data.dateDone) : null }),
+        ...(data.dateIn !== undefined && parseLocalDate(data.dateIn) && { dateIn: parseLocalDate(data.dateIn)! }),
+        ...(data.deadline !== undefined && { deadline: parseLocalDate(data.deadline) }),
+        ...(data.dateDone !== undefined && !('dateDone' in lifecycleUpdate) && { dateDone: parseLocalDate(data.dateDone) }),
         ...(data.reminderDate !== undefined && {
-          reminderDate: data.reminderDate ? new Date(data.reminderDate) : null,
+          reminderDate: parseLocalDate(data.reminderDate),
           reminderSent: false, // Reset ao mudar data do lembrete
         }),
         ...previousStatusUpdate,
