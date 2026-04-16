@@ -228,10 +228,6 @@ export default function DemandasPage() {
     })
     setDemandas(updatedDemandas)
 
-    if (isReopen) {
-      toast.info('Demanda reaberta — registrado no historico')
-    }
-
     // Persist to API
     try {
       const res = await fetch('/api/demandas', {
@@ -247,9 +243,11 @@ export default function DemandasPage() {
       if (!json.success) {
         setDemandas(demandas)
         toast.error('Erro ao mover demanda')
-      } else if (isReopen) {
-        // Re-fetch to sync server-side description changes
+      } else {
         fetchDemandas()
+        if (isReopen) {
+          toast.info('Demanda reaberta — registrado no historico')
+        }
       }
     } catch {
       setDemandas(demandas)

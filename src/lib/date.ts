@@ -25,10 +25,18 @@ export function parseLocalDate(
   return isNaN(d.getTime()) ? null : d
 }
 
+function toDate(d: string | Date): Date {
+  if (d instanceof Date) return d
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    return new Date(`${d}T00:00:00${SP_OFFSET}`)
+  }
+  return new Date(d)
+}
+
 /** Format date for display: "23/03/26, 15:22" */
 export function formatDateTime(d: string | Date | null): string {
   if (!d) return ''
-  const date = typeof d === 'string' ? new Date(d) : d
+  const date = toDate(d)
   return date.toLocaleDateString('pt-BR', {
     timeZone: TZ,
     day: '2-digit',
@@ -42,7 +50,7 @@ export function formatDateTime(d: string | Date | null): string {
 /** Format date only: "23/03/2026" */
 export function formatDate(d: string | Date | null): string {
   if (!d) return ''
-  const date = typeof d === 'string' ? new Date(d) : d
+  const date = toDate(d)
   return date.toLocaleDateString('pt-BR', {
     timeZone: TZ,
     day: '2-digit',
@@ -54,7 +62,7 @@ export function formatDate(d: string | Date | null): string {
 /** Format short date: "23 mar" */
 export function formatDateShort(d: string | Date | null): string {
   if (!d) return ''
-  const date = typeof d === 'string' ? new Date(d) : d
+  const date = toDate(d)
   return date.toLocaleDateString('pt-BR', {
     timeZone: TZ,
     day: '2-digit',
@@ -65,7 +73,7 @@ export function formatDateShort(d: string | Date | null): string {
 /** Format short date with year: "23 mar 2026" */
 export function formatDateShortYear(d: string | Date | null): string {
   if (!d) return ''
-  const date = typeof d === 'string' ? new Date(d) : d
+  const date = toDate(d)
   return date.toLocaleDateString('pt-BR', {
     timeZone: TZ,
     day: '2-digit',
@@ -77,7 +85,7 @@ export function formatDateShortYear(d: string | Date | null): string {
 /** YYYY-MM-DD string in SP timezone (for date inputs and comparisons) */
 export function toDateStr(d: string | Date | null): string {
   if (!d) return ''
-  const date = typeof d === 'string' ? new Date(d) : d
+  const date = toDate(d)
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: TZ,
     year: 'numeric',
