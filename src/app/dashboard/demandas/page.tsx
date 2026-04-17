@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSession } from 'next-auth/react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -38,6 +39,9 @@ import { CompanySelector } from '@/components/company-selector'
 
 export default function DemandasPage() {
   const { data: session } = useSession()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const openedFromSearchRef = useRef<string | null>(null)
   const [demandas, setDemandas] = useState<Demanda[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -110,6 +114,21 @@ export default function DemandasPage() {
       return () => clearTimeout(timer)
     }
   }, [highlightedCardId])
+
+  // Open demanda from search (Cmd+K) via URL param
+  useEffect(() => {
+    const demandaId = searchParams.get('demandaId')
+    if (!demandaId || demandas.length === 0) return
+    if (openedFromSearchRef.current === demandaId) return
+
+    const found = demandas.find((d) => d.id === demandaId)
+    if (found) {
+      openedFromSearchRef.current = demandaId
+      setEditingDemanda(found)
+      setModalOpen(true)
+      router.replace('/dashboard/demandas', { scroll: false })
+    }
+  }, [searchParams, demandas, router])
 
   const handleSave = async (form: DemandaForm) => {
     try {

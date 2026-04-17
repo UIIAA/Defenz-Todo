@@ -74,8 +74,8 @@ export default function DashboardLayout({
   }, [searchOpen, searchDemandas.length, fetchSearchDemandas])
 
   const handleSearchSelectDemanda = useCallback(
-    (_d: Demanda) => {
-      router.push('/dashboard/demandas')
+    (d: Demanda) => {
+      router.push(`/dashboard/demandas?demandaId=${d.id}`)
     },
     [router]
   )
