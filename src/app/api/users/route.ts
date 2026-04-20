@@ -6,10 +6,8 @@ export async function GET() {
   try {
     const user = await requireAuth()
 
-    if (!['admin', 'gerencia'].includes(user.role)) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
-    }
-
+    // Todos os roles autenticados podem listar colegas da mesma empresa
+    // Admin vê todos; gerencia e user veem apenas da própria company
     const where = isAdmin(user) ? {} : { companyId: user.companyId ?? '__none__' }
 
     const users = await db.user.findMany({
