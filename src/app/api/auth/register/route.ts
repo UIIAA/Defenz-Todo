@@ -1,112 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
+import { registerSchema } from '@/lib/validations/password'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { ZodError } from 'zod'
 
-// Handle OPTIONS for CORS
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  })
-}
+const GENERIC_ERROR = 'Dados invalidos ou convite indisponivel'
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 3 registrations per IP per hour
+    const limited = checkRateLimit(request, 'auth-register', { limit: 3, windowMs: 3600_000 })
+    if (limited) return limited
+
     const body = await request.json()
-    const { email, password, name, token, position } = body
-
-    console.log('Registration attempt:', { email, hasPassword: !!password, name, hasToken: !!token })
-
-    // Invite token is required
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Registro apenas por convite' },
-        { status: 403 }
-      )
-    }
+    const data = registerSchema.parse(body)
 
     // Look up the invite token
     const invite = await db.inviteToken.findUnique({
-      where: { token },
+      where: { token: data.token },
     })
 
-    if (!invite) {
-      return NextResponse.json(
-        { error: 'Convite invalido' },
-        { status: 403 }
-      )
+    if (!invite || invite.usedAt || invite.expiresAt < new Date()) {
+      return NextResponse.json({ error: GENERIC_ERROR }, { status: 403 })
     }
 
-    if (invite.usedAt) {
-      return NextResponse.json(
-        { error: 'Convite ja utilizado' },
-        { status: 403 }
-      )
-    }
-
-    if (invite.expiresAt < new Date()) {
-      return NextResponse.json(
-        { error: 'Convite expirado' },
-        { status: 403 }
-      )
-    }
-
-    if (invite.email && invite.email.toLowerCase() !== email?.toLowerCase()) {
-      return NextResponse.json(
-        { error: 'Email nao corresponde ao convite' },
-        { status: 403 }
-      )
-    }
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email e senha sao obrigatorios' },
-        { status: 400 }
-      )
-    }
-
-    const emailNormalized = email.toLowerCase().trim()
-
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'A senha deve ter no minimo 6 caracteres' },
-        { status: 400 }
-      )
+    if (invite.email && invite.email.toLowerCase() !== data.email) {
+      return NextResponse.json({ error: GENERIC_ERROR }, { status: 403 })
     }
 
     // Check if user already exists (case-insensitive)
     const existingUser = await db.user.findFirst({
-      where: { email: { equals: emailNormalized, mode: 'insensitive' } }
+      where: { email: { equals: data.email, mode: 'insensitive' } }
     })
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'Este email ja esta cadastrado' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 })
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(data.password, 12)
 
-    // Create user with role and company from invite (email always lowercase)
     const user = await db.user.create({
       data: {
-        email: emailNormalized,
+        email: data.email,
         password: hashedPassword,
-        name: name || email.split('@')[0],
+        name: data.name || data.email.split('@')[0],
         role: invite.role || 'user',
-        position: position || null,
+        position: data.position || null,
         companyId: invite.companyId || null,
         department: invite.department || null,
       }
     })
 
-    // Create UserTeam entries from invite teamIds
     if (invite.teamIds && invite.teamIds.length > 0) {
       await db.userTeam.createMany({
         data: invite.teamIds.map((teamId) => ({
@@ -116,13 +61,10 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Mark token as used
     await db.inviteToken.update({
       where: { id: invite.id },
       data: { usedAt: new Date() },
     })
-
-    console.log('User created successfully:', user.id)
 
     return NextResponse.json({
       success: true,
@@ -133,21 +75,27 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error: unknown) {
-    console.error('Registration error:', error)
-
-    // Error detail for debugging
-    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
+    if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Este email ja esta cadastrado' },
+        {
+          error: 'Dados invalidos',
+          details: error.issues.map((i) => ({
+            field: i.path.join('.'),
+            message: i.message,
+          })),
+        },
         { status: 400 }
       )
     }
 
+    console.error('Registration error:', error)
+
+    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
+      return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 })
+    }
+
     return NextResponse.json(
-      {
-        error: 'Erro ao criar usuario. Tente novamente.',
-        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : undefined) : undefined
-      },
+      { error: 'Erro ao criar usuario. Tente novamente.' },
       { status: 500 }
     )
   }

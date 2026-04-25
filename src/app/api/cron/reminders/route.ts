@@ -3,12 +3,21 @@ import { db } from '@/lib/db'
 import { sendEmailWithChecks } from '@/lib/email'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { ReminderEmail } from './email-template'
+import crypto from 'crypto'
+
+function timingSafeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) return false
+  return crypto.timingSafeEqual(bufA, bufB)
+}
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret
-    const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    // Verify cron secret (timing-safe comparison)
+    const authHeader = request.headers.get('authorization') || ''
+    const expected = `Bearer ${process.env.CRON_SECRET || ''}`
+    if (!process.env.CRON_SECRET || !timingSafeEqual(authHeader, expected)) {
       throw new ApiError('Nao autorizado', 401)
     }
 

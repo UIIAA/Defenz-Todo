@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
+import { updateProfileSchema } from '@/lib/validations/profile'
 
 export async function GET() {
   try {
@@ -48,7 +49,7 @@ export async function PUT(request: NextRequest) {
     if (!user?.id) throw new ApiError('Nao autorizado', 401)
 
     const body = await request.json()
-    const { name, notificationEmail, emailEnabled, activityAssigned, deadlineApproaching, statusChanged, quietHoursStart, quietHoursEnd } = body
+    const { name, notificationEmail, emailEnabled, activityAssigned, deadlineApproaching, statusChanged, quietHoursStart, quietHoursEnd } = updateProfileSchema.parse(body)
 
     // Update user name if provided
     if (name !== undefined) {

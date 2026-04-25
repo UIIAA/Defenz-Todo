@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
   try {
+    const limited = checkRateLimit(request, 'invite-validate', { limit: 10, windowMs: 60_000 })
+    if (limited) return limited
+
     const { searchParams } = new URL(request.url)
     const token = searchParams.get('token')
 

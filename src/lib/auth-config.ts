@@ -3,6 +3,13 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
+// Fail-fast: NEXTAUTH_SECRET must be set and strong
+if (!process.env.NEXTAUTH_SECRET || process.env.NEXTAUTH_SECRET.length < 32) {
+  throw new Error(
+    'NEXTAUTH_SECRET must be set and at least 32 characters. Generate with: openssl rand -base64 32'
+  )
+}
+
 /**
  * Configuração do NextAuth
  *

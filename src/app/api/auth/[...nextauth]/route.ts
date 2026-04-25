@@ -1,12 +1,16 @@
+import { NextRequest } from 'next/server'
 import NextAuth from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
+import { checkRateLimit } from '@/lib/rate-limit'
 
-/**
- * Route Handler do NextAuth
- *
- * Importa a configuração de @/lib/auth-config para evitar
- * problemas com exportação de authOptions diretamente de route.ts
- */
 const handler = NextAuth(authOptions)
 
-export { handler as GET, handler as POST }
+// GET passes through (callback, csrf token, etc.)
+export { handler as GET }
+
+// POST: rate-limit login attempts (5/min per IP)
+export async function POST(request: NextRequest, context: { params: Promise<{ nextauth: string[] }> }) {
+  const limited = checkRateLimit(request, 'auth-login', { limit: 5, windowMs: 60_000 })
+  if (limited) return limited
+  return handler(request, context)
+}
