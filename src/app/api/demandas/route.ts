@@ -34,18 +34,34 @@ export async function GET(request: NextRequest) {
         where.teamId = teamFilter
       }
     } else {
-      // User: vê apenas demandas das suas equipes
+      // User: demandas dos seus teams OU FK assignedToId === user.id OU legacy assignee match (mesma company, FK null)
       const teamIds = user.teamIds || []
+      const assigneeKey = user.name ?? user.email ?? null
+      const orClauses: Record<string, unknown>[] = []
+
       if (teamIds.length > 0) {
         if (teamFilter && teamFilter !== 'all' && teamIds.includes(teamFilter)) {
-          where.teamId = teamFilter
+          orClauses.push({ teamId: teamFilter })
         } else {
-          where.teamId = { in: teamIds }
+          orClauses.push({ teamId: { in: teamIds } })
         }
-      } else {
-        // User sem equipe: não vê nada
+      }
+
+      // Phase 2: FK match (fonte de verdade pós-backfill) com tenant guard
+      if (user.id && user.companyId) {
+        orClauses.push({ assignedToId: user.id, companyId: user.companyId })
+      }
+
+      // Phase 1 fallback: demandas legadas (FK null) com string assignee batendo
+      if (assigneeKey && user.companyId) {
+        orClauses.push({ assignee: assigneeKey, companyId: user.companyId, assignedToId: null })
+      }
+
+      if (orClauses.length === 0) {
         return successResponse([])
       }
+
+      where.OR = orClauses
     }
 
     const demandas = await db.demanda.findMany({
@@ -75,6 +91,22 @@ export async function POST(request: NextRequest) {
     // activeTeamId vem do body (equipe ativa selecionada na UI)
     const activeTeamId = body.teamId || (user.teamIds && user.teamIds.length === 1 ? user.teamIds[0] : null)
 
+    // Phase 2: resolve assignedToId → valida company → auto-popula assignee string
+    let resolvedAssignedToId: string | null = null
+    let resolvedAssignee: string | null = data.assignee ?? null
+    if (data.assignedToId) {
+      const assignee = await db.user.findUnique({ where: { id: data.assignedToId } })
+      if (!assignee) {
+        throw new ApiError('Responsavel nao encontrado', 400)
+      }
+      // admin pode atribuir cross-company; demais não
+      if (user.role !== 'admin' && assignee.companyId !== user.companyId) {
+        throw new ApiError('Responsavel pertence a outra empresa', 403)
+      }
+      resolvedAssignedToId = assignee.id
+      resolvedAssignee = assignee.name ?? assignee.email
+    }
+
     const demanda = await db.demanda.create({
       data: {
         title: data.title,
@@ -83,7 +115,8 @@ export async function POST(request: NextRequest) {
         status: data.status,
         priority: data.priority,
         classification: data.classification || null,
-        assignee: data.assignee || null,
+        assignee: resolvedAssignee,
+        assignedToId: resolvedAssignedToId,
         dateIn: parseLocalDate(data.dateIn) ?? new Date(),
         dateStarted: data.status === 'em_andamento' ? new Date() : null,
         deadline: parseLocalDate(data.deadline),
@@ -132,10 +165,43 @@ export async function PUT(request: NextRequest) {
         throw new ApiError('Sem permissao', 403)
       }
     } else {
-      // User: só demandas das suas equipes
+      // User: ownTeam OU FK match OU legacy string match (FK null + same company)
       const teamIds = user.teamIds || []
-      if (!current.teamId || !teamIds.includes(current.teamId)) {
+      const assigneeKey = user.name ?? user.email ?? null
+      const inOwnTeam = !!current.teamId && teamIds.includes(current.teamId)
+      const isAssigneeFk =
+        !!current.assignedToId &&
+        current.assignedToId === user.id &&
+        !!user.companyId &&
+        current.companyId === user.companyId
+      const isAssigneeLegacy =
+        current.assignedToId === null &&
+        !!assigneeKey &&
+        current.assignee === assigneeKey &&
+        !!user.companyId &&
+        current.companyId === user.companyId
+      if (!inOwnTeam && !isAssigneeFk && !isAssigneeLegacy) {
         throw new ApiError('Sem permissao', 403)
+      }
+    }
+
+    // Phase 2: resolver assignedToId no PUT também (se enviado)
+    let assigneeUpdate: { assignedToId: string | null; assignee: string | null } | null = null
+    if (data.assignedToId !== undefined) {
+      if (data.assignedToId === null) {
+        assigneeUpdate = { assignedToId: null, assignee: null }
+      } else {
+        const assignee = await db.user.findUnique({ where: { id: data.assignedToId } })
+        if (!assignee) {
+          throw new ApiError('Responsavel nao encontrado', 400)
+        }
+        if (user.role !== 'admin' && assignee.companyId !== user.companyId) {
+          throw new ApiError('Responsavel pertence a outra empresa', 403)
+        }
+        assigneeUpdate = {
+          assignedToId: assignee.id,
+          assignee: assignee.name ?? assignee.email,
+        }
       }
     }
 
@@ -188,7 +254,7 @@ export async function PUT(request: NextRequest) {
         ...(data.status !== undefined && { status: data.status }),
         ...(data.priority !== undefined && { priority: data.priority }),
         ...(data.classification !== undefined && { classification: data.classification || null }),
-        ...(data.assignee !== undefined && { assignee: data.assignee || null }),
+        ...(assigneeUpdate ?? (data.assignee !== undefined ? { assignee: data.assignee || null } : {})),
         ...(data.dateIn !== undefined && parseLocalDate(data.dateIn) && { dateIn: parseLocalDate(data.dateIn)! }),
         ...(data.deadline !== undefined && { deadline: parseLocalDate(data.deadline) }),
         ...(data.dateDone !== undefined && !('dateDone' in lifecycleUpdate) && { dateDone: parseLocalDate(data.dateDone) }),
@@ -249,7 +315,20 @@ export async function DELETE(request: NextRequest) {
       }
     } else {
       const teamIds = user.teamIds || []
-      if (!demanda.teamId || !teamIds.includes(demanda.teamId)) {
+      const assigneeKey = user.name ?? user.email ?? null
+      const inOwnTeam = !!demanda.teamId && teamIds.includes(demanda.teamId)
+      const isAssigneeFk =
+        !!demanda.assignedToId &&
+        demanda.assignedToId === user.id &&
+        !!user.companyId &&
+        demanda.companyId === user.companyId
+      const isAssigneeLegacy =
+        demanda.assignedToId === null &&
+        !!assigneeKey &&
+        demanda.assignee === assigneeKey &&
+        !!user.companyId &&
+        demanda.companyId === user.companyId
+      if (!inOwnTeam && !isAssigneeFk && !isAssigneeLegacy) {
         throw new ApiError('Sem permissao', 403)
       }
     }

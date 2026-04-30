@@ -72,26 +72,96 @@ describe('GET /api/demandas', () => {
     )
   })
 
-  it('restricts user to own teamIds', async () => {
-    mockAuthenticated({ role: 'user', teamIds: ['team-geral'] })
+  it('restricts user to teams OR assignedToId (FK + tenant) OR legacy assignee fallback', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: ['team-geral'], name: 'Leonardo', companyId: 'company-defenz' })
     mockDb.demanda.findMany.mockResolvedValue(demandaList)
     const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
     const res = await GET(req)
     expect(res.status).toBe(200)
     expect(mockDb.demanda.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { teamId: { in: ['team-geral'] } } })
+      expect.objectContaining({
+        where: {
+          OR: [
+            { teamId: { in: ['team-geral'] } },
+            { assignedToId: 'user-leo', companyId: 'company-defenz' },
+            { assignee: 'Leonardo', companyId: 'company-defenz', assignedToId: null },
+          ],
+        },
+      })
     )
   })
 
-  it('returns empty for user with no teams', async () => {
-    mockAuthenticated({ role: 'user', teamIds: [] })
+  it('user without team but with assignedToId match: queries by FK with tenant guard (and legacy fallback)', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: [], name: 'Leonardo', companyId: 'company-defenz' })
+    mockDb.demanda.findMany.mockResolvedValue([{ ...savedDemanda, assignedToId: 'user-leo', teamId: 'team-other' }])
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+    expect(mockDb.demanda.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [
+            { assignedToId: 'user-leo', companyId: 'company-defenz' },
+            { assignee: 'Leonardo', companyId: 'company-defenz', assignedToId: null },
+          ],
+        },
+      })
+    )
+  })
+
+  it('user without team and without name nor email queries only by FK (with tenant guard)', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: [], name: null, email: null, companyId: 'company-defenz' })
+    mockDb.demanda.findMany.mockResolvedValue([])
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+    expect(mockDb.demanda.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { OR: [{ assignedToId: 'user-leo', companyId: 'company-defenz' }] },
+      })
+    )
+  })
+
+  it('user without companyId: BOTH FK and legacy fallback dropped (tenant guard strict)', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: ['team-geral'], name: 'Test User', companyId: undefined })
+    mockDb.demanda.findMany.mockResolvedValue([])
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+    expect(mockDb.demanda.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [{ teamId: { in: ['team-geral'] } }],
+        },
+      })
+    )
+  })
+
+  it('user with no team and no companyId returns []', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: [], name: null, email: null, companyId: undefined })
     const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
     const res = await GET(req)
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.data).toEqual([])
-    // Should NOT call findMany
     expect(mockDb.demanda.findMany).not.toHaveBeenCalled()
+  })
+
+  it('legacy fallback uses email when name is null (FK still tenant-guarded)', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: [], name: null, email: 'leo@example.com', companyId: 'company-defenz' })
+    mockDb.demanda.findMany.mockResolvedValue([])
+    const req = createRequest('GET', { url: 'http://localhost:3000/api/demandas' })
+    await GET(req)
+    expect(mockDb.demanda.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [
+            { assignedToId: 'user-leo', companyId: 'company-defenz' },
+            { assignee: 'leo@example.com', companyId: 'company-defenz', assignedToId: null },
+          ],
+        },
+      })
+    )
   })
 })
 
@@ -192,6 +262,105 @@ describe('POST /api/demandas', () => {
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body.success).toBe(true)
+  })
+
+  it('POST without assignedToId stores assignee string only (legacy flow)', async () => {
+    mockAuthenticated({ id: 'user-marcos', role: 'admin', companyId: 'company-defenz' })
+    mockDb.demanda.create.mockResolvedValue({ ...savedDemanda, assignedToId: null, assignee: 'Free String' })
+    const req = createRequest('POST', {
+      body: { title: 'Legacy', assignee: 'Free String' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(201)
+    expect(mockDb.user.findUnique).not.toHaveBeenCalled()
+    const createCall = mockDb.demanda.create.mock.calls[0][0]
+    expect(createCall.data.assignedToId).toBeNull()
+    expect(createCall.data.assignee).toBe('Free String')
+  })
+
+  it('POST with neither assignee nor assignedToId stores both as null', async () => {
+    mockAuthenticated({ id: 'user-marcos', role: 'admin', companyId: 'company-defenz' })
+    mockDb.demanda.create.mockResolvedValue({ ...savedDemanda, assignedToId: null, assignee: null })
+    const req = createRequest('POST', {
+      body: { title: 'No assignee at all' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(201)
+    const createCall = mockDb.demanda.create.mock.calls[0][0]
+    expect(createCall.data.assignedToId).toBeNull()
+    expect(createCall.data.assignee).toBeNull()
+  })
+
+  it('POST with both assignedToId and assignee string: FK takes precedence (server overwrites string)', async () => {
+    mockAuthenticated({ id: 'user-marcos', role: 'admin', companyId: 'company-defenz' })
+    mockDb.user.findUnique.mockResolvedValue({
+      id: 'user-leo',
+      name: 'Leonardo Real',
+      email: 'leo@example.com',
+      companyId: 'company-defenz',
+    })
+    mockDb.demanda.create.mockResolvedValue({ ...savedDemanda, assignedToId: 'user-leo', assignee: 'Leonardo Real' })
+    const req = createRequest('POST', {
+      body: { title: 'Both fields', assignedToId: 'user-leo', assignee: 'Leo Apelido' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(201)
+    const createCall = mockDb.demanda.create.mock.calls[0][0]
+    expect(createCall.data.assignedToId).toBe('user-leo')
+    // Server resolves from User and overwrites the string
+    expect(createCall.data.assignee).toBe('Leonardo Real')
+  })
+
+  it('POST with assignedToId resolves user (same company) and auto-populates assignee string', async () => {
+    mockAuthenticated({ id: 'user-marcos', role: 'user', companyId: 'company-defenz', teamIds: ['team-a'] })
+    mockDb.user.findUnique.mockResolvedValue({
+      id: 'user-leo',
+      name: 'Leonardo',
+      email: 'leo@example.com',
+      companyId: 'company-defenz',
+    })
+    mockDb.demanda.create.mockResolvedValue({ ...savedDemanda, assignedToId: 'user-leo', assignee: 'Leonardo' })
+    const req = createRequest('POST', {
+      body: { title: 'FK demanda', assignedToId: 'user-leo' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(201)
+    expect(mockDb.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user-leo' } })
+    const createCall = mockDb.demanda.create.mock.calls[0][0]
+    expect(createCall.data.assignedToId).toBe('user-leo')
+    expect(createCall.data.assignee).toBe('Leonardo')
+  })
+
+  it('POST returns 403 when assignedToId points to user in another company (tenant guard)', async () => {
+    mockAuthenticated({ id: 'user-marcos', role: 'user', companyId: 'company-defenz', teamIds: ['team-a'] })
+    mockDb.user.findUnique.mockResolvedValue({
+      id: 'user-cross',
+      name: 'Cross-Company',
+      email: 'cross@example.com',
+      companyId: 'company-other',
+    })
+    const req = createRequest('POST', {
+      body: { title: 'Hack via FK', assignedToId: 'user-cross' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(403)
+    expect(mockDb.demanda.create).not.toHaveBeenCalled()
+  })
+
+  it('POST returns 400 when assignedToId references a non-existent user', async () => {
+    mockAuthenticated({ id: 'user-marcos', role: 'user', companyId: 'company-defenz', teamIds: ['team-a'] })
+    mockDb.user.findUnique.mockResolvedValue(null)
+    const req = createRequest('POST', {
+      body: { title: 'Bad FK', assignedToId: 'cknopxlbz0000aaaabbbbccccdef' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(400)
   })
 
   it('uses new Date() when dateIn not provided', async () => {
@@ -378,11 +547,149 @@ describe('PUT /api/demandas', () => {
 
   // --- Authorization tests: 3 levels ---
 
-  it('returns 403 when user edits demanda from another team', async () => {
-    mockAuthenticated({ role: 'user', teamIds: ['team-geral'] })
-    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, teamId: 'team-other' })
+  it('returns 403 when user edits demanda from another team and is neither FK nor legacy assignee', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: ['team-geral'], name: 'Leonardo', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      teamId: 'team-other',
+      assignedToId: 'user-other',
+      assignee: 'Outra Pessoa',
+      companyId: 'company-defenz',
+    })
     const req = createRequest('PUT', {
       body: { id: 'dem-001', title: 'Hacked' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(403)
+  })
+
+  it('allows user to edit demanda from another team when assignedToId === user.id (FK path)', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: ['team-geral'], name: 'Leonardo', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      teamId: 'team-other',
+      assignedToId: 'user-leo',
+      assignee: 'Leonardo',
+      companyId: 'company-defenz',
+    })
+    mockDb.demanda.update.mockResolvedValue({ ...savedDemanda, status: 'em_andamento' })
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', status: 'em_andamento' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+  })
+
+  it('allows user to edit legacy demanda where assignedToId is null and assignee string matches (legacy fallback)', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: ['team-geral'], name: 'Leonardo', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      teamId: 'team-other',
+      assignedToId: null,
+      assignee: 'Leonardo',
+      companyId: 'company-defenz',
+    })
+    mockDb.demanda.update.mockResolvedValue({ ...savedDemanda, status: 'em_andamento' })
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', status: 'em_andamento' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+  })
+
+  it('FK takes precedence: when assignedToId belongs to other user, string match does NOT authorize', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: ['team-geral'], name: 'Leonardo', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      teamId: 'team-other',
+      assignedToId: 'user-other',
+      assignee: 'Leonardo',
+      companyId: 'company-defenz',
+    })
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', title: 'Hacked via legacy string' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(403)
+  })
+
+  it('PUT with assignedToId=null clears both FK and assignee string', async () => {
+    mockAuthenticated({ id: 'user-marcos', role: 'admin' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      assignedToId: 'user-leo',
+      assignee: 'Leonardo',
+    })
+    mockDb.demanda.update.mockResolvedValue(savedDemanda)
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', assignedToId: null },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+    const updateData = mockDb.demanda.update.mock.calls[0][0].data
+    expect(updateData.assignedToId).toBeNull()
+    expect(updateData.assignee).toBeNull()
+  })
+
+  it('PUT with assignedToId resolves new user and updates both FK and assignee string', async () => {
+    mockAuthenticated({ id: 'user-marcos', role: 'admin', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      assignedToId: null,
+      assignee: null,
+    })
+    mockDb.user.findUnique.mockResolvedValue({
+      id: 'user-leo',
+      name: 'Leonardo',
+      email: 'leo@example.com',
+      companyId: 'company-defenz',
+    })
+    mockDb.demanda.update.mockResolvedValue(savedDemanda)
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', assignedToId: 'user-leo' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+    const updateData = mockDb.demanda.update.mock.calls[0][0].data
+    expect(updateData.assignedToId).toBe('user-leo')
+    expect(updateData.assignee).toBe('Leonardo')
+  })
+
+  it('PUT non-admin cannot reassign to user from another company', async () => {
+    mockAuthenticated({ id: 'user-mgr', role: 'gerencia', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
+    mockDb.user.findUnique.mockResolvedValue({
+      id: 'user-cross',
+      name: 'Cross-Company',
+      email: 'cross@example.com',
+      companyId: 'company-other',
+    })
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', assignedToId: 'user-cross' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(403)
+    expect(mockDb.demanda.update).not.toHaveBeenCalled()
+  })
+
+  it('returns 403 when FK match is in another company (tenant guard)', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: [], name: 'Leonardo', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      teamId: null,
+      assignedToId: 'user-leo',
+      assignee: 'Leonardo',
+      companyId: 'company-other',
+    })
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', title: 'Cross-company hack' },
       url: 'http://localhost:3000/api/demandas',
     })
     const res = await PUT(req)
@@ -446,9 +753,66 @@ describe('DELETE /api/demandas', () => {
     expect(res.status).toBe(200)
   })
 
-  it('returns 403 when user deletes demanda from another team', async () => {
-    mockAuthenticated({ role: 'user', teamIds: ['team-geral'] })
-    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, teamId: 'team-other' })
+  it('returns 403 when user deletes demanda from another team with no FK/legacy match', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: ['team-geral'], name: 'Leonardo', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      teamId: 'team-other',
+      assignedToId: 'user-other',
+      assignee: 'Outra Pessoa',
+      companyId: 'company-defenz',
+    })
+    const req = createRequest('DELETE', {
+      searchParams: { id: 'dem-001' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await DELETE(req)
+    expect(res.status).toBe(403)
+  })
+
+  it('allows user to delete demanda when assignedToId === user.id (FK path)', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: ['team-geral'], name: 'Leonardo', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      teamId: 'team-other',
+      assignedToId: 'user-leo',
+      companyId: 'company-defenz',
+    })
+    mockDb.demanda.delete.mockResolvedValue(savedDemanda)
+    const req = createRequest('DELETE', {
+      searchParams: { id: 'dem-001' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await DELETE(req)
+    expect(res.status).toBe(200)
+  })
+
+  it('allows user to delete legacy demanda where assignedToId is null and assignee matches', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: ['team-geral'], name: 'Leonardo', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      teamId: 'team-other',
+      assignedToId: null,
+      assignee: 'Leonardo',
+      companyId: 'company-defenz',
+    })
+    mockDb.demanda.delete.mockResolvedValue(savedDemanda)
+    const req = createRequest('DELETE', {
+      searchParams: { id: 'dem-001' },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await DELETE(req)
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 403 when FK match is in another company (DELETE tenant guard)', async () => {
+    mockAuthenticated({ id: 'user-leo', role: 'user', teamIds: [], name: 'Leonardo', companyId: 'company-defenz' })
+    mockDb.demanda.findUnique.mockResolvedValue({
+      ...savedDemanda,
+      teamId: null,
+      assignedToId: 'user-leo',
+      companyId: 'company-other',
+    })
     const req = createRequest('DELETE', {
       searchParams: { id: 'dem-001' },
       url: 'http://localhost:3000/api/demandas',

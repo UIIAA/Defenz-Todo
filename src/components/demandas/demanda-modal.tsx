@@ -82,6 +82,7 @@ export function DemandaModal({
         priority: demanda.priority,
         classification: demanda.classification || null,
         assignee: demanda.assignee || '',
+        assignedToId: demanda.assignedToId || null,
         dateIn: toDateStr(demanda.dateIn),
         dateStarted: demanda.dateStarted || null,
         deadline: toDateStr(demanda.deadline),
@@ -327,7 +328,7 @@ export function DemandaModal({
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Responsavel
             </label>
-            <Select value={form.assignee || '__none__'} onValueChange={(v) => upd('assignee', v === '__none__' ? null : v)}>
+            <Select value={form.assignedToId || '__none__'} onValueChange={(v) => upd('assignedToId', v === '__none__' ? null : v)}>
               <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
                 <SelectValue placeholder="Sem responsavel" />
               </SelectTrigger>
@@ -336,7 +337,7 @@ export function DemandaModal({
                   Sem responsavel
                 </SelectItem>
                 {modalUsers.map((u) => (
-                  <SelectItem key={u.id} value={u.name || u.email} className="text-slate-800 dark:text-slate-200">
+                  <SelectItem key={u.id} value={u.id} className="text-slate-800 dark:text-slate-200">
                     {u.name || u.email}
                   </SelectItem>
                 ))}

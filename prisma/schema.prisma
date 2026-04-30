@@ -90,7 +90,8 @@ model User {
   interactions            Interaction[]
   marketingLists          MarketingList[]
   dailyActivityLogs       DailyActivityLog[]
-  demandas                Demanda[]
+  demandas                Demanda[]                @relation("DemandaCreator")
+  demandasAssignedTo      Demanda[]                @relation("DemandaAssignee")
   inviteTokens            InviteToken[]
 
   @@index([email])
@@ -760,7 +761,9 @@ model Demanda {
   origin      String    @default("outra") // fernando, securisoft, autogerada, outra
   status      String    @default("solicitada") // solicitada, em_andamento, concluida, bloqueada
   priority    String    @default("media") // alta, media, baixa
-  assignee       String?   // Pessoa designada para a demanda
+  assignee       String?   // DEPRECATED — denormalized display cache (auto-populated from User.name when assignedToId is set). Mantido durante janela de compat até feature-assignee-fk-migration concluir backfill em prod.
+  assignedToId   String?   // FK para User responsável (fonte de verdade desde feature-assignee-fk-migration)
+  assignedTo     User?     @relation("DemandaAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
   previousStatus String?   // Status anterior quando bloqueada (para lane horizontal)
   dateIn         DateTime  @default(now())
   dateStarted    DateTime?
@@ -774,7 +777,7 @@ model Demanda {
   reminderSent  Boolean   @default(false) // Ja enviou email de lembrete?
 
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation("DemandaCreator", fields: [userId], references: [id])
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
   teamId    String?
@@ -790,6 +793,7 @@ model Demanda {
   @@index([origin])
   @@index([deadline])
   @@index([assignee])
+  @@index([assignedToId])
   @@index([classification])
   @@index([companyId])
   @@index([teamId])

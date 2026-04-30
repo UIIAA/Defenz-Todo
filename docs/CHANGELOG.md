@@ -3,7 +3,12 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Added
+- **Assignee como FK (Phase 2)**: nova coluna `Demanda.assignedToId` (FK para `User`, `ON DELETE SET NULL`) torna-se a fonte de verdade do responsável da demanda. POST/PUT aceitam `assignedToId`; servidor faz lookup do User, valida `companyId` (não-admin não pode atribuir cross-company) e auto-popula `Demanda.assignee` (string) como display cache denormalizado. GET para role `user` filtra `OR: [{ teamId IN [...] }, { assignedToId: user.id, companyId: user.companyId }, { assignee: key, companyId, assignedToId: null }]` — FK + tenant guard, com fallback string para legacy. PUT/DELETE auth: FK match com tenant guard, fallback string só quando `assignedToId IS NULL`. Frontend `demanda-modal.tsx` agora envia `User.id` no `<SelectItem>` em vez de `name||email`. Migration SQL: `prisma/migrations/20260428180000_add_assignee_fk/`. Backfill: `scripts/backfill-assignee.ts` (idempotente, loga não-resolvidos). 13 testes novos cobrindo POST FK, PUT FK, GET tri-OR, tenant guard, legacy fallback, cross-company assignment block (331 total).
+  - **Próximos passos para deploy**: (1) `prisma migrate deploy` (DIRECT_URL) em staging; (2) `tsx scripts/backfill-assignee.ts`; (3) revisar `unresolved_assignees.log`; (4) deploy do código; (5) repetir em prod.
+
 ### Fixed
+- **Assignee não via a própria demanda (P0)**: role `user` filtrava demandas apenas por `teamId ∈ user.teamIds` em GET/PUT/DELETE de `/api/demandas`. O campo `assignee` (string) nunca entrava no `where`. Resultado: ao atribuir Leonardo (team B) numa demanda criada por Marcos (team A), Leonardo não conseguia ver/editar/deletar a demanda. Fix: GET monta `where.OR = [{ teamId in [...] }, { assignee: (user.name ?? user.email), companyId: user.companyId }]`. PUT/DELETE autorizam `inOwnTeam || isAssignee` com tenant guard por `companyId`. 9 testes novos (318 total). Phase 2 (`feature-assignee-fk-migration.md`) planejada para eliminar fragilidade do match por string.
 - **Bug de timezone em datas (P0)**: `dateIn`, `deadline`, `dateDone`, `reminderDate` perdiam 1 dia ao salvar porque `new Date("YYYY-MM-DD")` em Node interpreta como UTC midnight e renderiza um dia antes em America/Sao_Paulo. Novo helper `parseLocalDate()` em `src/lib/date.ts` parseia como meia-noite SP. Aplicado em POST e PUT `/api/demandas`. 9 testes novos (298 total).
 
 ### Security
