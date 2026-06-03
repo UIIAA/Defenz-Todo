@@ -208,6 +208,7 @@ model Activity {
   location    String? // Onde? (Where) - Local/Plataforma de execução
   how         String? // Como? (How) - Método/Processo detalhado
   cost        String? // Quanto? (How Much) - Investimento/Custo
+  dependsOn   String            @default("[]") // JSON array de IDs de Activity que esta depende
   status      String            @default("pending") // pending, in_progress, completed, ok
   deletedAt   DateTime? // Soft delete
   createdAt   DateTime          @default(now())
@@ -784,6 +785,10 @@ model Demanda {
   team      Team?    @relation(fields: [teamId], references: [id])
   subtasks  Subtask[]
   links     DemandaLink[]
+  dependsOn String    @default("[]") // JSON array de IDs de Demanda que esta depende
+
+  estimatedMinutes Int?           // Horas estimadas (opcional), armazenadas em minutos
+  spentMinutes     Int  @default(0) // Horas gastas no card, em minutos
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -806,6 +811,8 @@ model Subtask {
   title     String
   completed Boolean  @default(false)
   position  Int      @default(0)
+  estimatedMinutes Int?            // Horas estimadas (opcional), em minutos
+  spentMinutes     Int  @default(0) // Horas gastas na subtarefa, em minutos
   demandaId String
   demanda   Demanda  @relation(fields: [demandaId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

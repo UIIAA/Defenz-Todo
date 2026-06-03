@@ -63,4 +63,14 @@ describe('updateSubtaskSchema', () => {
   it('rejects title over 200 chars', () => {
     expect(() => updateSubtaskSchema.parse({ title: 'x'.repeat(201) })).toThrow()
   })
+
+  it('accepts time tracking fields', () => {
+    const result = updateSubtaskSchema.parse({ spentMinutes: 90, estimatedMinutes: 120 })
+    expect(result.spentMinutes).toBe(90)
+    expect(result.estimatedMinutes).toBe(120)
+  })
+
+  it('rejects negative spentMinutes', () => {
+    expect(() => updateSubtaskSchema.parse({ spentMinutes: -5 })).toThrow()
+  })
 })

@@ -21,6 +21,8 @@ export const mockDb = {
   activity: {
     findMany: vi.fn(),
     findFirst: vi.fn(),
+    findUnique: vi.fn(),
+    update: vi.fn(),
   },
   auditLog: {
     create: vi.fn(),

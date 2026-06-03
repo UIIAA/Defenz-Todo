@@ -545,6 +545,93 @@ describe('PUT /api/demandas', () => {
     expect(updateData.classification).toBeNull()
   })
 
+  // --- Time tracking ---
+
+  it('persists spentMinutes/estimatedMinutes on update', async () => {
+    mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
+    mockDb.demanda.update.mockResolvedValue({ ...savedDemanda, spentMinutes: 90 })
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', spentMinutes: 90, estimatedMinutes: 480 },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+    const updateData = mockDb.demanda.update.mock.calls[0][0].data
+    expect(updateData.spentMinutes).toBe(90)
+    expect(updateData.estimatedMinutes).toBe(480)
+  })
+
+  it('returns 400 when spentMinutes is negative', async () => {
+    mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', spentMinutes: -10 },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(400)
+  })
+
+  // --- Dependências ---
+
+  it('persists dependsOn (valid, no cycle)', async () => {
+    mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
+    mockDb.demanda.findMany.mockResolvedValue([
+      { id: 'dem-001', dependsOn: '[]' },
+      { id: 'dep-002', dependsOn: '[]' },
+    ])
+    mockDb.demanda.update.mockResolvedValue({ ...savedDemanda, dependsOn: '["dep-002"]' })
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', dependsOn: ['dep-002'] },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(200)
+    const updateData = mockDb.demanda.update.mock.calls[0][0].data
+    expect(updateData.dependsOn).toBe(JSON.stringify(['dep-002']))
+  })
+
+  it('returns 400 on self-dependency', async () => {
+    mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', dependsOn: ['dem-001'] },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 on dependency cycle', async () => {
+    mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
+    mockDb.demanda.findMany.mockResolvedValue([
+      { id: 'dem-001', dependsOn: '[]' },
+      { id: 'dep-002', dependsOn: '["dem-001"]' }, // dep-002 já depende de dem-001
+    ])
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', dependsOn: ['dep-002'] }, // criaria dem-001 → dep-002 → dem-001
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(400)
+    expect(mockDb.demanda.update).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 on invalid dependency id', async () => {
+    mockAuthenticated()
+    mockDb.demanda.findUnique.mockResolvedValue(savedDemanda)
+    mockDb.demanda.findMany.mockResolvedValue([{ id: 'dem-001', dependsOn: '[]' }])
+    const req = createRequest('PUT', {
+      body: { id: 'dem-001', dependsOn: ['ghost-id'] },
+      url: 'http://localhost:3000/api/demandas',
+    })
+    const res = await PUT(req)
+    expect(res.status).toBe(400)
+  })
+
   // --- Authorization tests: 3 levels ---
 
   it('returns 403 when user edits demanda from another team and is neither FK nor legacy assignee', async () => {

@@ -5,8 +5,9 @@ import { handleApiError, createdResponse, successResponse, ApiError } from '@/li
 import { createDemandaSchema, updateDemandaSchema } from '@/lib/validations/demanda'
 import { createAuditLog, diffChanges } from '@/lib/audit'
 import { parseLocalDate } from '@/lib/date'
+import { detectCycle } from '@/lib/dependency-graph'
 
-const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'assignee', 'deadline', 'dateDone', 'dateStarted', 'reminderDate']
+const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'assignee', 'deadline', 'dateDone', 'dateStarted', 'reminderDate', 'estimatedMinutes', 'spentMinutes']
 
 export async function GET(request: NextRequest) {
   try {
@@ -74,7 +75,12 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return successResponse(demandas)
+    const result = demandas.map(d => ({
+      ...d,
+      dependsOn: JSON.parse(d.dependsOn || '[]') as string[],
+    }))
+
+    return successResponse(result)
   } catch (error) {
     return handleApiError(error)
   }
@@ -90,6 +96,18 @@ export async function POST(request: NextRequest) {
 
     // activeTeamId vem do body (equipe ativa selecionada na UI)
     const activeTeamId = body.teamId || (user.teamIds && user.teamIds.length === 1 ? user.teamIds[0] : null)
+
+    // Dependências (opcional): valida IDs no escopo da empresa
+    let dependsOnValue = '[]'
+    if (data.dependsOn && data.dependsOn.length > 0) {
+      const scopeWhere = user.companyId ? { companyId: user.companyId } : {}
+      const all = await db.demanda.findMany({ where: scopeWhere, select: { id: true } })
+      const validIds = new Set(all.map((d) => d.id))
+      for (const depId of data.dependsOn) {
+        if (!validIds.has(depId)) throw new ApiError('Dependência inválida', 400)
+      }
+      dependsOnValue = JSON.stringify(data.dependsOn)
+    }
 
     // Phase 2: resolve assignedToId → valida company → auto-popula assignee string
     let resolvedAssignedToId: string | null = null
@@ -121,6 +139,9 @@ export async function POST(request: NextRequest) {
         dateStarted: data.status === 'em_andamento' ? new Date() : null,
         deadline: parseLocalDate(data.deadline),
         dateDone: parseLocalDate(data.dateDone),
+        estimatedMinutes: data.estimatedMinutes ?? null,
+        spentMinutes: data.spentMinutes ?? 0,
+        dependsOn: dependsOnValue,
         userId: user.id,
         companyId: user.companyId || null,
         teamId: activeTeamId || null,
@@ -205,6 +226,27 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Dependências (opcional): self-dep, ID inválido e ciclo — escopo da empresa
+    let dependsOnUpdate: { dependsOn: string } | null = null
+    if (data.dependsOn !== undefined) {
+      const deps = data.dependsOn
+      if (deps.includes(id)) {
+        throw new ApiError('Uma demanda não pode depender de si mesma', 400)
+      }
+      const scopeWhere = current.companyId ? { companyId: current.companyId } : {}
+      const all = await db.demanda.findMany({ where: scopeWhere, select: { id: true, dependsOn: true } })
+      const validIds = new Set(all.map((d) => d.id))
+      for (const depId of deps) {
+        if (!validIds.has(depId)) throw new ApiError('Dependência inválida', 400)
+      }
+      const allDepsMap = new Map<string, string[]>()
+      for (const d of all) allDepsMap.set(d.id, JSON.parse(d.dependsOn || '[]') as string[])
+      if (detectCycle(id, deps, allDepsMap)) {
+        throw new ApiError('Isso criaria um ciclo de dependências', 400)
+      }
+      dependsOnUpdate = { dependsOn: JSON.stringify(deps) }
+    }
+
     // Optimistic locking via updatedAt
     if (updatedAt) {
       const clientDate = new Date(updatedAt).getTime()
@@ -262,6 +304,9 @@ export async function PUT(request: NextRequest) {
           reminderDate: parseLocalDate(data.reminderDate),
           reminderSent: false, // Reset ao mudar data do lembrete
         }),
+        ...(data.estimatedMinutes !== undefined && { estimatedMinutes: data.estimatedMinutes }),
+        ...(data.spentMinutes !== undefined && { spentMinutes: data.spentMinutes }),
+        ...(dependsOnUpdate ?? {}),
         ...previousStatusUpdate,
         ...lifecycleUpdate,
         version: { increment: 1 },

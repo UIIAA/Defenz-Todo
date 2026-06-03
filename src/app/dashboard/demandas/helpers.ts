@@ -60,6 +60,8 @@ export interface Subtask {
   completed: boolean
   position: number
   demandaId: string
+  estimatedMinutes?: number | null
+  spentMinutes?: number
 }
 
 export interface DemandaLink {
@@ -89,9 +91,27 @@ export interface Demanda {
   reminderSent: boolean
   subtasks?: Subtask[]
   links?: DemandaLink[]
+  dependsOn?: string[]
+  estimatedMinutes?: number | null
+  spentMinutes?: number
 }
 
 export type DemandaForm = Omit<Demanda, 'id'> & { id?: string }
+
+/** Total de minutos gastos = horas próprias da demanda + soma das subtarefas. */
+export function totalSpentMinutes(d: Pick<Demanda, 'spentMinutes' | 'subtasks'>): number {
+  const own = d.spentMinutes ?? 0
+  const subs = (d.subtasks ?? []).reduce((acc, s) => acc + (s.spentMinutes ?? 0), 0)
+  return own + subs
+}
+
+/** Total de minutos estimados (demanda + subtarefas); null quando nada foi estimado. */
+export function totalEstimatedMinutes(d: Pick<Demanda, 'estimatedMinutes' | 'subtasks'>): number | null {
+  const own = d.estimatedMinutes ?? 0
+  const subs = (d.subtasks ?? []).reduce((acc, s) => acc + (s.estimatedMinutes ?? 0), 0)
+  const total = own + subs
+  return total > 0 ? total : null
+}
 
 export function filterByAssignee(
   demandas: Demanda[],
@@ -171,4 +191,7 @@ export const emptyForm = (): DemandaForm => ({
   dateDone: null,
   reminderDate: null,
   reminderSent: false,
+  estimatedMinutes: null,
+  spentMinutes: 0,
+  dependsOn: [],
 })

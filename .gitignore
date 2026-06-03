@@ -91,3 +91,5 @@ pids
 *.backup*
 .vercel
 .claude/worktrees/
+.claude/scheduled_tasks.lock
+tasks/

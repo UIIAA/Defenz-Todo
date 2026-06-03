@@ -4,16 +4,22 @@ import { useDroppable } from '@dnd-kit/core'
 import { KanbanCard } from './kanban-card'
 import type { Demanda, Status } from '@/app/dashboard/demandas/helpers'
 
+type DepMeta = { id: string; title: string; status: string }
+
 function BlockedDropZone({
   statusId,
   items,
   onClickCard,
+  onOpenDemanda,
   highlightedCardId,
+  demandaMap,
 }: {
   statusId: string
   items: Demanda[]
   onClickCard: (d: Demanda) => void
+  onOpenDemanda?: (id: string) => void
   highlightedCardId?: string | null
+  demandaMap?: Record<string, DepMeta>
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `blocked-${statusId}`,
@@ -42,14 +48,21 @@ function BlockedDropZone({
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {items.map((d) => (
-            <KanbanCard
-              key={d.id}
-              d={d}
-              onClick={onClickCard}
-              highlighted={highlightedCardId === d.id}
-            />
-          ))}
+          {items.map((d) => {
+            const dependsOnMeta = demandaMap
+              ? (d.dependsOn ?? []).map((id) => demandaMap[id]).filter(Boolean)
+              : undefined
+            return (
+              <KanbanCard
+                key={d.id}
+                d={d}
+                onClick={onClickCard}
+                onOpenDemanda={onOpenDemanda}
+                highlighted={highlightedCardId === d.id}
+                dependsOnMeta={dependsOnMeta}
+              />
+            )
+          })}
         </div>
       )}
     </div>
@@ -60,12 +73,16 @@ export function BlockedLane({
   demandas,
   kanbanStatuses,
   onClickCard,
+  onOpenDemanda,
   highlightedCardId,
+  demandaMap,
 }: {
   demandas: Demanda[]
   kanbanStatuses: Status[]
   onClickCard: (d: Demanda) => void
+  onOpenDemanda?: (id: string) => void
   highlightedCardId?: string | null
+  demandaMap?: Record<string, DepMeta>
 }) {
   return (
     <div className="mt-4 pt-3 border-t-2 border-dashed border-red-200/60 dark:border-red-800/30">
@@ -89,7 +106,9 @@ export function BlockedLane({
               statusId={s.id}
               items={items}
               onClickCard={onClickCard}
+              onOpenDemanda={onOpenDemanda}
               highlightedCardId={highlightedCardId}
+              demandaMap={demandaMap}
             />
           )
         })}

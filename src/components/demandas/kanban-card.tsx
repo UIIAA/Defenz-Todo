@@ -1,7 +1,8 @@
 'use client'
 
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { useDraggable } from '@dnd-kit/core'
-import { Link as LinkIcon, Bell } from 'lucide-react'
+import { Link as LinkIcon, Lock, Bell, Clock } from 'lucide-react'
 import { formatDateShort } from '@/lib/date'
 import {
   ORIGINS,
@@ -9,25 +10,58 @@ import {
   CLASSIFICATIONS,
   toDateStr,
   todayStr,
+  totalSpentMinutes,
+  totalEstimatedMinutes,
   type Demanda,
 } from '@/app/dashboard/demandas/helpers'
+import { minutesToHoursLabel } from '@/lib/duration'
+
+type DepMeta = { id: string; title: string; status: string }
 
 export function KanbanCard({
   d,
   onClick,
+  onOpenDemanda,
   highlighted,
   isDragOverlay,
+  dependsOnMeta,
 }: {
   d: Demanda
   onClick: (d: Demanda) => void
+  onOpenDemanda?: (id: string) => void
   highlighted?: boolean
   isDragOverlay?: boolean
+  dependsOnMeta?: DepMeta[]
 }) {
   const origin = ORIGINS.find((o) => o.id === d.origin)
   const prio = PRIORITIES.find((p) => p.id === d.priority)
   const classif = d.classification ? CLASSIFICATIONS.find((c) => c.id === d.classification) : null
   const isOverdue = d.deadline && d.status !== 'concluida' && toDateStr(d.deadline) < todayStr()
   const hasReminderToday = d.reminderDate && d.status !== 'concluida' && toDateStr(d.reminderDate) <= todayStr()
+
+  const deps = dependsOnMeta ?? []
+  const depCount = deps.length
+  const isBlocked = deps.some((dep) => dep.status !== 'concluida')
+  const depTooltip = deps.map((dep) => dep.title).join('\n')
+
+  // Click no badge de deps: 1 dep abre direto; várias abrem a própria demanda (lista clicável no modal)
+  const handleDepClick = (e: ReactMouseEvent) => {
+    e.stopPropagation()
+    if (depCount === 1 && onOpenDemanda) onOpenDemanda(deps[0].id)
+    else onClick(d)
+  }
+  const stopDrag = (e: ReactPointerEvent) => e.stopPropagation()
+
+  const spentMin = totalSpentMinutes(d)
+  const estMin = totalEstimatedMinutes(d)
+  const showTime = spentMin > 0 || estMin != null
+  const overBudget = estMin != null && spentMin > estMin
+  const timeLabel = estMin != null
+    ? `${minutesToHoursLabel(spentMin).replace('h', '')}/${minutesToHoursLabel(estMin)}`
+    : minutesToHoursLabel(spentMin)
+  const timeTooltip = estMin != null
+    ? `Horas: ${minutesToHoursLabel(spentMin)} de ${minutesToHoursLabel(estMin)} estimadas`
+    : `Horas gastas: ${minutesToHoursLabel(spentMin)}`
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: d.id,
@@ -93,6 +127,43 @@ export function KanbanCard({
             <span className="flex items-center gap-0.5 text-[9px] text-blue-400" title={`${d.links.length} link(s)`}>
               <LinkIcon className="h-2.5 w-2.5" />
               {d.links.length}
+            </span>
+          )}
+          {depCount > 0 && !isBlocked && (
+            <button
+              type="button"
+              onClick={handleDepClick}
+              onPointerDown={stopDrag}
+              className="flex items-center gap-0.5 text-[9px] px-1 py-0.5 rounded bg-blue-50 text-blue-500 dark:bg-blue-900/30 dark:text-blue-400 shrink-0 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:underline"
+              title={depCount === 1 ? `Abrir: ${deps[0].title}` : depTooltip}
+            >
+              <LinkIcon className="h-2.5 w-2.5" />
+              {depCount}
+            </button>
+          )}
+          {depCount > 0 && isBlocked && (
+            <button
+              type="button"
+              onClick={handleDepClick}
+              onPointerDown={stopDrag}
+              className="flex items-center gap-0.5 text-[9px] px-1 py-0.5 rounded bg-red-50 text-red-500 dark:bg-red-900/30 dark:text-red-400 shrink-0 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/50 hover:underline"
+              title={depCount === 1 ? `Abrir: ${deps[0].title}` : depTooltip}
+            >
+              <Lock className="h-2.5 w-2.5" />
+              {depCount}
+            </button>
+          )}
+          {showTime && (
+            <span
+              className={`flex items-center gap-0.5 text-[9px] px-1 py-0.5 rounded shrink-0 ${
+                overBudget
+                  ? 'bg-red-50 text-red-500 dark:bg-red-900/30 dark:text-red-400'
+                  : 'bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-300'
+              }`}
+              title={timeTooltip}
+            >
+              <Clock className="h-2.5 w-2.5" />
+              {timeLabel}
             </span>
           )}
           {hasReminderToday && (

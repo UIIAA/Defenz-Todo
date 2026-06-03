@@ -32,6 +32,8 @@ export async function PUT(
         ...(data.title !== undefined && { title: data.title }),
         ...(data.completed !== undefined && { completed: data.completed }),
         ...(data.position !== undefined && { position: data.position }),
+        ...(data.estimatedMinutes !== undefined && { estimatedMinutes: data.estimatedMinutes }),
+        ...(data.spentMinutes !== undefined && { spentMinutes: data.spentMinutes }),
       },
     })
 

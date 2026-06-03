@@ -28,6 +28,21 @@ describe('createDemandaSchema', () => {
     expect(result.priority).toBe('media')
   })
 
+  it('accepts time tracking fields', () => {
+    const result = createDemandaSchema.parse({ title: 'T', spentMinutes: 90, estimatedMinutes: 480 })
+    expect(result.spentMinutes).toBe(90)
+    expect(result.estimatedMinutes).toBe(480)
+  })
+
+  it('rejects negative spentMinutes', () => {
+    expect(() => createDemandaSchema.parse({ title: 'T', spentMinutes: -1 })).toThrow()
+  })
+
+  it('accepts dependsOn array', () => {
+    const result = createDemandaSchema.parse({ title: 'T', dependsOn: ['a', 'b'] })
+    expect(result.dependsOn).toEqual(['a', 'b'])
+  })
+
   it('rejects empty title', () => {
     expect(() => createDemandaSchema.parse({ title: '' })).toThrow()
   })

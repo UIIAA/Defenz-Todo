@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Trash2, Plus, Check, ExternalLink, Pencil, Link as LinkIcon, Bell } from 'lucide-react'
+import { Trash2, Plus, Check, ExternalLink, Pencil, Link as LinkIcon, Bell, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   ORIGINS,
@@ -27,12 +27,15 @@ import {
   toDateStr,
   todayStr,
   emptyForm,
+  totalSpentMinutes,
   type Demanda,
   type DemandaForm,
   type Subtask,
   type DemandaLink,
 } from '@/app/dashboard/demandas/helpers'
 import { formatDate } from '@/lib/date'
+import { parseHoursToMinutes, minutesToHoursInput, minutesToHoursLabel } from '@/lib/duration'
+import { DemandaDependsOnCombobox } from './demanda-depends-on-combobox'
 
 export function DemandaModal({
   demanda,
@@ -41,6 +44,7 @@ export function DemandaModal({
   onSave,
   onDelete,
   onSubtaskChange,
+  onNavigate,
 }: {
   demanda: Demanda | null
   open: boolean
@@ -48,6 +52,7 @@ export function DemandaModal({
   onSave: (d: DemandaForm) => void
   onDelete: (id: string) => void
   onSubtaskChange?: () => void
+  onNavigate?: (id: string) => void
 }) {
   const [form, setForm] = useState<DemandaForm>(emptyForm())
   const [modalUsers, setModalUsers] = useState<{ id: string; name: string | null; email: string }[]>([])
@@ -59,6 +64,9 @@ export function DemandaModal({
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null)
   const [editLinkLabel, setEditLinkLabel] = useState('')
   const [editLinkUrl, setEditLinkUrl] = useState('')
+  const [spentHoursStr, setSpentHoursStr] = useState('')
+  const [estHoursStr, setEstHoursStr] = useState('')
+  const [subtaskHours, setSubtaskHours] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const isNew = !demanda
 
@@ -89,13 +97,23 @@ export function DemandaModal({
         dateDone: demanda.dateDone ? toDateStr(demanda.dateDone) : null,
         reminderDate: demanda.reminderDate ? toDateStr(demanda.reminderDate) : null,
         reminderSent: demanda.reminderSent ?? false,
+        estimatedMinutes: demanda.estimatedMinutes ?? null,
+        spentMinutes: demanda.spentMinutes ?? 0,
+        dependsOn: demanda.dependsOn ?? [],
       })
-      setSubtasks(demanda.subtasks || [])
+      const sub = demanda.subtasks || []
+      setSubtasks(sub)
       setLinks(demanda.links || [])
+      setSpentHoursStr(minutesToHoursInput(demanda.spentMinutes))
+      setEstHoursStr(minutesToHoursInput(demanda.estimatedMinutes))
+      setSubtaskHours(Object.fromEntries(sub.map((s) => [s.id, minutesToHoursInput(s.spentMinutes)])))
     } else {
       setForm(emptyForm())
       setSubtasks([])
       setLinks([])
+      setSpentHoursStr('')
+      setEstHoursStr('')
+      setSubtaskHours({})
     }
     setNewSubtaskTitle('')
     setNewLinkLabel('')
@@ -117,6 +135,7 @@ export function DemandaModal({
       const json = await res.json()
       if (json.success) {
         setSubtasks((prev) => [...prev, json.data])
+        setSubtaskHours((prev) => ({ ...prev, [json.data.id]: '' }))
         setNewSubtaskTitle('')
         onSubtaskChange?.()
       } else {
@@ -169,6 +188,29 @@ export function DemandaModal({
     } catch {
       setSubtasks(prev)
       toast.error('Erro ao excluir subtask')
+    }
+  }
+
+  const commitSubtaskHours = async (st: Subtask) => {
+    if (!demanda?.id) return
+    const raw = subtaskHours[st.id] ?? ''
+    const minutes = parseHoursToMinutes(raw)
+    if (minutes === (st.spentMinutes ?? 0)) return // sem mudanca
+    setSubtasks((prev) => prev.map((s) => s.id === st.id ? { ...s, spentMinutes: minutes } : s))
+    try {
+      const res = await fetch(`/api/demandas/${demanda.id}/subtasks/${st.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spentMinutes: minutes }),
+      })
+      const json = await res.json()
+      if (!json.success) {
+        toast.error('Erro ao salvar horas')
+      } else {
+        onSubtaskChange?.()
+      }
+    } catch {
+      toast.error('Erro ao salvar horas')
     }
   }
 
@@ -395,6 +437,50 @@ export function DemandaModal({
             </div>
           </div>
 
+          {/* Horas (controle de tempo) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Horas gastas
+              </label>
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={spentHoursStr}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setSpentHoursStr(v)
+                  setForm((p) => ({ ...p, spentMinutes: parseHoursToMinutes(v) }))
+                }}
+                placeholder="Ex: 1,5"
+                className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Horas estimadas <span className="normal-case text-slate-300 dark:text-slate-500">(opcional)</span>
+              </label>
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={estHoursStr}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setEstHoursStr(v)
+                  setForm((p) => ({ ...p, estimatedMinutes: v.trim() === '' ? null : parseHoursToMinutes(v) }))
+                }}
+                placeholder="Ex: 8"
+                className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
+              />
+            </div>
+            {!isNew && subtasks.some((s) => (s.spentMinutes ?? 0) > 0) && (
+              <p className="sm:col-span-2 text-[10px] text-slate-400 -mt-1">
+                Total gasto (card + subtarefas): {minutesToHoursLabel(totalSpentMinutes({ spentMinutes: form.spentMinutes, subtasks }))}
+              </p>
+            )}
+          </div>
+
           {/* Lembrete */}
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
@@ -453,6 +539,21 @@ export function DemandaModal({
             />
           </div>
 
+          {/* Dependências */}
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Depende de
+            </label>
+            <div className="mt-1.5">
+              <DemandaDependsOnCombobox
+                demandaId={form.id}
+                value={form.dependsOn ?? []}
+                onChange={(ids) => setForm((p) => ({ ...p, dependsOn: ids }))}
+                onOpen={onNavigate}
+              />
+            </div>
+          </div>
+
           {/* Subtasks section - only for existing demandas */}
           {!isNew && (
             <div>
@@ -480,6 +581,19 @@ export function DemandaModal({
                     <span className={`flex-1 text-sm ${st.completed ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'}`}>
                       {st.title}
                     </span>
+                    <div className="flex items-center gap-0.5 shrink-0" title="Horas gastas na subtarefa">
+                      <Clock className="h-3 w-3 text-slate-400" />
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={subtaskHours[st.id] ?? ''}
+                        onChange={(e) => setSubtaskHours((prev) => ({ ...prev, [st.id]: e.target.value }))}
+                        onBlur={() => commitSubtaskHours(st)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitSubtaskHours(st) } }}
+                        placeholder="0"
+                        className="h-6 w-12 px-1 text-[11px] text-center bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-700 dark:text-slate-200"
+                      />
+                    </div>
                     <button
                       onClick={() => deleteSubtask(st.id)}
                       className="sm:opacity-0 sm:group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all cursor-pointer"

@@ -1,6 +1,6 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-04-28
+**Last updated:** 2026-06-03
 **Version:** 0.2.0
 **Branch:** main
 
@@ -11,6 +11,8 @@ Phase 2 (FK migration) com código completo, migration SQL e backfill prontos. *
 - feature-assignee-fk-migration — aguardando deploy ordenado: `prisma migrate deploy` → `tsx scripts/backfill-assignee.ts` → review `unresolved_assignees.log` → deploy do código
 
 ## Recently completed (last 5)
+- 2026-06-03 feature-demanda-dependencies — edição de dependências de Demanda (combobox no modal) + guardas self/ciclo/inválido (detectCycle em src/lib/dependency-graph.ts) + deps clicáveis (card e modal abrem a tarefa da dependência). Módulo `activities` órfão removido. Validado em localhost. 407 testes.
+- 2026-06-03 feature-time-tracking — controle de horas gastas/estimadas em Demanda + Subtask (minutos canônicos, UI horas decimais), badge no card, inputs no modal/subtarefas, AuditLog. Schema no Neon dev via `db push`. Validado em localhost.
 - 2026-04-28 feature-assignee-fk-migration (código) — schema + migration SQL + backfill + POST/PUT/GET/DELETE com FK source-of-truth + Phase 1 fallback (331 testes)
 - 2026-04-28 feature-bugfix-assignee-visibility (Phase 1) — user assignee passa a ver/editar/deletar demanda em qualquer team da própria company (318 testes)
 - 2026-04-14 feature-bugfix-date-timezone — parseLocalDate() + fix em /api/demandas (298 testes)

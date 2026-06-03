@@ -4,20 +4,26 @@ import { useDroppable } from '@dnd-kit/core'
 import { KanbanCard } from './kanban-card'
 import type { Demanda, Status } from '@/app/dashboard/demandas/helpers'
 
+type DepMeta = { id: string; title: string; status: string }
+
 export function KanbanColumn({
   status,
   items,
   onClickCard,
+  onOpenDemanda,
   isLast,
   highlightedCardId,
   wipLimit,
+  demandaMap,
 }: {
   status: Status
   items: Demanda[]
   onClickCard: (d: Demanda) => void
+  onOpenDemanda?: (id: string) => void
   isLast?: boolean
   highlightedCardId?: string | null
   wipLimit?: number
+  demandaMap?: Record<string, DepMeta>
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: status.id,
@@ -53,14 +59,21 @@ export function KanbanColumn({
         )}
       </div>
       <div className="flex flex-col gap-2 min-h-[60px] max-h-[55vh] overflow-y-auto pr-1">
-        {items.map((d) => (
-          <KanbanCard
-            key={d.id}
-            d={d}
-            onClick={onClickCard}
-            highlighted={highlightedCardId === d.id}
-          />
-        ))}
+        {items.map((d) => {
+          const dependsOnMeta = demandaMap
+            ? (d.dependsOn ?? []).map((id) => demandaMap[id]).filter(Boolean)
+            : undefined
+          return (
+            <KanbanCard
+              key={d.id}
+              d={d}
+              onClick={onClickCard}
+              onOpenDemanda={onOpenDemanda}
+              highlighted={highlightedCardId === d.id}
+              dependsOnMeta={dependsOnMeta}
+            />
+          )
+        })}
       </div>
     </div>
   )

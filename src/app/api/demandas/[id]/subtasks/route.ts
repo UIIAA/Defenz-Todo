@@ -34,6 +34,8 @@ export async function POST(
       data: {
         title: data.title,
         position: data.position ?? (maxPos ? maxPos.position + 1 : 0),
+        estimatedMinutes: data.estimatedMinutes ?? null,
+        spentMinutes: data.spentMinutes ?? 0,
         demandaId,
       },
     })

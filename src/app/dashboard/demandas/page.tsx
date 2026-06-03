@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Upload, ChevronDown, LayoutGrid, List, ClipboardList, X } from 'lucide-react'
+import { Plus, Upload, ChevronDown, LayoutGrid, List, ClipboardList, X, Network } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { toast } from 'sonner'
@@ -34,6 +34,7 @@ import { ListViewTable, type SortableField } from '@/components/demandas/list-vi
 import { useWipLimits } from '@/hooks/use-wip-limits'
 import { WipSettingsPopover } from '@/components/demandas/wip-settings-popover'
 import { BlockedLane } from '@/components/demandas/blocked-lane'
+import { DependencyOverlay } from '@/components/demandas/dependency-overlay'
 import { TeamSelector } from '@/components/team-selector'
 import { CompanySelector } from '@/components/company-selector'
 
@@ -63,6 +64,8 @@ export default function DemandasPage() {
   const [filterTeam, setFilterTeam] = useState('all')
   const [highlightedCardId, setHighlightedCardId] = useState<string | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [showDeps, setShowDeps] = useState(false)
+  const kanbanContainerRef = useRef<HTMLDivElement>(null)
   const { limits: wipLimits, setLimit: setWipLimit, getLimit: getWipLimit, userLimits: wipUserLimits, setUserLimit: setWipUserLimit, getUserLimit: getWipUserLimit } = useWipLimits()
 
   const sensors = useSensors(
@@ -176,6 +179,12 @@ export default function DemandasPage() {
   const openEdit = (d: Demanda) => {
     setEditingDemanda(d)
     setModalOpen(true)
+  }
+
+  // Abre a demanda pelo id (navegação a partir de um badge de dependência)
+  const openDemandaById = (id: string) => {
+    const d = demandas.find((x) => x.id === id)
+    if (d) openEdit(d)
   }
 
   const handleBarClick = (demandaId: string) => {
@@ -303,6 +312,13 @@ export default function DemandasPage() {
   // Bloqueada lane: separate blocked from normal columns
   const KANBAN_STATUSES = STATUSES.filter((s) => s.id !== 'bloqueada')
   const blockedDemandas = filtered.filter((d) => d.status === 'bloqueada')
+
+  // Map id → {id, title, status} for dependency badge resolution
+  const demandaMap = useMemo(() => {
+    const map: Record<string, { id: string; title: string; status: string }> = {}
+    demandas.forEach((d) => { map[d.id] = { id: d.id, title: d.title, status: d.status } })
+    return map
+  }, [demandas])
 
   const stats = {
     total: filtered.length,
@@ -619,39 +635,68 @@ export default function DemandasPage() {
                 </span>
               </button>
               {kanbanOpen && (
-                <WipSettingsPopover limits={wipLimits} onSetLimit={setWipLimit} userLimits={wipUserLimits} onSetUserLimit={setWipUserLimit} assignees={assignees} />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowDeps(!showDeps)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                      showDeps
+                        ? 'bg-blue-500 border-blue-500 text-white'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    }`}
+                    title={showDeps ? 'Ocultar dependências' : 'Mostrar dependências'}
+                    aria-pressed={showDeps}
+                  >
+                    <Network className="h-3.5 w-3.5" />
+                    <span>{showDeps ? 'Ocultar' : 'Mostrar'} deps</span>
+                  </button>
+                  <WipSettingsPopover limits={wipLimits} onSetLimit={setWipLimit} userLimits={wipUserLimits} onSetUserLimit={setWipUserLimit} assignees={assignees} />
+                </div>
               )}
             </div>
             {kanbanOpen && (
-              <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                <div className="flex gap-3 overflow-x-auto">
-                  {KANBAN_STATUSES.map((s, index) => (
-                    <KanbanColumn
-                      key={s.id}
-                      status={s}
-                      items={filtered.filter((d) => d.status === s.id)}
-                      onClickCard={openEdit}
-                      isLast={index === KANBAN_STATUSES.length - 1}
-                      highlightedCardId={highlightedCardId}
-                      wipLimit={getWipLimit(s.id)}
-                    />
-                  ))}
-                </div>
+              <div ref={kanbanContainerRef} className="relative">
+                {showDeps && (
+                  <DependencyOverlay demandas={filtered} containerRef={kanbanContainerRef} />
+                )}
+                <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                  <div className="flex gap-3 overflow-x-auto">
+                    {KANBAN_STATUSES.map((s, index) => (
+                      <KanbanColumn
+                        key={s.id}
+                        status={s}
+                        items={filtered.filter((d) => d.status === s.id)}
+                        onClickCard={openEdit}
+                        onOpenDemanda={openDemandaById}
+                        isLast={index === KANBAN_STATUSES.length - 1}
+                        highlightedCardId={highlightedCardId}
+                        wipLimit={getWipLimit(s.id)}
+                        demandaMap={demandaMap}
+                      />
+                    ))}
+                  </div>
 
-                {/* Bloqueada Lane — always visible as drop target */}
-                <BlockedLane
-                  demandas={blockedDemandas}
-                  kanbanStatuses={KANBAN_STATUSES}
-                  onClickCard={openEdit}
-                  highlightedCardId={highlightedCardId}
-                />
+                  {/* Bloqueada Lane — always visible as drop target */}
+                  <BlockedLane
+                    demandas={blockedDemandas}
+                    kanbanStatuses={KANBAN_STATUSES}
+                    onClickCard={openEdit}
+                    onOpenDemanda={openDemandaById}
+                    highlightedCardId={highlightedCardId}
+                    demandaMap={demandaMap}
+                  />
 
-                <DragOverlay>
-                  {activeDemanda ? (
-                    <KanbanCard d={activeDemanda} onClick={() => {}} isDragOverlay />
-                  ) : null}
-                </DragOverlay>
-              </DndContext>
+                  <DragOverlay>
+                    {activeDemanda ? (
+                      <KanbanCard
+                        d={activeDemanda}
+                        onClick={() => {}}
+                        isDragOverlay
+                        dependsOnMeta={(activeDemanda.dependsOn ?? []).map((id) => demandaMap[id]).filter(Boolean)}
+                      />
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -723,6 +768,7 @@ export default function DemandasPage() {
         onSave={handleSave}
         onDelete={handleDelete}
         onSubtaskChange={fetchDemandas}
+        onNavigate={openDemandaById}
       />
 
       <ImportModal
