@@ -57,3 +57,14 @@ Formato: ADR curto (Date / Context / Decision / Consequences). Ordem cronológic
 **Context:** Migração para Next.js 16 quebrou compatibilidade de peer deps com next-auth v4 (que não tem release para Next 16 ainda).
 **Decision:** Manter next-auth v4 + `.npmrc` com `legacy-peer-deps=true`. Não migrar para v5 agora (breaking changes grandes).
 **Consequences:** `npm install` exige `.npmrc`. CI e Vercel precisam carregar o `.npmrc`. Considerar migração para Auth.js v5 quando estabilizar.
+
+---
+
+## ADR-008: Banco Neon único compartilhado entre dev local e produção
+**Date:** 2026-06-03
+**Context:** Não estava documentado qual banco a produção (Vercel) usa. Surgiu a dúvida ao aplicar mudanças de schema (time-tracking, dependências) se o `db push` local atingia produção.
+**Decision:** Dev local (`.env`) e produção (Vercel env) apontam para o **mesmo projeto Neon** — host `ep-flat-term-aclvza7r` (pooler para `DATABASE_URL`, direct para `DIRECT_URL`/`DATABASE_URL_UNPOOLED`), database `neondb`, região `sa-east-1`. Confirmado comparando `vercel env pull --environment=production` com o `.env`.
+**Consequences:**
+- Um `prisma db push` (ou `migrate`) executado localmente **já altera a produção** — não há banco de staging separado. Cuidado: mudanças destrutivas afetam prod imediatamente. Preferir mudanças aditivas (colunas nullable/default).
+- Não há ambiente de staging isolado. Validar em localhost (que usa o mesmo banco) antes de push.
+- Se um dia houver banco de produção separado, este ADR deve ser atualizado e o fluxo de migration revisto (aplicar em prod via `DIRECT_URL` de produção antes do deploy do código).
