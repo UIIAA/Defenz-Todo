@@ -5,21 +5,32 @@
 **Branch:** main
 
 ## Current focus
-**Alimentar o Kanban de fora** — em implementação. **Solução A (Bearer token) CONCLUÍDA** (build+tsc+435 testes verdes): modelo `ApiToken`, `resolveActor`, swap nas rotas de demanda/subtasks/links, script gerador. Fundação **multi-empresa** também pronta (modelo `UserCompany`, helpers set-based, `companyIds` na sessão). Schema aplicado no Neon (aditivo, ADR-008). **Falta:** gerar o token admin (rodar o script), converter as ~12 rotas restantes p/ conjunto, UI multi-empresa, configurar Marcos + token Marcos, e Solução B (MCP `defenz-mcp`).
+**Alimentar o Kanban de fora.** **Solução A (Bearer token) SHIPADA E DEPLOYADA** (commit `0dc7117`, prod `https://defenz-todo.vercel.app` verificada: POST/PUT/GET/DELETE via `Authorization: Bearer` funcionam; rotas fora da família demanda → 401). Fundação **multi-empresa** shipada junto (modelo `UserCompany`, helpers set-based em `auth.ts`, `companyIds` na sessão). 435 testes, build+tsc verdes. Schema aplicado no Neon (aditivo, ADR-008).
+
+**Config de usuários aplicada (2026-06-07, via `scripts/setup-marcos-admin.ts`):**
+- `marcos@defenz.com.br` → **role=admin** + membro (UserCompany) das 4 empresas (Defenz, Cow Cycling, Grafono, PSI.SheilaCarvalho). Senha não alterada (já era a do admin).
+- `marcos.v.cruz222@gmail.com` → **novo admin de recuperação**, senha = a do admin existente ("Admin Defenz", mesma conta do token `admin-cli`).
+- Empresas existentes no banco: **Defenz | Cow Cycling | Grafono | PSI.SheilaCarvalho**.
+- Token admin ativo: `admin-cli` (prefix `defz_2e03fd88`), atado à conta "Admin Defenz".
+
+## ▶️ PRÓXIMA SESSÃO — começar aqui (Soluções B e D)
+**Solução B — MCP `defenz-mcp`** (blueprint completo no design do workflow; resumo em [feature-external-kanban-feed.md](features/feature-external-kanban-feed.md)):
+- Pacote standalone em `mcp/defenz-mcp/` (Node/TS, `@modelcontextprotocol/sdk` + zod + axios), stdio.
+- 4 tools sobre `/api/demandas` via Bearer: `list_demandas`, `create_demanda`, `update_demanda`, `move_demanda` (mapeia coluna→status). Auth: env `DEFENZ_API_TOKEN` + `DEFENZ_API_URL`. NÃO envia companyId/role (servidor resolve pelo token).
+- Gerar o token do Marcos p/ o MCP: `npx tsx scripts/create-api-token.ts --email marcos@defenz.com.br --name marcos-mcp` (Marcos é admin → token vê tudo).
+- README com `claude mcp add` + .gitignore + .env.example. Não commitar token.
+
+**Fase D (resto do multi-empresa)** — capacidade geral (Marcos já é admin, então não urgente p/ ele, mas pedido):
+- Converter rotas restantes p/ conjunto via helpers: `demandas` GET/POST/PUT/DELETE (3-níveis → `accessibleCompanyIds`/`resolveActiveCompany`), `users` GET, `users/[id]` PUT (aceitar `companyIds[]`, sincronizar `UserCompany` como teamIds, gerência só dentro do próprio set), `teams`, `invites`, `companies`, `audit-logs`, `report/executive`, `demandas/import`. `demanda.companyId` é imutável no PUT.
+- UI: `src/app/dashboard/configuracoes/usuarios/page.tsx` — multi-select de empresas (espelhar bloco de Equipes). Validação Zod em `src/lib/validations/user.ts` (criar).
+- Testes: `route-multicompany.test.ts`, `user-crud.test.ts` (+ casos sad de empresa fora do set → 403). Mock `auth.ts` já set-based; manter lockstep.
 
 ## In progress
-- **feature-multi-company-membership (Fase D)**: aplicar conjunto às rotas restantes (users/[id] PUT com `companyIds`, teams, invites, companies, audit-logs, report, import) + UI Configurações→Usuários (multi-select) + configurar Marcos.
-- **feature-external-kanban-feed (Solução B)**: MCP server `defenz-mcp` (4 tools sobre /api/demandas via Bearer). Depende da Solução A (pronta).
-- feature-assignee-fk-migration continua aguardando deploy ordenado.
-
-## Gerar tokens (após Solução A)
-```bash
-npx tsx scripts/create-api-token.ts --role admin --name admin-cli      # token admin (acesso total)
-# (após configurar Marcos multi-empresa, Fase D)
-npx tsx scripts/create-api-token.ts --email <marcos@...> --name marcos-mcp
-```
+- (nada em código aberto) — Solução A fechada e no ar.
+- feature-assignee-fk-migration continua aguardando deploy ordenado (independente).
 
 ## Recently completed (last 5)
+- 2026-06-07 feature-api-service-token (Solução A) + fundação multi-empresa — Bearer token (`ApiToken`+`resolveActor`) na família demanda, `UserCompany` N:N, helpers set-based, `companyIds` na sessão. SHIPADO + DEPLOYADO (commit `0dc7117`, prod verificada). Marcos→admin + memberships + recovery admin. 435 testes.
 - 2026-06-03 feature-demanda-dependencies — edição de dependências de Demanda (combobox no modal) + guardas self/ciclo/inválido (detectCycle em src/lib/dependency-graph.ts) + deps clicáveis (card e modal abrem a tarefa da dependência). Módulo `activities` órfão removido. Validado em localhost. 407 testes.
 - 2026-06-03 feature-time-tracking — controle de horas gastas/estimadas em Demanda + Subtask (minutos canônicos, UI horas decimais), badge no card, inputs no modal/subtarefas, AuditLog. Schema no Neon dev via `db push`. Validado em localhost.
 - 2026-04-28 feature-assignee-fk-migration (código) — schema + migration SQL + backfill + POST/PUT/GET/DELETE com FK source-of-truth + Phase 1 fallback (331 testes)
