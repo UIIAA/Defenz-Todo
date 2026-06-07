@@ -44,6 +44,12 @@ Permitir que chamadores máquina-a-máquina (Claude via curl, MCP, automações)
 - `resolveActor` em `src/lib/auth.ts` monta SessionUser idêntico ao `authorize()` → nenhuma lógica de autorização das rotas muda.
 - Sem fallback silencioso: header presente ⇒ deve ser Bearer válido.
 
+## Gestão via UI (Configurações → Usuários)
+- Cada usuário tem a ação **"API Tokens"** (ícone chave) — visível **só para admin**.
+- O dialog permite: **gerar** token (nome + expiração opcional), **ver/copiar** o plaintext UMA vez na criação, **listar** tokens (nome, prefixo, último uso, expiração, status) e **revogar** (`revokedAt`).
+- **Permissão:** apenas `admin` gera/lista/revoga — um token concede acesso à API "como" o usuário-dono, então mintar é privilégio de admin. O dialog mostra a role/empresa do usuário (o que o token poderá fazer).
+- API: `GET/POST/DELETE /api/users/[id]/api-tokens` (session-only; `tokenHash` nunca retornado; plaintext só na resposta do POST). Helpers puros em `src/lib/api-token.ts` (`generateApiToken`, `hashToken`).
+
 ## Dependencies
 - Depende de: [[feature-multi-company-membership]] (scoping por conjunto torna o token seguro p/ usuários multi-empresa e cobre `companyId=null`).
 - Bloqueia: MCP server `defenz-mcp` (Solução B).

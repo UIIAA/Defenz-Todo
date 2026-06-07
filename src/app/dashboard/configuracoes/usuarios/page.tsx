@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Users, Plus, Copy, Check, Link2, Clock, Mail, Pencil, Trash2, X, KeyRound, Eye, EyeOff, Building2, UsersRound } from 'lucide-react'
+import { Users, Plus, Copy, Check, Link2, Clock, Mail, Pencil, Trash2, X, KeyRound, Eye, EyeOff, Building2, UsersRound, Key, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDate } from '@/lib/date'
 import { DEPARTMENTS } from '@/app/dashboard/demandas/helpers'
@@ -63,6 +63,16 @@ interface InviteInfo {
   expiresAt: string
   usedAt: string | null
   createdByUser: { id: string; name: string | null; email: string }
+}
+
+interface ApiTokenInfo {
+  id: string
+  name: string
+  tokenPrefix: string
+  lastUsedAt: string | null
+  expiresAt: string | null
+  revokedAt: string | null
+  createdAt: string
 }
 
 export default function UsuariosPage() {
@@ -107,9 +117,20 @@ export default function UsuariosPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [resettingPassword, setResettingPassword] = useState(false)
 
+  // API Tokens (admin-only)
+  const [tokenDialogOpen, setTokenDialogOpen] = useState(false)
+  const [tokenUser, setTokenUser] = useState<UserInfo | null>(null)
+  const [userTokens, setUserTokens] = useState<ApiTokenInfo[]>([])
+  const [loadingTokens, setLoadingTokens] = useState(false)
+  const [newTokenName, setNewTokenName] = useState('')
+  const [newTokenExpiry, setNewTokenExpiry] = useState('')
+  const [creatingToken, setCreatingToken] = useState(false)
+  const [createdTokenValue, setCreatedTokenValue] = useState('')
+
   const userRole = (session?.user as { role?: string })?.role || ''
   const userId = (session?.user as { id?: string })?.id || ''
   const isAdmin = ['admin', 'gerencia'].includes(userRole)
+  const isRealAdmin = userRole === 'admin'
 
   const fetchData = useCallback(async () => {
     try {
@@ -338,6 +359,85 @@ export default function UsuariosPage() {
     }
   }
 
+  // === API TOKEN HANDLERS (admin-only) ===
+  const fetchUserTokens = async (uid: string) => {
+    setLoadingTokens(true)
+    try {
+      const res = await fetch(`/api/users/${uid}/api-tokens`)
+      const data = await res.json()
+      if (data.success) setUserTokens(data.data)
+    } catch {
+      toast.error('Erro ao carregar tokens')
+    } finally {
+      setLoadingTokens(false)
+    }
+  }
+
+  const openTokenDialog = (u: UserInfo) => {
+    setTokenUser(u)
+    setUserTokens([])
+    setNewTokenName('')
+    setNewTokenExpiry('')
+    setCreatedTokenValue('')
+    setTokenDialogOpen(true)
+    fetchUserTokens(u.id)
+  }
+
+  const handleCreateToken = async () => {
+    if (!tokenUser) return
+    if (!newTokenName.trim()) {
+      toast.error('Dê um nome ao token')
+      return
+    }
+    setCreatingToken(true)
+    try {
+      const res = await fetch(`/api/users/${tokenUser.id}/api-tokens`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newTokenName.trim(),
+          expiresDays: newTokenExpiry ? Number(newTokenExpiry) : undefined,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setCreatedTokenValue(data.data.token)
+        setNewTokenName('')
+        setNewTokenExpiry('')
+        toast.success('Token gerado — copie agora!')
+        fetchUserTokens(tokenUser.id)
+      } else {
+        toast.error(data.error || 'Erro ao gerar token')
+      }
+    } catch {
+      toast.error('Erro ao gerar token')
+    } finally {
+      setCreatingToken(false)
+    }
+  }
+
+  const handleRevokeToken = async (tokenId: string) => {
+    if (!tokenUser) return
+    try {
+      const res = await fetch(`/api/users/${tokenUser.id}/api-tokens?tokenId=${tokenId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Token revogado')
+        fetchUserTokens(tokenUser.id)
+      } else {
+        toast.error(data.error || 'Erro ao revogar token')
+      }
+    } catch {
+      toast.error('Erro ao revogar token')
+    }
+  }
+
+  const getTokenStatus = (t: ApiTokenInfo) => {
+    if (t.revokedAt) return { label: 'Revogado', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' }
+    if (t.expiresAt && new Date(t.expiresAt) < new Date()) return { label: 'Expirado', color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' }
+    return { label: 'Ativo', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' }
+  }
+
   const getInviteStatus = (invite: InviteInfo) => {
     if (invite.usedAt) return { label: 'Usado', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' }
     if (new Date(invite.expiresAt) < new Date()) return { label: 'Expirado', color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' }
@@ -464,6 +564,17 @@ export default function UsuariosPage() {
                           >
                             <KeyRound className="h-3.5 w-3.5" />
                           </Button>
+                          {isRealAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openTokenDialog(u)}
+                              className="h-8 w-8 p-0 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer"
+                              title="API Tokens"
+                            >
+                              <Key className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                           {u.id !== userId && (
                             <Button
                               variant="ghost"
@@ -973,6 +1084,147 @@ export default function UsuariosPage() {
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* API Tokens Dialog (admin-only) */}
+      <Dialog open={tokenDialogOpen} onOpenChange={setTokenDialogOpen}>
+        <DialogContent className="sm:max-w-[560px] max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-emerald-600 dark:text-emerald-400 text-lg font-bold flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              API Tokens
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 dark:text-slate-400 text-sm">
+              {tokenUser?.name || tokenUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Permissões do token */}
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3">
+              <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+              <div className="text-xs text-amber-700 dark:text-amber-300 space-y-1">
+                <p>
+                  O token age <strong>como este usuário</strong> — herda role{' '}
+                  <strong>{tokenUser?.role}</strong>
+                  {tokenUser?.companyName ? <> e empresa <strong>{tokenUser.companyName}</strong></> : ''}.
+                </p>
+                <p>Funciona apenas nas rotas de Demanda (criar, mover, listar). Guarde em cofre; nunca commite.</p>
+              </div>
+            </div>
+
+            {/* Token recém-gerado (mostrado UMA vez) */}
+            {createdTokenValue && (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-1">
+                  Token gerado! Copie agora — não será mostrado de novo.
+                </p>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    readOnly
+                    value={createdTokenValue}
+                    className="text-xs font-mono bg-white dark:bg-slate-900 border-green-200 dark:border-green-800 text-slate-700 dark:text-slate-300"
+                  />
+                  <Button
+                    onClick={() => handleCopyLink(createdTokenValue)}
+                    variant="outline"
+                    className="shrink-0 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer"
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Gerar novo token */}
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Gerar novo token</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  placeholder="Nome (ex: marcos-mcp, projeto-x)"
+                  value={newTokenName}
+                  onChange={(e) => setNewTokenName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateToken()}
+                  className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 flex-1"
+                />
+                <Input
+                  type="number"
+                  min={1}
+                  placeholder="Expira (dias, opc.)"
+                  value={newTokenExpiry}
+                  onChange={(e) => setNewTokenExpiry(e.target.value)}
+                  className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 sm:w-40"
+                />
+                <Button
+                  onClick={handleCreateToken}
+                  disabled={creatingToken || !newTokenName.trim()}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shrink-0"
+                >
+                  {creatingToken ? (
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <><Plus className="h-4 w-4 mr-1.5" />Gerar</>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Lista de tokens */}
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Tokens existentes</p>
+              {loadingTokens ? (
+                <div className="flex items-center justify-center py-6">
+                  <div className="h-5 w-5 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+                </div>
+              ) : userTokens.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400 py-3 text-center">
+                  Nenhum token ainda.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {userTokens.map((t) => {
+                    const status = getTokenStatus(t)
+                    return (
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-slate-700 p-2.5"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{t.name}</span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${status.color}`}>
+                              {status.label}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-slate-400">
+                            <span className="font-mono">{t.tokenPrefix}…</span>
+                            <span>último uso: {t.lastUsedAt ? formatDate(t.lastUsedAt) : 'nunca'}</span>
+                            <span>expira: {t.expiresAt ? formatDate(t.expiresAt) : 'nunca'}</span>
+                          </div>
+                        </div>
+                        {!t.revokedAt && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRevokeToken(t.id)}
+                            className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer shrink-0"
+                            title="Revogar token"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <Button variant="outline" onClick={() => setTokenDialogOpen(false)} className="w-full cursor-pointer">
+              Fechar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

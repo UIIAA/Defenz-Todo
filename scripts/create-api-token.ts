@@ -20,20 +20,13 @@
  */
 
 import { PrismaClient } from '@prisma/client'
-import crypto from 'node:crypto'
+import { generateApiToken } from '../src/lib/api-token'
 
 const prisma = new PrismaClient()
 
 function arg(flag: string): string | undefined {
   const i = process.argv.indexOf(flag)
   return i >= 0 ? process.argv[i + 1] : undefined
-}
-
-function generateToken(): { raw: string; hash: string; prefix: string } {
-  const raw = 'defz_' + crypto.randomBytes(28).toString('hex') // 56 hex chars
-  const hash = crypto.createHash('sha256').update(raw).digest('hex')
-  const prefix = raw.slice(0, 13) // "defz_" + 8 chars
-  return { raw, hash, prefix }
 }
 
 async function main() {
@@ -68,7 +61,7 @@ async function main() {
     data: { revokedAt: new Date() },
   })
 
-  const { raw, hash, prefix } = generateToken()
+  const { raw, hash, prefix } = generateApiToken()
   const expiresAt = expiresDays
     ? new Date(Date.now() + Number(expiresDays) * 24 * 60 * 60 * 1000)
     : null

@@ -1,9 +1,12 @@
-import crypto from 'crypto'
 import { getServerSession } from 'next-auth'
 import type { NextRequest } from 'next/server'
 import { authOptions } from '@/lib/auth-config'
 import { db } from '@/lib/db'
 import { ApiError } from '@/lib/api-helpers'
+import { hashToken, extractBearerToken, API_TOKEN_FORMAT } from '@/lib/api-token'
+
+// Re-export p/ compat: callers/tests importam estes de '@/lib/auth'.
+export { hashToken, extractBearerToken } from '@/lib/api-token'
 
 export type SessionUser = {
   id: string
@@ -121,22 +124,6 @@ export function resolveActiveCompany(
 // ============================================================
 // API SERVICE TOKEN (Bearer) — resolveActor (Solução A)
 // ============================================================
-
-/** Formato do token de serviço: `defz_` + 56 hex chars (28 bytes aleatórios). */
-const API_TOKEN_FORMAT = /^defz_[0-9a-f]{56}$/
-
-/** SHA-256 (hex) do token plaintext. Armazenado em ApiToken.tokenHash. */
-export function hashToken(raw: string): string {
-  return crypto.createHash('sha256').update(raw).digest('hex')
-}
-
-/** Extrai o token de um header `Authorization: Bearer <token>`, ou null. */
-export function extractBearerToken(request: NextRequest): string | null {
-  const header = request.headers.get('authorization')
-  if (!header) return null
-  const match = header.match(/^Bearer\s+(.+)$/i)
-  return match ? match[1].trim() : null
-}
 
 /**
  * Resolve o "ator" de uma request, suportando dois caminhos de auth:
