@@ -1,5 +1,5 @@
 # Feature: Multi-empresa por usuário
-**Status:** Approved
+**Status:** Done
 **Priority:** P1
 **Date:** 2026-06-07
 

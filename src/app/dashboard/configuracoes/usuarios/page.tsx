@@ -51,6 +51,7 @@ interface UserInfo {
   companyName: string | null
   teamIds: string[]
   teamNames: string[]
+  companyIds: string[]
   createdAt: string
 }
 
@@ -102,6 +103,7 @@ export default function UsuariosPage() {
   const [editDepartment, setEditDepartment] = useState('')
   const [editCompany, setEditCompany] = useState('')
   const [editTeams, setEditTeams] = useState<string[]>([])
+  const [editCompanyIds, setEditCompanyIds] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
   // Delete user state
@@ -241,6 +243,7 @@ export default function UsuariosPage() {
     setEditDepartment(u.department || '')
     setEditCompany(u.companyId || '')
     setEditTeams(u.teamIds || [])
+    setEditCompanyIds(u.companyIds || [])
     setEditDialogOpen(true)
   }
 
@@ -258,6 +261,7 @@ export default function UsuariosPage() {
           department: editDepartment || null,
           companyId: editCompany || null,
           teamIds: editTeams,
+          companyIds: editCompanyIds.filter((id) => id !== editCompany),
         }),
       })
       const data = await res.json()
@@ -939,7 +943,7 @@ export default function UsuariosPage() {
                   <Building2 className="h-4 w-4 text-indigo-500" />
                   Empresa
                 </Label>
-                <Select value={editCompany} onValueChange={(v) => { setEditCompany(v); setEditTeams([]) }}>
+                <Select value={editCompany} onValueChange={(v) => { setEditCompany(v); setEditTeams([]); setEditCompanyIds((prev) => prev.filter((id) => id !== v)) }}>
                   <SelectTrigger className="bg-white/80 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
                     <SelectValue placeholder="Nenhuma" />
                   </SelectTrigger>
@@ -949,6 +953,39 @@ export default function UsuariosPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-slate-400">Empresa primária (branding + default ao criar demandas).</p>
+              </div>
+            )}
+
+            {/* Empresas adicionais (multi-empresa) — só admin enxerga a lista de empresas */}
+            {companies.length > 1 && (
+              <div className="space-y-2">
+                <Label className="text-slate-600 dark:text-slate-300 flex items-center gap-2 font-medium text-sm">
+                  <Building2 className="h-4 w-4 text-indigo-500" />
+                  Empresas adicionais
+                </Label>
+                <div className="space-y-1 max-h-32 overflow-y-auto rounded-md border border-slate-200 dark:border-slate-700 p-2 bg-white/80 dark:bg-slate-900/40">
+                  {companies
+                    .filter((c) => c.id !== editCompany)
+                    .map((c) => (
+                      <label key={c.id} className="flex items-center gap-2 cursor-pointer py-1 px-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <input
+                          type="checkbox"
+                          checked={editCompanyIds.includes(c.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditCompanyIds((prev) => [...prev, c.id])
+                            } else {
+                              setEditCompanyIds((prev) => prev.filter((id) => id !== c.id))
+                            }
+                          }}
+                          className="rounded border-slate-300 dark:border-slate-600 text-indigo-500"
+                        />
+                        <span className="text-sm text-slate-700 dark:text-slate-200">{c.name}</span>
+                      </label>
+                    ))}
+                </div>
+                <p className="text-xs text-slate-400">O usuário também acessará as demandas destas empresas.</p>
               </div>
             )}
 

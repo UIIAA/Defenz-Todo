@@ -1,6 +1,12 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import {
+  getCurrentUser,
+  accessibleCompanyIds,
+  assertCompanyAccess,
+  companyScopeWhere,
+  resolveActiveCompany,
+} from '@/lib/auth'
 import { handleApiError, successResponse, createdResponse, ApiError } from '@/lib/api-helpers'
 
 export async function GET(request: NextRequest) {
@@ -18,8 +24,12 @@ export async function GET(request: NextRequest) {
         where = { companyId: companyFilter }
       }
     } else if (user.role === 'gerencia') {
-      // Gerencia: lista equipes da sua empresa
-      where = { companyId: user.companyId }
+      // Gerencia: lista equipes do seu CONJUNTO de empresas (multi-empresa)
+      where = companyScopeWhere(user)
+      if (companyFilter && companyFilter !== 'all') {
+        const ids = accessibleCompanyIds(user) ?? []
+        if (ids.includes(companyFilter)) where = { companyId: companyFilter }
+      }
     } else {
       // User: lista apenas suas equipes
       const teamIds = user.teamIds || []
@@ -61,10 +71,8 @@ export async function POST(request: NextRequest) {
       throw new ApiError('Nome da equipe e obrigatorio', 400)
     }
 
-    // Resolve companyId: admin pode escolher, gerencia usa a sua
-    const resolvedCompanyId = user.role === 'admin' && companyId
-      ? companyId
-      : user.companyId
+    // Resolve companyId: default = primária; só aceita outra empresa se ∈ conjunto (senão 403)
+    const resolvedCompanyId = resolveActiveCompany(user, companyId)
 
     if (!resolvedCompanyId) {
       throw new ApiError('Empresa nao encontrada', 400)
@@ -108,10 +116,8 @@ export async function PUT(request: NextRequest) {
     const existing = await db.team.findUnique({ where: { id } })
     if (!existing) throw new ApiError('Equipe nao encontrada', 404)
 
-    // Gerencia so pode editar equipes da sua empresa
-    if (user.role === 'gerencia' && existing.companyId !== user.companyId) {
-      throw new ApiError('Sem permissao', 403)
-    }
+    // Gerencia so pode editar equipes do seu conjunto (admin: no-op)
+    assertCompanyAccess(existing.companyId, user)
 
     const team = await db.team.update({
       where: { id },
@@ -149,10 +155,8 @@ export async function DELETE(request: NextRequest) {
     })
     if (!existing) throw new ApiError('Equipe nao encontrada', 404)
 
-    // Gerencia so pode deletar equipes da sua empresa
-    if (user.role === 'gerencia' && existing.companyId !== user.companyId) {
-      throw new ApiError('Sem permissao', 403)
-    }
+    // Gerencia so pode deletar equipes do seu conjunto (admin: no-op)
+    assertCompanyAccess(existing.companyId, user)
 
     // Nao permite deletar equipe com membros ou demandas
     if (existing._count.members > 0 || existing._count.demandas > 0) {

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { getCurrentUser, isAdmin } from '@/lib/auth'
+import { getCurrentUser, isAdmin, companyScopeWhere } from '@/lib/auth'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { NextRequest } from 'next/server'
 
@@ -25,10 +25,10 @@ export async function GET(request: NextRequest) {
     if (entityType) where.entityType = entityType
     if (userId) where.userId = userId
 
-    // Tenant isolation: gerencia só vê logs de usuários da própria company.
-    // AuditLog não tem companyId; scope via relação user.companyId.
+    // Tenant isolation: gerencia só vê logs de usuários do seu CONJUNTO de empresas.
+    // AuditLog não tem companyId; scope via relação user.companyId (multi-empresa).
     if (!isAdmin(user)) {
-      where.user = { is: { companyId: user.companyId ?? '__none__' } }
+      where.user = { is: companyScopeWhere(user) }
     }
 
     const [logs, total] = await Promise.all([

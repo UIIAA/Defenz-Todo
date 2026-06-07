@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { resolveActor } from '@/lib/auth'
+import {
+  resolveActor,
+  accessibleCompanyIds,
+  assertCompanyAccess,
+  companyScopeWhere,
+  resolveActiveCompany,
+} from '@/lib/auth'
 import { handleApiError, createdResponse, successResponse, ApiError } from '@/lib/api-helpers'
 import { createDemandaSchema, updateDemandaSchema } from '@/lib/validations/demanda'
 import { createAuditLog, diffChanges } from '@/lib/audit'
@@ -29,15 +35,23 @@ export async function GET(request: NextRequest) {
         where.teamId = teamFilter
       }
     } else if (user.role === 'gerencia') {
-      // Gerencia: vê tudo da sua empresa
-      where.companyId = user.companyId
+      // Gerencia: vê tudo do seu CONJUNTO de empresas (multi-empresa)
+      Object.assign(where, companyScopeWhere(user))
+      // Pode estreitar por uma empresa específica do conjunto (filtro da UI)
+      if (companyFilter && companyFilter !== 'all') {
+        const ids = accessibleCompanyIds(user) ?? []
+        if (ids.includes(companyFilter)) where.companyId = companyFilter
+      }
       if (teamFilter && teamFilter !== 'all') {
         where.teamId = teamFilter
       }
     } else {
-      // User: demandas dos seus teams OU FK assignedToId === user.id OU legacy assignee match (mesma company, FK null)
+      // User: demandas dos seus teams OU FK assignedToId === user.id OU legacy assignee match
+      // (empresa ∈ conjunto acessível, FK null no caso legado)
       const teamIds = user.teamIds || []
       const assigneeKey = user.name ?? user.email ?? null
+      const ids = accessibleCompanyIds(user) ?? []
+      const scope = companyScopeWhere(user)
       const orClauses: Record<string, unknown>[] = []
 
       if (teamIds.length > 0) {
@@ -48,14 +62,14 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Phase 2: FK match (fonte de verdade pós-backfill) com tenant guard
-      if (user.id && user.companyId) {
-        orClauses.push({ assignedToId: user.id, companyId: user.companyId })
+      // Phase 2: FK match (fonte de verdade pós-backfill) com tenant guard (conjunto)
+      if (user.id && ids.length > 0) {
+        orClauses.push({ assignedToId: user.id, ...scope })
       }
 
-      // Phase 1 fallback: demandas legadas (FK null) com string assignee batendo
-      if (assigneeKey && user.companyId) {
-        orClauses.push({ assignee: assigneeKey, companyId: user.companyId, assignedToId: null })
+      // Phase 1 fallback: demandas legadas (FK null) com string assignee batendo (conjunto)
+      if (assigneeKey && ids.length > 0) {
+        orClauses.push({ assignee: assigneeKey, ...scope, assignedToId: null })
       }
 
       if (orClauses.length === 0) {
@@ -94,13 +108,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const data = createDemandaSchema.parse(body)
 
+    // Empresa ativa: default = primária; só aceita outra empresa se ∈ conjunto (senão 403)
+    const activeCompanyId = resolveActiveCompany(user, body.companyId)
+
     // activeTeamId vem do body (equipe ativa selecionada na UI)
     const activeTeamId = body.teamId || (user.teamIds && user.teamIds.length === 1 ? user.teamIds[0] : null)
 
-    // Dependências (opcional): valida IDs no escopo da empresa
+    // Dependências (opcional): valida IDs no escopo da empresa ativa
     let dependsOnValue = '[]'
     if (data.dependsOn && data.dependsOn.length > 0) {
-      const scopeWhere = user.companyId ? { companyId: user.companyId } : {}
+      const scopeWhere = activeCompanyId ? { companyId: activeCompanyId } : {}
       const all = await db.demanda.findMany({ where: scopeWhere, select: { id: true } })
       const validIds = new Set(all.map((d) => d.id))
       for (const depId of data.dependsOn) {
@@ -109,7 +126,7 @@ export async function POST(request: NextRequest) {
       dependsOnValue = JSON.stringify(data.dependsOn)
     }
 
-    // Phase 2: resolve assignedToId → valida company → auto-popula assignee string
+    // Phase 2: resolve assignedToId → valida company (conjunto) → auto-popula assignee string
     let resolvedAssignedToId: string | null = null
     let resolvedAssignee: string | null = data.assignee ?? null
     if (data.assignedToId) {
@@ -117,10 +134,8 @@ export async function POST(request: NextRequest) {
       if (!assignee) {
         throw new ApiError('Responsavel nao encontrado', 400)
       }
-      // admin pode atribuir cross-company; demais não
-      if (user.role !== 'admin' && assignee.companyId !== user.companyId) {
-        throw new ApiError('Responsavel pertence a outra empresa', 403)
-      }
+      // admin pode atribuir cross-company; demais só dentro do conjunto acessível
+      assertCompanyAccess(assignee.companyId, user)
       resolvedAssignedToId = assignee.id
       resolvedAssignee = assignee.name ?? assignee.email
     }
@@ -143,7 +158,7 @@ export async function POST(request: NextRequest) {
         spentMinutes: data.spentMinutes ?? 0,
         dependsOn: dependsOnValue,
         userId: user.id,
-        companyId: user.companyId || null,
+        companyId: activeCompanyId,
         teamId: activeTeamId || null,
       },
     })
@@ -177,30 +192,26 @@ export async function PUT(request: NextRequest) {
 
     if (!current) throw new ApiError('Recurso nao encontrado', 404)
 
-    // Authorization: 3 níveis
+    // Authorization: 3 níveis (escopo por CONJUNTO de empresas)
     if (user.role === 'admin') {
       // Admin: pode tudo
     } else if (user.role === 'gerencia') {
-      // Gerencia: só demandas da sua empresa
-      if (current.companyId !== user.companyId) {
-        throw new ApiError('Sem permissao', 403)
-      }
+      // Gerencia: só demandas de empresa do seu conjunto
+      assertCompanyAccess(current.companyId, user)
     } else {
-      // User: ownTeam OU FK match OU legacy string match (FK null + same company)
+      // User: ownTeam OU FK match OU legacy string match (FK null + empresa ∈ conjunto)
       const teamIds = user.teamIds || []
       const assigneeKey = user.name ?? user.email ?? null
+      const ids = accessibleCompanyIds(user) ?? []
+      const inScope = !!current.companyId && ids.includes(current.companyId)
       const inOwnTeam = !!current.teamId && teamIds.includes(current.teamId)
       const isAssigneeFk =
-        !!current.assignedToId &&
-        current.assignedToId === user.id &&
-        !!user.companyId &&
-        current.companyId === user.companyId
+        !!current.assignedToId && current.assignedToId === user.id && inScope
       const isAssigneeLegacy =
         current.assignedToId === null &&
         !!assigneeKey &&
         current.assignee === assigneeKey &&
-        !!user.companyId &&
-        current.companyId === user.companyId
+        inScope
       if (!inOwnTeam && !isAssigneeFk && !isAssigneeLegacy) {
         throw new ApiError('Sem permissao', 403)
       }
@@ -216,9 +227,8 @@ export async function PUT(request: NextRequest) {
         if (!assignee) {
           throw new ApiError('Responsavel nao encontrado', 400)
         }
-        if (user.role !== 'admin' && assignee.companyId !== user.companyId) {
-          throw new ApiError('Responsavel pertence a outra empresa', 403)
-        }
+        // admin pode atribuir cross-company; demais só dentro do conjunto acessível
+        assertCompanyAccess(assignee.companyId, user)
         assigneeUpdate = {
           assignedToId: assignee.id,
           assignee: assignee.name ?? assignee.email,
@@ -277,6 +287,18 @@ export async function PUT(request: NextRequest) {
 
     if (data.status === 'em_andamento' && current.dateStarted === null) {
       lifecycleUpdate.dateStarted = new Date()
+    }
+
+    // Ao concluir (transição p/ concluida), o servidor define dateDone se ainda nula E o
+    // cliente não enviou uma data explícita — espelha o dateStarted e alimenta analytics
+    // p/ callers externos (MCP/curl). Cliente que envia dateDone (ex.: UI, backfill) é respeitado.
+    if (
+      data.status === 'concluida' &&
+      current.status !== 'concluida' &&
+      current.dateDone === null &&
+      data.dateDone === undefined
+    ) {
+      lifecycleUpdate.dateDone = new Date()
     }
 
     if (current.status === 'concluida' && data.status && data.status !== 'concluida') {
@@ -351,28 +373,24 @@ export async function DELETE(request: NextRequest) {
 
     if (!demanda) throw new ApiError('Recurso nao encontrado', 404)
 
-    // Authorization: 3 níveis
+    // Authorization: 3 níveis (escopo por CONJUNTO de empresas)
     if (user.role === 'admin') {
       // Admin: pode tudo
     } else if (user.role === 'gerencia') {
-      if (demanda.companyId !== user.companyId) {
-        throw new ApiError('Sem permissao', 403)
-      }
+      assertCompanyAccess(demanda.companyId, user)
     } else {
       const teamIds = user.teamIds || []
       const assigneeKey = user.name ?? user.email ?? null
+      const ids = accessibleCompanyIds(user) ?? []
+      const inScope = !!demanda.companyId && ids.includes(demanda.companyId)
       const inOwnTeam = !!demanda.teamId && teamIds.includes(demanda.teamId)
       const isAssigneeFk =
-        !!demanda.assignedToId &&
-        demanda.assignedToId === user.id &&
-        !!user.companyId &&
-        demanda.companyId === user.companyId
+        !!demanda.assignedToId && demanda.assignedToId === user.id && inScope
       const isAssigneeLegacy =
         demanda.assignedToId === null &&
         !!assigneeKey &&
         demanda.assignee === assigneeKey &&
-        !!user.companyId &&
-        demanda.companyId === user.companyId
+        inScope
       if (!inOwnTeam && !isAssigneeFk && !isAssigneeLegacy) {
         throw new ApiError('Sem permissao', 403)
       }

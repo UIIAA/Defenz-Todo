@@ -13,7 +13,7 @@ export default defineConfig({
     environment: 'node',
     environmentMatchGlobs: [['**/*.test.tsx', 'jsdom']],
     setupFiles: ['./src/test/setup.ts'],
-    exclude: ['_archived/**', 'node_modules/**', '.next/**'],
+    exclude: ['_archived/**', 'node_modules/**', '.next/**', 'mcp/**'],
     globals: true,
   },
 })

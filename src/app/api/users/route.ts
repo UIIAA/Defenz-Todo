@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { requireAuth, isAdmin } from '@/lib/auth'
+import { requireAuth, companyScopeWhere } from '@/lib/auth'
 
 export async function GET() {
   try {
     const user = await requireAuth()
 
-    // Todos os roles autenticados podem listar colegas da mesma empresa
-    // Admin vê todos; gerencia e user veem apenas da própria company
-    const where = isAdmin(user) ? {} : { companyId: user.companyId ?? '__none__' }
+    // Todos os roles autenticados podem listar colegas das suas empresas.
+    // Admin vê todos; gerencia/user veem apenas do seu CONJUNTO de empresas.
+    const where = companyScopeWhere(user)
 
     const users = await db.user.findMany({
       where,
@@ -26,6 +26,7 @@ export async function GET() {
             team: { select: { id: true, name: true } },
           },
         },
+        userCompanies: { select: { companyId: true } },
         createdAt: true,
       },
       orderBy: { name: 'asc' },
@@ -36,8 +37,10 @@ export async function GET() {
       companyName: u.company?.name || null,
       teamIds: u.teams.map((ut) => ut.team.id),
       teamNames: u.teams.map((ut) => ut.team.name),
+      companyIds: u.userCompanies.map((uc) => uc.companyId),
       company: undefined,
       teams: undefined,
+      userCompanies: undefined,
     }))
 
     return NextResponse.json({

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, resolveActiveCompany } from '@/lib/auth'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { importSchema } from '@/lib/validations/demanda'
 
@@ -11,6 +11,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { items } = importSchema.parse(body)
+
+    // Empresa ativa: default = primária; só aceita outra empresa se ∈ conjunto (senão 403)
+    const activeCompanyId = resolveActiveCompany(user, body.companyId)
 
     // activeTeamId from body or user's single team
     const activeTeamId = body.teamId || (user.teamIds && user.teamIds.length === 1 ? user.teamIds[0] : null)
@@ -27,7 +30,7 @@ export async function POST(request: NextRequest) {
         deadline: item.deadline ? new Date(item.deadline) : null,
         dateDone: null,
         userId: user.id,
-        companyId: user.companyId || null,
+        companyId: activeCompanyId,
         teamId: activeTeamId || null,
       })),
     })

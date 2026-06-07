@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, accessibleCompanyIds, assertCompanyAccess } from '@/lib/auth'
 import { handleApiError, successResponse, createdResponse, ApiError } from '@/lib/api-helpers'
 
 const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/
@@ -14,10 +14,11 @@ export async function GET() {
       throw new ApiError('Sem permissao', 403)
     }
 
-    // Admin ve todas; gerencia ve apenas sua empresa
-    const where = user.role === 'gerencia' && user.companyId
-      ? { id: user.companyId }
-      : {}
+    // Admin ve todas; gerencia ve apenas as empresas do seu CONJUNTO (multi-empresa).
+    // A entidade é a própria Company, então o escopo é por `id` (não `companyId`).
+    const ids = accessibleCompanyIds(user) // null = admin
+    const where =
+      ids === null ? {} : ids.length === 1 ? { id: ids[0] } : { id: { in: ids } }
 
     const companies = await db.company.findMany({
       where,
@@ -109,9 +110,9 @@ export async function PUT(request: NextRequest) {
     const existing = await db.company.findUnique({ where: { id } })
     if (!existing) throw new ApiError('Empresa nao encontrada', 404)
 
-    // Gerencia so pode editar branding da propria empresa
+    // Gerencia so pode editar branding de empresa do seu conjunto
     if (user.role === 'gerencia') {
-      if (id !== user.companyId) throw new ApiError('Sem permissao', 403)
+      assertCompanyAccess(id, user)
       // Gerencia nao pode renomear empresa
       const data: Record<string, unknown> = {}
       if (logoUrl !== undefined) data.logoUrl = logoUrl?.trim() || null

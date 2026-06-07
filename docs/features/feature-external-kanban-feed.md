@@ -1,5 +1,5 @@
 # Feature: Alimentar o Kanban Defenz de fora (chat / projeto externo)
-**Status:** Approved (decomposta em duas specs filhas — ver abaixo)
+**Status:** Done (Solução A + B + multi-empresa shipadas — ver specs filhas)
 **Priority:** P1
 **Date:** 2026-06-07
 

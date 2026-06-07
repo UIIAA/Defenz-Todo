@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { requireAuth } from '@/lib/auth'
+import { requireAuth, accessibleCompanyIds, assertCompanyAccess } from '@/lib/auth'
 import { createAuditLog, diffChanges } from '@/lib/audit'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
+import { updateUserSchema } from '@/lib/validations/user'
 import bcrypt from 'bcryptjs'
 
 type RouteContext = { params: Promise<{ id: string }> }
@@ -17,17 +18,25 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params
     const body = await request.json()
-    const { name, role, position, department, password, companyId, teamIds } = body as {
-      name?: string; role?: string; position?: string; department?: string;
-      password?: string; companyId?: string; teamIds?: string[]
-    }
+    const { name, role, position, department, password, companyId, teamIds, companyIds } =
+      updateUserSchema.parse(body)
 
     const target = await db.user.findUnique({
       where: { id },
-      include: { teams: { select: { teamId: true } } },
+      include: {
+        teams: { select: { teamId: true } },
+        userCompanies: { select: { companyId: true } },
+      },
     })
     if (!target) {
       throw new ApiError('Usuario nao encontrado', 404)
+    }
+
+    // Tenant guard no ALVO: gerência só gerencia usuários do seu conjunto (admin: no-op).
+    // Sem isto, uma gerência poderia resetar senha/editar usuário de outra empresa.
+    const actor = user as { role: string; companyId?: string; companyIds?: string[] }
+    if (currentRole !== 'admin') {
+      assertCompanyAccess(target.companyId, actor)
     }
 
     // Cannot lower own role
@@ -44,11 +53,63 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       throw new ApiError('Apenas admin pode promover para admin', 403)
     }
 
-    // Password validation
-    if (password !== undefined && password.length < 6) {
-      throw new ApiError('Senha deve ter pelo menos 6 caracteres', 400)
+    // Tenant guard: não-admin (gerência) só opera dentro do próprio conjunto de empresas
+    // (sem escalonamento de privilégio: não atribui empresa fora do seu escopo).
+    if (currentRole !== 'admin') {
+      const allowed = accessibleCompanyIds(actor) ?? []
+      if (companyId && !allowed.includes(companyId)) {
+        throw new ApiError('Empresa fora do seu escopo', 403, { code: 'FORBIDDEN_COMPANY' })
+      }
+      if (companyIds) {
+        for (const cid of companyIds) {
+          if (!allowed.includes(cid)) {
+            throw new ApiError('Empresa fora do seu escopo', 403, { code: 'FORBIDDEN_COMPANY' })
+          }
+        }
+      }
     }
 
+    // ===== VALIDAÇÃO antes de QUALQUER escrita (evita partial-write quando um guard barra) =====
+
+    // Plano de sincronização de equipes: valida escopo + existência (sem escrever ainda).
+    let teamSync: { toAdd: string[]; toRemove: string[] } | null = null
+    if (teamIds !== undefined) {
+      const currentTeamIds = target.teams.map((t) => t.teamId)
+      const toAdd = teamIds.filter((tid) => !currentTeamIds.includes(tid))
+      const toRemove = currentTeamIds.filter((tid) => !teamIds.includes(tid))
+      if (toAdd.length > 0) {
+        const addTeams = await db.team.findMany({
+          where: { id: { in: toAdd } },
+          select: { id: true, companyId: true },
+        })
+        if (addTeams.length !== toAdd.length) {
+          throw new ApiError('Equipe inválida', 400)
+        }
+        // Gerência só vincula equipes de empresas do seu conjunto (admin: no-op)
+        if (currentRole !== 'admin') {
+          for (const t of addTeams) assertCompanyAccess(t.companyId, actor)
+        }
+      }
+      teamSync = { toAdd, toRemove }
+    }
+
+    // Plano de sincronização de empresas (UserCompany = só ADICIONAIS; a primária é descartada).
+    let companySync: { toAdd: string[]; toRemove: string[] } | null = null
+    if (companyIds !== undefined) {
+      const effectivePrimary = companyId !== undefined ? companyId || null : target.companyId
+      const desired = companyIds.filter((cid) => cid && cid !== effectivePrimary)
+      const currentCompanyIds = target.userCompanies.map((uc) => uc.companyId)
+      const toAdd = desired.filter((cid) => !currentCompanyIds.includes(cid))
+      let toRemove = currentCompanyIds.filter((cid) => !desired.includes(cid))
+      // Não-admin nunca mexe em membership fora do próprio conjunto (sem remoção cross-tenant)
+      if (currentRole !== 'admin') {
+        const allowed = accessibleCompanyIds(actor) ?? []
+        toRemove = toRemove.filter((cid) => allowed.includes(cid))
+      }
+      companySync = { toAdd, toRemove }
+    }
+
+    // ===== ESCRITAS (todas as validações já passaram) =====
     const updateData: Record<string, unknown> = {}
     if (name !== undefined) updateData.name = name
     if (role !== undefined) updateData.role = role
@@ -63,21 +124,21 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       select: { id: true, name: true, email: true, role: true, position: true, department: true, companyId: true, createdAt: true },
     })
 
-    // Update team memberships if provided
-    if (teamIds !== undefined) {
-      const currentTeamIds = target.teams.map((t) => t.teamId)
-      const toAdd = teamIds.filter((tid) => !currentTeamIds.includes(tid))
-      const toRemove = currentTeamIds.filter((tid) => !teamIds.includes(tid))
-
-      if (toRemove.length > 0) {
-        await db.userTeam.deleteMany({
-          where: { userId: id, teamId: { in: toRemove } },
-        })
+    if (teamSync) {
+      if (teamSync.toRemove.length > 0) {
+        await db.userTeam.deleteMany({ where: { userId: id, teamId: { in: teamSync.toRemove } } })
       }
-      if (toAdd.length > 0) {
-        await db.userTeam.createMany({
-          data: toAdd.map((teamId) => ({ userId: id, teamId })),
-        })
+      if (teamSync.toAdd.length > 0) {
+        await db.userTeam.createMany({ data: teamSync.toAdd.map((teamId) => ({ userId: id, teamId })) })
+      }
+    }
+
+    if (companySync) {
+      if (companySync.toRemove.length > 0) {
+        await db.userCompany.deleteMany({ where: { userId: id, companyId: { in: companySync.toRemove } } })
+      }
+      if (companySync.toAdd.length > 0) {
+        await db.userCompany.createMany({ data: companySync.toAdd.map((cid) => ({ userId: id, companyId: cid })) })
       }
     }
 
@@ -128,6 +189,11 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     const target = await db.user.findUnique({ where: { id } })
     if (!target) {
       throw new ApiError('Usuario nao encontrado', 404)
+    }
+
+    // Tenant guard no ALVO: gerência só deleta usuários do seu conjunto (admin: no-op).
+    if (currentRole !== 'admin') {
+      assertCompanyAccess(target.companyId, user as { role: string; companyId?: string; companyIds?: string[] })
     }
 
     // Only admin can delete another admin

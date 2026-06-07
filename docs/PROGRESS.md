@@ -5,7 +5,15 @@
 **Branch:** main
 
 ## Current focus
-**Alimentar o Kanban de fora.** **Solução A (Bearer token) SHIPADA E DEPLOYADA** (commit `0dc7117`, prod `https://defenz-todo.vercel.app` verificada: POST/PUT/GET/DELETE via `Authorization: Bearer` funcionam; rotas fora da família demanda → 401). Fundação **multi-empresa** shipada junto (modelo `UserCompany`, helpers set-based em `auth.ts`, `companyIds` na sessão). 435 testes, build+tsc verdes. Schema aplicado no Neon (aditivo, ADR-008).
+**Alimentar o Kanban de fora — Fases B e D COMPLETAS (não deployadas ainda).**
+- **Fase B — MCP `defenz-mcp`**: pacote standalone em `mcp/defenz-mcp/` (Node/TS ESM, `@modelcontextprotocol/sdk` + `zod`, fetch nativo, stdio). 4 tools (`list/create/update/move_demanda`) sobre `/api/demandas` via Bearer; escopo resolvido pelo token. 31 testes + smoke E2E stdio. README + `.env.example` + `.gitignore`. Toolchain isolada (root `tsconfig`/`vitest` excluem `mcp/`).
+- **Fase D — resto do multi-empresa**: rotas convertidas p/ escopo por **conjunto** (`demandas` GET/POST/PUT/DELETE, `users` GET, `users/[id]` PUT c/ `companyIds[]` sync, `teams`, `companies`, `invites`, `audit-logs`, `report/executive`, `demandas/import`). UI Configurações→Usuários ganhou multi-select "Empresas adicionais". Validação `src/lib/validations/user.ts`.
+- **Revisão adversarial multi-agente** do diff (Fase B+D) → 4 findings confirmados, **todos corrigidos com TDD**: (CRÍTICO) gerência podia editar/resetar-senha/deletar usuário de outra empresa — adicionado guard de tenant no alvo (PUT+DELETE); (ALTO) `teamIds` não escopado → cross-tenant team bind, agora valida empresa da equipe; (MÉDIO) PUT não setava `dateDone` ao concluir → corrigido server-side (espelha `dateStarted`, beneficia MCP/curl); (BAIXO) `companyId` primária virava linha `UserCompany` redundante → strip da primária. Re-revisão focada dos fixes executada.
+- **Gate**: 486 testes app + 31 MCP = **517**, `npm run build` + `npx tsc --noEmit` verdes. **Não deployado** — aguarda decisão de push.
+- **Validação de UI**: estática + runtime smoke (todas as rotas alteradas → 401 não 500; página renderiza). Clique autenticado não feito (sem credencial de dev / token não mintável em prod por guardrail). Usuário aceitou considerar validado.
+
+### Histórico imediato (Fase A)
+**Solução A (Bearer token) SHIPADA E DEPLOYADA** (commit `0dc7117`, prod verificada). Fundação multi-empresa shipada junto (`UserCompany`, helpers set-based, `companyIds` na sessão). Schema aplicado no Neon (aditivo, ADR-008).
 
 **Config de usuários aplicada (2026-06-07, via `scripts/setup-marcos-admin.ts`):**
 - `marcos@defenz.com.br` → **role=admin** + membro (UserCompany) das 4 empresas (Defenz, Cow Cycling, Grafono, PSI.SheilaCarvalho). Senha não alterada (já era a do admin).
@@ -15,23 +23,17 @@
 
 **UI de gestão de tokens SHIPADA E DEPLOYADA (commit `8b53062`):** Configurações → Usuários → ação 🔑 "API Tokens" por usuário (**admin-only**) — gerar (plaintext 1x), listar, revogar. API `GET/POST/DELETE /api/users/[id]/api-tokens` (session-only, admin). Helpers em `src/lib/api-token.ts`. 442 testes. (Não depende mais de CLI/chat para gerar token.)
 
-## ▶️ PRÓXIMA SESSÃO — começar aqui (Soluções B e D)
-**Solução B — MCP `defenz-mcp`** (blueprint completo no design do workflow; resumo em [feature-external-kanban-feed.md](features/feature-external-kanban-feed.md)):
-- Pacote standalone em `mcp/defenz-mcp/` (Node/TS, `@modelcontextprotocol/sdk` + zod + axios), stdio.
-- 4 tools sobre `/api/demandas` via Bearer: `list_demandas`, `create_demanda`, `update_demanda`, `move_demanda` (mapeia coluna→status). Auth: env `DEFENZ_API_TOKEN` + `DEFENZ_API_URL`. NÃO envia companyId/role (servidor resolve pelo token).
-- Gerar o token do Marcos p/ o MCP: `npx tsx scripts/create-api-token.ts --email marcos@defenz.com.br --name marcos-mcp` (Marcos é admin → token vê tudo).
-- README com `claude mcp add` + .gitignore + .env.example. Não commitar token.
-
-**Fase D (resto do multi-empresa)** — capacidade geral (Marcos já é admin, então não urgente p/ ele, mas pedido):
-- Converter rotas restantes p/ conjunto via helpers: `demandas` GET/POST/PUT/DELETE (3-níveis → `accessibleCompanyIds`/`resolveActiveCompany`), `users` GET, `users/[id]` PUT (aceitar `companyIds[]`, sincronizar `UserCompany` como teamIds, gerência só dentro do próprio set), `teams`, `invites`, `companies`, `audit-logs`, `report/executive`, `demandas/import`. `demanda.companyId` é imutável no PUT.
-- UI: `src/app/dashboard/configuracoes/usuarios/page.tsx` — multi-select de empresas (espelhar bloco de Equipes). Validação Zod em `src/lib/validations/user.ts` (criar).
-- Testes: `route-multicompany.test.ts`, `user-crud.test.ts` (+ casos sad de empresa fora do set → 403). Mock `auth.ts` já set-based; manter lockstep.
+## ▶️ PRÓXIMA SESSÃO — começar aqui
+1. **Deploy de B+D** (decisão do usuário): `git push` na main → Vercel auto-deploya. Mudanças backward-compatible e validadas (517 testes, build verde). Sem migration nova (schema já aplicado na Fase A). Depois do deploy, testar a UI autenticada em prod (multi-select Empresas adicionais) e o MCP contra prod.
+2. **Gerar o token do Marcos p/ o MCP** (quando for plugar): pela UI (Configurações→Usuários→🔑) ou `npx tsx scripts/create-api-token.ts --email marcos@defenz.com.br --name marcos-mcp`. Depois `cd mcp/defenz-mcp && npm install && npm run build` e `claude mcp add` (ver `mcp/defenz-mcp/README.md`).
+3. Deploy ordenado da Phase 2 do assignee-fk (independente; ver abaixo).
 
 ## In progress
-- (nada em código aberto) — Solução A fechada e no ar.
+- (nada em código aberto) — Fases B e D fechadas localmente, aguardando push/deploy.
 - feature-assignee-fk-migration continua aguardando deploy ordenado (independente).
 
 ## Recently completed (last 5)
+- 2026-06-07 **Fase B (MCP `defenz-mcp`) + Fase D (resto multi-empresa)** — pacote MCP standalone (4 tools, 31 testes + smoke E2E) + conversão de ~10 rotas p/ escopo por conjunto + `companyIds[]` sync em `users/[id]` PUT + UI multi-select + validação Zod `user.ts`. Revisão adversarial multi-agente → 4 fixes (1 crítico tenant: gerência editava usuário cross-company; 1 alto teamIds cross-tenant; 1 médio dateDone server-side ao concluir; 1 baixo strip primária UserCompany). 517 testes, build+tsc verdes. **Local; não deployado.** Specs: feature-defenz-mcp, feature-multi-company-membership, feature-external-kanban-feed.
 - 2026-06-07 UI de gestão de API Tokens — Configurações→Usuários, ação 🔑 por usuário (admin-only): gerar/copiar(1x)/listar/revogar. API `/api/users/[id]/api-tokens`. Helpers em `src/lib/api-token.ts`. SHIPADO+DEPLOYADO (commit `8b53062`). 442 testes.
 - 2026-06-07 feature-api-service-token (Solução A) + fundação multi-empresa — Bearer token (`ApiToken`+`resolveActor`) na família demanda, `UserCompany` N:N, helpers set-based, `companyIds` na sessão. SHIPADO + DEPLOYADO (commit `0dc7117`, prod verificada). Marcos→admin + memberships + recovery admin. 435 testes.
 - 2026-06-03 feature-demanda-dependencies — edição de dependências de Demanda (combobox no modal) + guardas self/ciclo/inválido (detectCycle em src/lib/dependency-graph.ts) + deps clicáveis (card e modal abrem a tarefa da dependência). Módulo `activities` órfão removido. Validado em localhost. 407 testes.

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { requireAuth, isAdmin } from '@/lib/auth'
+import { requireAuth, isAdmin, accessibleCompanyIds, companyScopeWhere } from '@/lib/auth'
 import { createAuditLog } from '@/lib/audit'
 import crypto from 'crypto'
 
@@ -16,7 +16,8 @@ export async function GET() {
       )
     }
 
-    const where = isAdmin(user) ? {} : { companyId: user.companyId ?? '__none__' }
+    // Escopo por CONJUNTO de empresas (admin → {}; demais → companyId ∈ conjunto)
+    const where = companyScopeWhere(user)
 
     const invites = await db.inviteToken.findMany({
       where,
@@ -63,10 +64,15 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
 
-    // companyId: admin pode especificar; gerencia é forçado à própria company
-    const resolvedCompanyId = isAdmin(user)
-      ? (companyId || user.companyId || null)
-      : (user.companyId || null)
+    // companyId: admin pode especificar; gerencia pode escolher uma empresa do seu
+    // conjunto (senão usa a primária). Inline (sem throw) p/ não virar 500 no catch manual.
+    const allowed = accessibleCompanyIds(user) // null = admin
+    const resolvedCompanyId =
+      allowed === null
+        ? companyId || user.companyId || null
+        : companyId && allowed.includes(companyId)
+          ? companyId
+          : user.companyId || null
 
     if (!resolvedCompanyId && !isAdmin(user)) {
       return NextResponse.json(
@@ -133,7 +139,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Convite nao encontrado' }, { status: 404 })
     }
 
-    if (!isAdmin(user) && invite.companyId !== user.companyId) {
+    // Escopo por conjunto. Inline (sem throw) p/ devolver 403 direto (catch manual → 500).
+    const allowed = accessibleCompanyIds(user) // null = admin
+    if (allowed !== null && (!invite.companyId || !allowed.includes(invite.companyId))) {
       return NextResponse.json(
         { error: 'Acesso negado: convite de outra empresa' },
         { status: 403 }

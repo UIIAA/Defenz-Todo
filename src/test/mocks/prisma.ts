@@ -64,6 +64,13 @@ export const mockDb = {
     deleteMany: vi.fn(),
     delete: vi.fn(),
   },
+  userTeam: {
+    findMany: vi.fn(),
+    create: vi.fn(),
+    createMany: vi.fn(),
+    deleteMany: vi.fn(),
+    delete: vi.fn(),
+  },
 }
 
 vi.mock('@/lib/db', () => ({

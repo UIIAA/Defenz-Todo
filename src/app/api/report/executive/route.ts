@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, companyScopeWhere } from '@/lib/auth'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 
 const VALID_PERIODS = ['7d', '14d', '30d', '60d', '90d', 'custom'] as const
@@ -104,7 +104,8 @@ export async function POST(request: NextRequest) {
       if (companyId && companyId !== 'all') where.companyId = companyId
       if (teamId && teamId !== 'all') where.teamId = teamId
     } else {
-      where.companyId = user.companyId
+      // Escopo por CONJUNTO de empresas (multi-empresa)
+      Object.assign(where, companyScopeWhere(user))
       if (teamId && teamId !== 'all') where.teamId = teamId
     }
 
