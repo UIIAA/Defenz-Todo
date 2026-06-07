@@ -1,86 +1,89 @@
-# Feature: Lançamento de horas por pessoa (timesheet) + aba "Horas"
+# Feature: Diário de horas automático (delta-on-save) + campo Cliente + aba "Horas"
 **Status:** Draft
 **Priority:** P1
 **Date:** 2026-06-07
 
-> Evolui [[feature-time-tracking]] (que introduziu o `spentMinutes` único por card) para um
-> **diário de lançamentos por pessoa/data**, mantendo o Kanban (board) intacto. Cliente = Empresa
-> (multi-empresa). Aprovado via brainstorming (Opção 1: diário = fonte da verdade).
+> Evolui [[feature-time-tracking]] (que introduziu o `spentMinutes` de livre edição). Aprovado via
+> brainstorming (**Desenho B**): as horas continuam de **livre edição** (modal inalterado); o diário
+> é **alimentado automaticamente** pelo delta a cada Salvar, sem mudar a UX. "Cliente atendido" é uma
+> dimensão NOVA, distinta da Empresa-tenant do multi-empresa.
+
+## Conceitos (a distinção que motiva tudo)
+- **Empresa (tenant)** = quem usa o app / dono do Kanban (Defenz, Cow Cycling…). Já existe (multi-empresa). Define o **escopo/tenant**.
+- **Cliente (atendido)** = para quem o trabalho foi feito (clientes da Defenz). **Não existe hoje** no modelo. Novo campo de **texto livre** no card (vira lista gerenciável no futuro). É o eixo principal do relatório.
 
 ## Objective
-Permitir que cada pessoa lance horas trabalhadas em cada card (Demanda), de forma **atribuída** (quem) e **datada** (quando), e extrair/visualizar essas horas **agrupadas** por cliente (empresa), pessoa, equipe, área e card, com filtro de período — numa nova aba "Horas". O total de horas do card passa a ser a **soma dos lançamentos** (número único e coerente).
+Permitir extrair "quem atuou, para qual cliente, por quanto tempo, em que período" **sem mudar a edição de horas** que já existe. As horas seguem de livre edição (card + subtarefas); a cada Salvar que altera horas, o servidor grava um **lançamento (delta)** num diário, atribuído ao **Responsável** do card e datado no momento do Salvar. A aba "Horas" agrega o diário.
 
 ## Behavior
-1. No **modal** de um card (board inalterado), a área de horas vira uma seção **"Lançamentos de horas"**: lista (data, quem, horas, descrição) + formulário "Lançar horas" (horas decimais, data=hoje por default, descrição opcional).
-2. Por padrão o lançamento é atribuído ao **usuário logado**. Admin/gerência podem lançar/editar/excluir **por outra pessoa do seu escopo** (select).
-3. Ao criar/editar/excluir um lançamento, o servidor **recalcula** `Demanda.spentMinutes` = soma dos lançamentos do card. O badge do card e o `totalSpentMinutes` continuam funcionando (agora alimentados pelos lançamentos).
-4. A aba **"Horas"** (`/dashboard/demandas/horas`, ao lado de Análises/Relatório) lista e **agrupa** os lançamentos com filtros (período, empresa/cliente, equipe, pessoa): totais por pessoa, por cliente, por equipe, por área e por card.
-5. Escopo de tenant por **conjunto** (multi-empresa): admin vê tudo; gerência/user só das suas empresas.
+1. Editar horas no modal (card ou subtarefa) **continua exatamente como hoje** (livre edição). Modal só ganha um campo **"Cliente"** (texto livre).
+2. Ao **Salvar** uma alteração de horas, o servidor calcula o **delta** (novo − antigo). Se ≠ 0, grava 1 linha no diário: `{ card, Responsável (quem), cliente (snapshot), minutos = delta, quando = agora, origem = card|subtask }`.
+3. **Independe do status/movimentação do card** — conta no Salvar, não na conclusão. Correção posterior grava delta negativo (o total sempre fecha).
+4. **Subtarefas também contam**: editar/criar/excluir horas de subtarefa grava delta (atribuído ao Responsável do card, mesmo cliente).
+5. **Período fica exato** (cada lançamento é datado no Salvar; orienta-se preencher ~1x/dia).
+6. **Aba "Horas"** (`/dashboard/demandas/horas`, admin/gerência, escopada): filtra (período, cliente, responsável, equipe) e agrupa por **Cliente, Responsável, Equipe, Área e Card**.
 
 ## Business Rules
-- **`TimeEntry` é a fonte da verdade** das horas gastas no nível do card. `Demanda.spentMinutes` é cache derivado (= Σ lançamentos do card), recalculado a cada mutação.
-- **Subtarefas ficam fora do v1**: `Subtask.spentMinutes`/`estimatedMinutes` permanecem como estão (estimativa manual). A aba "Horas" reporta apenas lançamentos de card. O badge do card mantém a fórmula atual (`spentMinutes` do card + Σ subtarefas) — o `spentMinutes` do card agora vem dos lançamentos.
-- **`estimatedMinutes` (estimativa) continua manual** no modal (separado do realizado).
-- **Cliente = Empresa**: agrupar "por cliente" = agrupar pelo `companyId` do card. Sem campo "projeto".
-- **Permissão de lançamento**: `user` lança/edita/exclui só lançamentos **próprios** (em qualquer card que ele acessa). `admin`/`gerencia` podem lançar/editar/excluir por qualquer pessoa do **seu conjunto** de empresas.
-- **Resiliência a exclusão de usuário**: o lançamento guarda `userName` (snapshot) e o FK `userId` é `SetNull` ao deletar o usuário — os dados históricos de horas **não se perdem**.
-- **Visibilidade**: a **lista de lançamentos de um card** (no modal, e `GET /api/demandas/[id]/time-entries`) é visível a **qualquer pessoa que acessa o card** (transparência — todos veem quem lançou o quê), mas cada um só **edita/exclui** os próprios (admin/gerência: do escopo). A **aba "Horas"** (visão agregada de todos os cards, `GET /api/time-entries`) é restrita a `admin` + `gerencia`, escopada ao conjunto. (Lançar horas continua disponível a todos no modal.)
-- Sem exportação no v1 (só visualização) — pode ser adicionada depois.
+- **Horas continuam de livre edição e fonte autoritativa do card** (`spentMinutes` do card e da subtarefa inalterados). O diário (`TimeEntry`) é **derivado/aditivo** — não troca a fonte da verdade, não há recompute, não trava input.
+- **Atribuição ("quem atuou") = Responsável do card** (`assignedToId`); se o card não tiver responsável, atribui ao **editor** (quem salvou). `userName` é gravado como **snapshot** (resiliente a exclusão de usuário; FK `SetNull`).
+- **Cliente** é **snapshot** no lançamento (texto livre no momento do Salvar) — o diário é um registro imutável de evento. Equipe/Área/Título são lidos **ao vivo** do card no relatório (estrutura org atual).
+- **Sem CRUD manual de lançamentos**: o diário é só leitura (gerado por ações). Correções se fazem editando as horas do card/subtarefa (gera delta). Não há tela de "lançar horas".
+- **Consistência**: soma dos deltas de um card (incluindo seed inicial) = `totalSpentMinutes` do card (card + subtarefas). Edição fora do app (script/DB direto) não gera delta (débito anotado).
+- **Escopo de tenant por conjunto**: a aba/relatório (`GET /api/time-entries`) é `admin` + `gerencia`, escopado via `companyId` do card (helpers de `src/lib/auth.ts`). A gravação do delta é server-side em quem já pode editar a Demanda (sem permissão nova).
+- Sem exportação no v1 (só visualização).
 
 ## Edge Cases
-- Lançar em card de empresa fora do conjunto (não-admin) → 403.
-- Lançar por outra pessoa fora do escopo (não-admin) → 403; `user` tentando lançar por outro → 403 (só self).
-- Minutos ≤ 0 ou não-inteiro → 400.
-- Card sem empresa (`companyId` null) → agrupa em "Sem cliente".
-- Usuário deletado → lançamentos preservados via `userName` (FK null).
-- Recompute idempotente: deletar todos os lançamentos → `spentMinutes` = 0.
+- `data.spentMinutes` igual ao atual → delta 0 → **não grava**.
+- Card sem responsável → atribui ao editor; sem cliente → agrupa em "Sem cliente".
+- Subtarefa criada com horas → delta = +horas; subtarefa excluída → delta = −horas.
+- Usuário deletado → lançamentos preservados (`userName` snapshot, FK null).
+- Delta negativo (correção) some corretamente no agregado.
+- Edição via Bearer (MCP/curl) também gera delta (gravação é server-side, independe do caminho de auth).
 
 ## Data Contract
-- **TimeEntry** (Prisma, novo):
+- **Demanda**: novo campo `client String?` (texto livre, "Cliente atendido"). Entra em `createDemandaSchema`/`updateDemandaSchema` e no modal.
+- **TimeEntry** (Prisma, novo — o diário):
   - `id`, `demandaId` FK→Demanda (Cascade), `userId?` FK→User (SetNull), `userName String` (snapshot),
-    `minutes Int` (>0), `workedOn DateTime` (data do trabalho), `description String?`,
-    `createdBy String?` (quem registrou), `createdAt`.
-  - índices: `demandaId`, `userId`, `workedOn`.
+    `minutes Int` (delta; pode ser negativo), `client String?` (snapshot), `source String` ("card"|"subtask"),
+    `subtaskId String?` (rastreio), `createdById String?` (editor), `createdAt DateTime @default(now())`.
+  - índices: `demandaId`, `userId`, `createdAt`.
   - relações: `Demanda.timeEntries TimeEntry[]`, `User.timeEntries TimeEntry[]`.
-- **Migração**: `db push` aditivo (ADR-008). Backfill `scripts/backfill-time-entries.ts` (idempotente): p/ cada Demanda com `spentMinutes>0` e sem lançamentos, cria 1 lançamento inicial (userId=assignedToId||userId, userName=nome, minutes=spentMinutes, workedOn=updatedAt, description="Lançamento inicial (migração)").
-- **APIs** (família demanda — aceitam sessão **e** Bearer via `resolveActor`, tenant-scoped):
-  - `GET /api/demandas/[id]/time-entries` — lista do card.
-  - `POST /api/demandas/[id]/time-entries` `{minutes, workedOn?, description?, userId?}` → cria + recompute + AuditLog.
-  - `PUT /api/demandas/[id]/time-entries/[entryId]` `{minutes?, workedOn?, description?}` → edita + recompute.
-  - `DELETE /api/demandas/[id]/time-entries/[entryId]` → exclui + recompute.
-  - `GET /api/time-entries?from&to&companyId&teamId&userId` — lançamentos filtrados (admin/gerência, escopo por conjunto via relação demanda), p/ a aba agregar. Cap de itens com aviso.
-- **Validação**: `src/lib/validations/time-entry.ts` (Zod).
-- **Helper puro**: `sumMinutes(entries)` e agregadores (`groupBy`) testáveis em `src/lib/time-entries.ts`.
+- **Migração**: `db push` aditivo (ADR-008). Seed `scripts/backfill-time-entries.ts` (idempotente): p/ cada Demanda com `totalSpentMinutes>0` e sem lançamentos, cria 1 lançamento inicial (`minutes = totalSpentMinutes`, `userId=assignedToId`, `userName=assignee`, `client=demanda.client`, `createdAt=updatedAt`, `source="seed"`).
+- **Gravação do delta** (server-side, sem endpoint novo):
+  - `PUT /api/demandas`: se `data.spentMinutes !== undefined` e `≠ current.spentMinutes` → grava delta (origem "card").
+  - `POST/PUT/DELETE /api/demandas/[id]/subtasks*`: delta do `spentMinutes` da subtarefa (origem "subtask"), atribuído ao Responsável do card pai.
+- **Leitura** (aba): `GET /api/time-entries?from&to&client&teamId&userId` — lançamentos filtrados, escopados por conjunto (via relação `demanda`), com `demanda` (title/teamId/classification) incluído. Cap de itens com aviso (`log`).
+- **Helpers puros** (`src/lib/time-entries.ts`): `computeDelta(oldMin, newMin)`, `groupBy(entries, keyFn)`, `sumMinutes(entries)` — testáveis.
 
 ## Acceptance Criteria
-- [ ] Modelo `TimeEntry` criado; `Demanda.spentMinutes` recalculado como Σ lançamentos em cada mutação.
-- [ ] POST cria lançamento (self por default; admin/gerência por outro do escopo); 403 fora do conjunto (empresa ou pessoa); 400 minutos inválidos.
-- [ ] PUT/DELETE respeitam permissão (próprio, ou admin/gerência no escopo) e recalculam `spentMinutes`.
-- [ ] `GET /api/demandas/[id]/time-entries` e `GET /api/time-entries` são tenant-scoped por conjunto.
-- [ ] Modal do card: seção de lançamentos (lista + form), board do Kanban inalterado.
-- [ ] Aba "Horas" agrupa por pessoa, cliente, equipe, área e card, com filtro de período; escopada.
-- [ ] Backfill converte `spentMinutes` existentes em lançamentos iniciais (idempotente).
-- [ ] Mutações gravam AuditLog. Lockstep do mock `auth.ts` mantido.
+- [ ] Campo `Demanda.client` (texto livre) criado, no schema Zod e no modal.
+- [ ] `PUT /api/demandas` grava lançamento de delta quando `spentMinutes` muda (não grava se delta 0); atribui ao Responsável (fallback editor); snapshot de cliente + userName.
+- [ ] Subtarefa (POST/PUT/DELETE) grava lançamento de delta atribuído ao Responsável do card pai.
+- [ ] `GET /api/time-entries` é tenant-scoped por conjunto (admin/gerência); filtros período/cliente/equipe/responsável.
+- [ ] Aba "Horas" agrupa por Cliente, Responsável, Equipe, Área e Card; filtro de período (datado no Salvar = exato).
+- [ ] Edição de horas no modal **inalterada** (livre); board do Kanban inalterado.
+- [ ] Seed backfill idempotente; soma dos lançamentos = `totalSpentMinutes` do card.
+- [ ] Lockstep do mock `auth.ts`/`prisma.ts` mantido; gate verde (build+tsc+test).
 
 ## Technical Decisions
-- **Opção 1 (fonte da verdade)** escolhida no brainstorming: um único número de horas, rastreável; vs. manter `spentMinutes` paralelo (descartado por gerar dois conceitos divergentes).
-- **Snapshot `userName`** + FK `SetNull`: preserva relatórios após exclusão de usuário ("dados importantes").
-- **Sem denormalizar companyId/teamId** no lançamento: filtra/agrupa via relação `demanda` (sempre correto; `companyId` é imutável, `teamId`/`classification` lidos ao vivo).
-- **Escopo por conjunto** reusa helpers de `src/lib/auth.ts` (`assertCompanyAccess`, `companyScopeWhere`, `accessibleCompanyIds`) — consistente com Fase D.
-- **Bearer na família demanda**: APIs de time-entry aceitam token (futuro: MCP lançar horas).
-- **Agregação client-side** na aba (a partir de lançamentos filtrados) → flexível p/ múltiplos eixos; cap de itens p/ não estourar contexto.
+- **Delta-on-save (Desenho B)**: o diário é alimentado pela ação de Salvar, preservando a livre edição — vs. (a) diário como fonte da verdade travando o input (rejeitado), (b) diário manual com CRUD (rejeitado — muda a UX).
+- **Cliente ≠ Empresa-tenant**: dimensão nova, texto livre v1 (lista gerenciável depois). Snapshot no lançamento.
+- **Atribuição ao Responsável** (não ao editor) reflete "quem atuou"; `userName` snapshot p/ resiliência.
+- **Append-only / sem recompute**: zero risco ao fluxo de horas atual; consistência garantida por seed + deltas.
+- **Reaproveita** `resolveActor`/helpers de tenant (Fase D) e `minutesToHoursLabel`/`totalSpentMinutes` existentes.
+- **AuditLog permanece** p/ auditoria geral; `TimeEntry` é o log dedicado e otimizado p/ relatório de horas.
 
 ## Build order (TDD, proporcional)
-1. Schema `TimeEntry` + relações; `npx prisma validate` + `db push`; mock prisma ganha `timeEntry`.
-2. Zod `time-entry.ts` + helper puro `time-entries.ts` (sum/group) — testes.
-3. `recomputeSpentMinutes(demandaId)` helper (server) — teste.
-4. API `/api/demandas/[id]/time-entries` (GET/POST) — testes (self, admin-for-other, 403 escopo, recompute).
-5. API `[entryId]` (PUT/DELETE) — testes (permissão, recompute).
-6. API agregada `/api/time-entries` (GET) — testes (escopo + filtros).
-7. UI: seção de lançamentos no modal da Demanda (substitui input manual de horas gastas).
-8. UI: página `/dashboard/demandas/horas` + item de nav; agrupamentos + filtros.
-9. Backfill `scripts/backfill-time-entries.ts` (idempotente).
+1. Schema: `Demanda.client` + `TimeEntry` + relações; `prisma validate` + `db push`; mock prisma ganha `timeEntry`.
+2. `src/lib/time-entries.ts` (computeDelta/groupBy/sumMinutes) + Zod `client` na demanda — testes.
+3. Helper server `logTimeDelta(...)` (monta o lançamento) — teste.
+4. Hook no `PUT /api/demandas` (delta card) — testes (grava em mudança, ignora delta 0, atribui responsável/fallback, snapshot cliente).
+5. Hook nos subtasks routes (delta subtask) — testes (create/update/delete → delta).
+6. `GET /api/time-entries` (escopo + filtros) — testes.
+7. UI modal: campo "Cliente" (texto livre). Board inalterado.
+8. UI aba `/dashboard/demandas/horas` + nav; agrupamentos + filtros.
+9. Seed `scripts/backfill-time-entries.ts`.
 10. Gate: `npm run build && npx tsc --noEmit && npm test`. Validar na UI.
 
 ## Dependencies
-- Depende de: [[feature-time-tracking]] (spentMinutes), [[feature-multi-company-membership]] (escopo por conjunto), [[feature-tenant-isolation]] (helpers).
+- Depende de: [[feature-time-tracking]] (spentMinutes livre edição), [[feature-multi-company-membership]] (escopo por conjunto), [[feature-tenant-isolation]] (helpers), [[feature-api-service-token]] (Bearer também gera delta).
