@@ -1,7 +1,14 @@
 # Feature: Alimentar o Kanban Defenz de fora (chat / projeto externo)
-**Status:** Draft (a brainstormar na próxima sessão — NÃO implementar antes de aprovar)
+**Status:** Approved (decomposta em duas specs filhas — ver abaixo)
 **Priority:** P1
 **Date:** 2026-06-07
+
+## Decisões tomadas (2026-06-07)
+- **Auth de serviço** = modelo `ApiToken` em **tabela** (não env JSON, não CRON_SECRET). Token vinculado a 1 usuário, autentica "como" ele. → [[feature-api-service-token]]
+- **Entrega**: Solução **A** (curl/Bearer na API) PRIMEIRO; depois Solução **B** (MCP `defenz-mcp`). Opção C (n8n) descartada por ora.
+- **Multi-empresa por usuário** via `UserCompany` N:N; aplicar ao Marcos. → [[feature-multi-company-membership]]
+- Dois tokens iniciais: **admin** (acesso total) + **Marcos** (empresas dele).
+- Os acceptance criteria deste rascunho são cobertos pelas duas specs filhas.
 
 ## Objective
 Permitir criar, atualizar e mover cards (Demandas) do Kanban Defenz a partir de uma conversa com o Claude (chat) e/ou de outro projeto/automação — sem abrir o navegador. Ex.: "crie o card Teste e mova para Em Andamento".

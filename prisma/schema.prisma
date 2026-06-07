@@ -26,6 +26,7 @@ model Company {
   teams       Team[]
   demandas    Demanda[]
   invites     InviteToken[]
+  userCompanies UserCompany[] // memberships adicionais (multi-empresa)
 }
 
 model Team {
@@ -52,6 +53,24 @@ model UserTeam {
   @@unique([userId, teamId])
   @@index([userId])
   @@index([teamId])
+}
+
+// Membership N:N usuario<->empresa (multi-empresa).
+// User.companyId continua sendo a empresa PRIMARIA (branding + default de criacao);
+// UserCompany guarda apenas as empresas ADICIONAIS. Conjunto acessivel =
+// dedup([companyId, ...userCompanies.companyId]). Ver feature-multi-company-membership.
+model UserCompany {
+  id        String  @id @default(cuid())
+  userId    String
+  companyId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+  @@map("user_companies")
 }
 
 model User {
@@ -93,6 +112,8 @@ model User {
   demandas                Demanda[]                @relation("DemandaCreator")
   demandasAssignedTo      Demanda[]                @relation("DemandaAssignee")
   inviteTokens            InviteToken[]
+  userCompanies           UserCompany[]            // empresas adicionais (multi-empresa)
+  apiTokens               ApiToken[]               // tokens de serviço (Bearer) deste usuario
 
   @@index([email])
   @@index([companyId])
@@ -858,4 +879,30 @@ model InviteToken {
   @@index([token])
   @@index([createdBy])
   @@index([companyId])
+}
+
+// ============================================================
+// API SERVICE TOKENS (Bearer — Solução A)
+// ============================================================
+
+// Token de serviço para autenticação máquina-a-máquina (Claude/curl/MCP).
+// Vinculado a 1 usuário: autentica "como" ele, herdando seu escopo (role +
+// empresas). Armazena apenas o SHA-256 do token (alta entropia), nunca o plaintext.
+// Ver feature-api-service-token.
+model ApiToken {
+  id          String    @id @default(cuid())
+  name        String    // rótulo legível (ex: "admin-cli", "marcos-mcp")
+  tokenHash   String    @unique // SHA-256(plaintext) — lookup O(1)
+  tokenPrefix String    // primeiros chars do plaintext, p/ identificação visual
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime? // null = nunca expira
+  revokedAt   DateTime? // null = ativo
+  lastUsedAt  DateTime? // auditoria de uso (fire-and-forget)
+  createdBy   String?   // userId de quem gerou (opcional)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("api_tokens")
 }

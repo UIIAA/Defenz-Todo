@@ -49,6 +49,21 @@ export const mockDb = {
     update: vi.fn(),
     delete: vi.fn(),
   },
+  apiToken: {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+  userCompany: {
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    createMany: vi.fn(),
+    deleteMany: vi.fn(),
+    delete: vi.fn(),
+  },
 }
 
 vi.mock('@/lib/db', () => ({

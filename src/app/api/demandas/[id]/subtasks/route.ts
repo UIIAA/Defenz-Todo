@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser, assertCompanyAccess } from '@/lib/auth'
+import { resolveActor, assertCompanyAccess } from '@/lib/auth'
 import { handleApiError, createdResponse, ApiError } from '@/lib/api-helpers'
 import { createSubtaskSchema } from '@/lib/validations/subtask'
 import { createAuditLog } from '@/lib/audit'
@@ -10,7 +10,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser()
+    const user = await resolveActor(request)
     if (!user?.id) throw new ApiError('Nao autorizado', 401)
 
     const { id: demandaId } = await params

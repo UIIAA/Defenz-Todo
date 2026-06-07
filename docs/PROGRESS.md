@@ -1,15 +1,23 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-06-03
+**Last updated:** 2026-06-07
 **Version:** 0.2.0
 **Branch:** main
 
 ## Current focus
-Time-tracking + dependências entre demandas **shipados** (push c502ebf, deploy Vercel). Banco Neon é único dev/prod (ADR-008) → schema já aplicado em prod via db push.
-**Próximo rumo (a brainstormar):** permitir alimentar o Kanban Defenz de fora — via conversa com o Claude (chat) e/ou por outro projeto/automação. Rascunho em `docs/features/feature-external-kanban-feed.md`. Blocker principal: API só aceita sessão NextAuth (sem token de serviço para chamadas máquina-a-máquina).
+**Alimentar o Kanban de fora** — em implementação. **Solução A (Bearer token) CONCLUÍDA** (build+tsc+435 testes verdes): modelo `ApiToken`, `resolveActor`, swap nas rotas de demanda/subtasks/links, script gerador. Fundação **multi-empresa** também pronta (modelo `UserCompany`, helpers set-based, `companyIds` na sessão). Schema aplicado no Neon (aditivo, ADR-008). **Falta:** gerar o token admin (rodar o script), converter as ~12 rotas restantes p/ conjunto, UI multi-empresa, configurar Marcos + token Marcos, e Solução B (MCP `defenz-mcp`).
 
 ## In progress
-- (nada em código) — feature-assignee-fk-migration continua aguardando deploy ordenado: `prisma migrate deploy` → `tsx scripts/backfill-assignee.ts` → review `unresolved_assignees.log` → deploy do código
+- **feature-multi-company-membership (Fase D)**: aplicar conjunto às rotas restantes (users/[id] PUT com `companyIds`, teams, invites, companies, audit-logs, report, import) + UI Configurações→Usuários (multi-select) + configurar Marcos.
+- **feature-external-kanban-feed (Solução B)**: MCP server `defenz-mcp` (4 tools sobre /api/demandas via Bearer). Depende da Solução A (pronta).
+- feature-assignee-fk-migration continua aguardando deploy ordenado.
+
+## Gerar tokens (após Solução A)
+```bash
+npx tsx scripts/create-api-token.ts --role admin --name admin-cli      # token admin (acesso total)
+# (após configurar Marcos multi-empresa, Fase D)
+npx tsx scripts/create-api-token.ts --email <marcos@...> --name marcos-mcp
+```
 
 ## Recently completed (last 5)
 - 2026-06-03 feature-demanda-dependencies — edição de dependências de Demanda (combobox no modal) + guardas self/ciclo/inválido (detectCycle em src/lib/dependency-graph.ts) + deps clicáveis (card e modal abrem a tarefa da dependência). Módulo `activities` órfão removido. Validado em localhost. 407 testes.

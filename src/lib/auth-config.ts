@@ -42,6 +42,7 @@ export const authOptions: NextAuthOptions = {
             teams: {
               select: { team: { select: { id: true } } },
             },
+            userCompanies: { select: { companyId: true } },
           },
         })
 
@@ -64,6 +65,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           companyId: user.company?.id,
+          companyIds: user.userCompanies.map((uc) => uc.companyId),
           companyName: user.company?.name,
           companyLogoUrl: user.company?.logoUrl || undefined,
           companyAccentColor: user.company?.accentColor || undefined,
@@ -86,6 +88,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.role = user.role
         token.companyId = (user as { companyId?: string }).companyId
+        token.companyIds = (user as { companyIds?: string[] }).companyIds
         token.companyName = (user as { companyName?: string }).companyName
         token.companyLogoUrl = (user as { companyLogoUrl?: string }).companyLogoUrl
         token.companyAccentColor = (user as { companyAccentColor?: string }).companyAccentColor
@@ -99,6 +102,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
         session.user.role = token.role as string
         session.user.companyId = token.companyId as string | undefined
+        session.user.companyIds = token.companyIds as string[] | undefined
         session.user.companyName = token.companyName as string | undefined
         session.user.companyLogoUrl = token.companyLogoUrl as string | undefined
         session.user.companyAccentColor = token.companyAccentColor as string | undefined

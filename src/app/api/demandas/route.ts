@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { resolveActor } from '@/lib/auth'
 import { handleApiError, createdResponse, successResponse, ApiError } from '@/lib/api-helpers'
 import { createDemandaSchema, updateDemandaSchema } from '@/lib/validations/demanda'
 import { createAuditLog, diffChanges } from '@/lib/audit'
@@ -11,7 +11,7 @@ const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
+    const user = await resolveActor(request)
     if (!user) throw new ApiError('Nao autorizado', 401)
 
     const params = new URL(request.url).searchParams
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
+    const user = await resolveActor(request)
     if (!user?.id) throw new ApiError('Nao autorizado', 401)
 
     const body = await request.json()
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
+    const user = await resolveActor(request)
     if (!user?.id) throw new ApiError('Nao autorizado', 401)
 
     const body = await request.json()
@@ -338,7 +338,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
+    const user = await resolveActor(request)
     if (!user?.id) throw new ApiError('Nao autorizado', 401)
 
     const { searchParams } = new URL(request.url)

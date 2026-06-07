@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser, assertCompanyAccess } from '@/lib/auth'
+import { resolveActor, assertCompanyAccess } from '@/lib/auth'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { updateSubtaskSchema } from '@/lib/validations/subtask'
 import { createAuditLog } from '@/lib/audit'
@@ -10,7 +10,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; subtaskId: string }> }
 ) {
   try {
-    const user = await getCurrentUser()
+    const user = await resolveActor(request)
     if (!user?.id) throw new ApiError('Nao autorizado', 401)
 
     const { id: demandaId, subtaskId } = await params
@@ -56,11 +56,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string; subtaskId: string }> }
 ) {
   try {
-    const user = await getCurrentUser()
+    const user = await resolveActor(request)
     if (!user?.id) throw new ApiError('Nao autorizado', 401)
 
     const { id: demandaId, subtaskId } = await params

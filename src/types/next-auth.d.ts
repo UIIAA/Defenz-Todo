@@ -7,7 +7,8 @@ import { JWT, DefaultJWT } from 'next-auth/jwt'
  * Estende os tipos padrão para incluir campos customizados:
  * - user.id: ID único do usuário no banco
  * - user.role: Papel do usuário no sistema (admin, user, gerencia)
- * - user.companyId/companyName: Empresa do usuário
+ * - user.companyId/companyName: Empresa PRIMÁRIA do usuário (branding/default)
+ * - user.companyIds: Empresas adicionais (multi-empresa via UserCompany)
  * - user.teamIds: IDs das equipes do usuário
  * - user.department: Departamento informativo
  */
@@ -17,6 +18,7 @@ declare module 'next-auth' {
     id: string
     role: string
     companyId?: string
+    companyIds?: string[]
     companyName?: string
     companyLogoUrl?: string
     companyAccentColor?: string
@@ -29,6 +31,7 @@ declare module 'next-auth' {
       id: string
       role: string
       companyId?: string
+      companyIds?: string[]
       companyName?: string
       companyLogoUrl?: string
       companyAccentColor?: string
@@ -46,6 +49,7 @@ declare module 'next-auth/jwt' {
     id: string
     role: string
     companyId?: string
+    companyIds?: string[]
     companyName?: string
     companyLogoUrl?: string
     companyAccentColor?: string

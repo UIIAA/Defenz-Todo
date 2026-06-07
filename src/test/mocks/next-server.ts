@@ -6,6 +6,7 @@ export function createRequest(
     body?: unknown
     searchParams?: Record<string, string>
     url?: string
+    headers?: Record<string, string>
   }
 ) {
   const baseUrl = options?.url || 'http://localhost:3000/api/test'
@@ -18,10 +19,15 @@ export function createRequest(
   }
 
   const init: RequestInit = { method }
+  const headers: Record<string, string> = { ...(options?.headers ?? {}) }
 
   if (options?.body) {
     init.body = JSON.stringify(options.body)
-    init.headers = { 'Content-Type': 'application/json' }
+    headers['Content-Type'] = 'application/json'
+  }
+
+  if (Object.keys(headers).length > 0) {
+    init.headers = headers
   }
 
   return new NextRequest(url, init)
