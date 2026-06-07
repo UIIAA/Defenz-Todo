@@ -5,10 +5,11 @@
 **Branch:** main
 
 ## Current focus
-Phase 2 (FK migration) com código completo, migration SQL e backfill prontos. **Pendente:** aplicar migration + rodar backfill em staging/prod (não automatizado neste PR — requer DIRECT_URL e revisão de unresolved log).
+Time-tracking + dependências entre demandas **shipados** (push c502ebf, deploy Vercel). Banco Neon é único dev/prod (ADR-008) → schema já aplicado em prod via db push.
+**Próximo rumo (a brainstormar):** permitir alimentar o Kanban Defenz de fora — via conversa com o Claude (chat) e/ou por outro projeto/automação. Rascunho em `docs/features/feature-external-kanban-feed.md`. Blocker principal: API só aceita sessão NextAuth (sem token de serviço para chamadas máquina-a-máquina).
 
 ## In progress
-- feature-assignee-fk-migration — aguardando deploy ordenado: `prisma migrate deploy` → `tsx scripts/backfill-assignee.ts` → review `unresolved_assignees.log` → deploy do código
+- (nada em código) — feature-assignee-fk-migration continua aguardando deploy ordenado: `prisma migrate deploy` → `tsx scripts/backfill-assignee.ts` → review `unresolved_assignees.log` → deploy do código
 
 ## Recently completed (last 5)
 - 2026-06-03 feature-demanda-dependencies — edição de dependências de Demanda (combobox no modal) + guardas self/ciclo/inválido (detectCycle em src/lib/dependency-graph.ts) + deps clicáveis (card e modal abrem a tarefa da dependência). Módulo `activities` órfão removido. Validado em localhost. 407 testes.
@@ -21,6 +22,7 @@ Phase 2 (FK migration) com código completo, migration SQL e backfill prontos. *
 - 2026-04-05 feature-executive-report — relatório executivo com slides via Gemini (1c3787c)
 
 ## Next up (priority order)
+0. **Alimentar o Kanban de fora (chat/projeto externo)** — ver `docs/features/feature-external-kanban-feed.md`. Decidir: (a) auth de serviço (token + escopo company/team), (b) entrega via curl na API atual ou via MCP server Defenz. Brainstorm no início da próxima sessão.
 1. **Deploy ordenado da Phase 2** (manual, requer DIRECT_URL):
    1. `npx prisma migrate deploy` em staging
    2. `npx tsx scripts/backfill-assignee.ts` em staging
