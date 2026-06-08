@@ -226,6 +226,10 @@ export default function DemandasAnalisesPage() {
 
   const hasFilters = filterAssignee !== 'all' || filterOrigin !== 'all' || filterPriority !== 'all' || filterClassification !== 'all' || filterCompany !== 'all' || filterTeam !== 'all'
 
+  // Acesso restrito a admin/gerência (espelha Relatório e Horas) — evita flash de render
+  // para usuário comum antes do redirect do useEffect acima.
+  if (session && !isAdminOrGerencia) return null
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
