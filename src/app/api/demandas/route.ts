@@ -12,8 +12,9 @@ import { createDemandaSchema, updateDemandaSchema } from '@/lib/validations/dema
 import { createAuditLog, diffChanges } from '@/lib/audit'
 import { parseLocalDate } from '@/lib/date'
 import { detectCycle } from '@/lib/dependency-graph'
+import { logTimeDelta } from '@/lib/time-entries-server'
 
-const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'assignee', 'deadline', 'dateDone', 'dateStarted', 'reminderDate', 'estimatedMinutes', 'spentMinutes']
+const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'client', 'assignee', 'deadline', 'dateDone', 'dateStarted', 'reminderDate', 'estimatedMinutes', 'spentMinutes']
 
 export async function GET(request: NextRequest) {
   try {
@@ -148,6 +149,7 @@ export async function POST(request: NextRequest) {
         status: data.status,
         priority: data.priority,
         classification: data.classification || null,
+        client: data.client || null,
         assignee: resolvedAssignee,
         assignedToId: resolvedAssignedToId,
         dateIn: parseLocalDate(data.dateIn) ?? new Date(),
@@ -318,6 +320,7 @@ export async function PUT(request: NextRequest) {
         ...(data.status !== undefined && { status: data.status }),
         ...(data.priority !== undefined && { priority: data.priority }),
         ...(data.classification !== undefined && { classification: data.classification || null }),
+        ...(data.client !== undefined && { client: data.client || null }),
         ...(assigneeUpdate ?? (data.assignee !== undefined ? { assignee: data.assignee || null } : {})),
         ...(data.dateIn !== undefined && parseLocalDate(data.dateIn) && { dateIn: parseLocalDate(data.dateIn)! }),
         ...(data.deadline !== undefined && { deadline: parseLocalDate(data.deadline) }),
@@ -349,6 +352,22 @@ export async function PUT(request: NextRequest) {
         userId: user.id,
         userEmail: user.email || '',
         changes,
+      })
+    }
+
+    // Diário de horas (delta-on-save): grava 1 lançamento quando spentMinutes do CARD muda.
+    // Livre edição preservada — não recomputa nem trava. Atribuído ao Responsável (fallback editor).
+    if (data.spentMinutes !== undefined && data.spentMinutes !== current.spentMinutes) {
+      await logTimeDelta({
+        demanda: {
+          id: demanda.id,
+          assignedToId: demanda.assignedToId,
+          assignee: demanda.assignee,
+          client: demanda.client,
+        },
+        delta: data.spentMinutes - current.spentMinutes,
+        source: 'card',
+        actor: { id: user.id, name: user.name, email: user.email },
       })
     }
 

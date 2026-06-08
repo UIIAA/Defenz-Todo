@@ -71,6 +71,24 @@ export const mockDb = {
     deleteMany: vi.fn(),
     delete: vi.fn(),
   },
+  subtask: {
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+  timeEntry: {
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    createMany: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
 }
 
 vi.mock('@/lib/db', () => ({

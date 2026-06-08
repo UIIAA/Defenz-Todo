@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users, UsersRound, Home } from 'lucide-react'
+import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users, UsersRound, Home, Clock } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { DefenzLogoIcon } from '@/components/defenz-logo'
 import { UserAvatar } from '@/components/user-avatar'
@@ -197,6 +197,10 @@ export default function DashboardLayout({
                         <a href="/dashboard/demandas/relatorio" className={navItemClass('/dashboard/demandas/relatorio')}>
                           <FileText className="h-4 w-4" />
                           <span>Relatorio</span>
+                        </a>
+                        <a href="/dashboard/demandas/horas" className={navItemClass('/dashboard/demandas/horas')}>
+                          <Clock className="h-4 w-4" />
+                          <span>Horas</span>
                         </a>
                       </>
                     )}

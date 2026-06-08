@@ -114,6 +114,7 @@ model User {
   inviteTokens            InviteToken[]
   userCompanies           UserCompany[]            // empresas adicionais (multi-empresa)
   apiTokens               ApiToken[]               // tokens de serviço (Bearer) deste usuario
+  timeEntries             TimeEntry[]              // diário de horas (delta-on-save)
 
   @@index([email])
   @@index([companyId])
@@ -794,6 +795,7 @@ model Demanda {
   version     Int       @default(1) // Optimistic locking
 
   classification String?   // marketing, administrativo, vendas, financeiro, operacional, tecnologia, juridico, rh, estrategico
+  client         String?   // Cliente atendido (texto livre) — eixo do relatório de horas; ≠ Empresa-tenant. Ver feature-time-entries.
 
   reminderDate  DateTime?            // Data do lembrete
   reminderSent  Boolean   @default(false) // Ja enviou email de lembrete?
@@ -806,6 +808,7 @@ model Demanda {
   team      Team?    @relation(fields: [teamId], references: [id])
   subtasks  Subtask[]
   links     DemandaLink[]
+  timeEntries TimeEntry[]
   dependsOn String    @default("[]") // JSON array de IDs de Demanda que esta depende
 
   estimatedMinutes Int?           // Horas estimadas (opcional), armazenadas em minutos
@@ -905,4 +908,35 @@ model ApiToken {
   @@index([userId])
   @@index([tokenHash])
   @@map("api_tokens")
+}
+
+// ============================================================
+// TIME ENTRIES (Diário de horas — delta-on-save)
+// ============================================================
+
+// Diário DERIVADO/aditivo de horas. NÃO é a fonte da verdade: `spentMinutes` do card e
+// da subtarefa continuam de livre edição e autoritativos. Cada linha é 1 delta gravado
+// no Salvar (novo − antigo), atribuído ao Responsável do card (fallback: editor), com
+// snapshot de cliente + nome. Append-only, sem CRUD manual. Ver feature-time-entries.
+model TimeEntry {
+  id          String   @id @default(cuid())
+  demandaId   String
+  demanda     Demanda  @relation(fields: [demandaId], references: [id], onDelete: Cascade)
+  userId      String?  // Responsável do card (quem atuou); null se o usuário for removido
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName    String   // Snapshot do nome (resiliente a exclusão de usuário)
+  minutes     Int      // Delta em minutos (pode ser negativo numa correção)
+  client      String?  // Snapshot do cliente atendido no momento do Salvar
+  source      String   // "card" | "subtask" | "seed"
+  // Rastreio da subtarefa (quando source="subtask"). SEM FK de propósito: é um traço
+  // write-once — a exclusão da subtarefa grava um delta negativo e o histórico deve
+  // sobreviver (não cascatear/anular). Ver feature-time-entries.
+  subtaskId   String?
+  createdById String?  // Editor que salvou (ator), p/ auditoria
+  createdAt   DateTime @default(now())
+
+  @@index([demandaId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("time_entries")
 }

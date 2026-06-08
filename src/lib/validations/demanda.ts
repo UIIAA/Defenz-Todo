@@ -7,6 +7,7 @@ export const createDemandaSchema = z.object({
   status: z.enum(['solicitada', 'selecionada', 'em_andamento', 'concluida', 'bloqueada']).default('solicitada'),
   priority: z.enum(['alta', 'media', 'baixa']).default('media'),
   classification: z.enum(['marketing', 'administrativo', 'vendas', 'financeiro', 'operacional', 'tecnologia', 'juridico', 'rh', 'estrategico']).nullable().optional(),
+  client: z.string().nullable().optional(),
   assignee: z.string().nullable().optional(),
   assignedToId: z.string().min(1).nullable().optional(),
   dateIn: z.string().optional(),

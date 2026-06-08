@@ -80,6 +80,7 @@ export interface Demanda {
   status: string
   priority: string
   classification: string | null
+  client?: string | null
   assignee: string | null
   assignedToId: string | null
   previousStatus?: string | null
@@ -182,6 +183,7 @@ export const emptyForm = (): DemandaForm => ({
   status: 'solicitada',
   priority: 'media',
   classification: null,
+  client: null,
   assignee: null,
   assignedToId: null,
   previousStatus: null,

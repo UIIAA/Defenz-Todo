@@ -1,7 +1,15 @@
 # Feature: Diário de horas automático (delta-on-save) + campo Cliente + aba "Horas"
-**Status:** Draft
+**Status:** Done (código + gate verde; **pendente** `db push` + backfill + validação UI — requer autorização p/ tocar o Neon)
 **Priority:** P1
 **Date:** 2026-06-07
+
+> **Implementado em 2026-06-08.** Todos os critérios de aceite cobertos em código + 31 testes
+> novos (523 total), `tsc`+`build` verdes. Revisão adversarial multi-agente (2 rodadas) → achados
+> corrigidos (TZ SP no filtro de período, seed auto-corretivo/order-independent, snapshot do
+> Responsável sem nome do editor, cobertura de tenant-scope/edge). **Não deployado.** Antes do
+> deploy: `npx prisma db push` (aditivo: coluna `client` + tabela `time_entries`), depois
+> `npx tsx scripts/backfill-time-entries.ts` (rodar ANTES de edições pós-deploy ou confiar no
+> baseline auto-corretivo do seed), então validar a aba `/dashboard/demandas/horas` autenticado.
 
 > Evolui [[feature-time-tracking]] (que introduziu o `spentMinutes` de livre edição). Aprovado via
 > brainstorming (**Desenho B**): as horas continuam de **livre edição** (modal inalterado); o diário

@@ -89,6 +89,7 @@ export function DemandaModal({
         status: demanda.status,
         priority: demanda.priority,
         classification: demanda.classification || null,
+        client: demanda.client || '',
         assignee: demanda.assignee || '',
         assignedToId: demanda.assignedToId || null,
         dateIn: toDateStr(demanda.dateIn),
@@ -364,6 +365,18 @@ export function DemandaModal({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Cliente <span className="normal-case text-slate-300 dark:text-slate-500">(atendido)</span>
+            </label>
+            <Input
+              value={form.client || ''}
+              onChange={(e) => upd('client', e.target.value)}
+              placeholder="Ex: Acme Corp"
+              className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100 placeholder:text-slate-500"
+            />
           </div>
 
           <div>

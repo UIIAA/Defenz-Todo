@@ -4,6 +4,7 @@ import { resolveActor, assertCompanyAccess } from '@/lib/auth'
 import { handleApiError, createdResponse, ApiError } from '@/lib/api-helpers'
 import { createSubtaskSchema } from '@/lib/validations/subtask'
 import { createAuditLog } from '@/lib/audit'
+import { logTimeDelta } from '@/lib/time-entries-server'
 
 export async function POST(
   request: NextRequest,
@@ -48,6 +49,22 @@ export async function POST(
       userEmail: user.email || '',
       changes: { title: { from: null, to: subtask.title }, demandaId: { from: null, to: demandaId } },
     })
+
+    // Diário de horas: subtarefa criada com horas → delta positivo (atribuído ao Responsável do card pai)
+    if ((subtask.spentMinutes ?? 0) !== 0) {
+      await logTimeDelta({
+        demanda: {
+          id: demandaId,
+          assignedToId: demanda.assignedToId,
+          assignee: demanda.assignee,
+          client: demanda.client,
+        },
+        delta: subtask.spentMinutes ?? 0,
+        source: 'subtask',
+        subtaskId: subtask.id,
+        actor: { id: user.id, name: user.name, email: user.email },
+      })
+    }
 
     return createdResponse(subtask, 'Subtask criada')
   } catch (error) {

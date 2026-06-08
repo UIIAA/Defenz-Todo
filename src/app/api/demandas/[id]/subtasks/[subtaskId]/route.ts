@@ -4,6 +4,12 @@ import { resolveActor, assertCompanyAccess } from '@/lib/auth'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { updateSubtaskSchema } from '@/lib/validations/subtask'
 import { createAuditLog } from '@/lib/audit'
+import { logTimeDelta } from '@/lib/time-entries-server'
+
+// Campos do card pai necessários para atribuir o lançamento do diário de horas.
+// NB: o findFirst da subtarefa NÃO usa `select` próprio de propósito — assim todos os
+// escalares da subtarefa (inclusive `spentMinutes`, usado p/ calcular o delta) são carregados.
+const PARENT_TIME_SELECT = { companyId: true, assignedToId: true, assignee: true, client: true } as const
 
 export async function PUT(
   request: NextRequest,
@@ -17,7 +23,7 @@ export async function PUT(
 
     const existing = await db.subtask.findFirst({
       where: { id: subtaskId, demandaId },
-      include: { demanda: { select: { companyId: true } } },
+      include: { demanda: { select: PARENT_TIME_SELECT } },
     })
     if (!existing) throw new ApiError('Subtask nao encontrada', 404)
 
@@ -49,6 +55,22 @@ export async function PUT(
       },
     })
 
+    // Diário de horas: delta do spentMinutes da subtarefa (atribuído ao Responsável do card pai)
+    if (data.spentMinutes !== undefined && data.spentMinutes !== existing.spentMinutes) {
+      await logTimeDelta({
+        demanda: {
+          id: demandaId,
+          assignedToId: existing.demanda.assignedToId,
+          assignee: existing.demanda.assignee,
+          client: existing.demanda.client,
+        },
+        delta: data.spentMinutes - existing.spentMinutes,
+        source: 'subtask',
+        subtaskId,
+        actor: { id: user.id, name: user.name, email: user.email },
+      })
+    }
+
     return successResponse(subtask, 'Subtask atualizada')
   } catch (error) {
     return handleApiError(error)
@@ -67,13 +89,29 @@ export async function DELETE(
 
     const existing = await db.subtask.findFirst({
       where: { id: subtaskId, demandaId },
-      include: { demanda: { select: { companyId: true } } },
+      include: { demanda: { select: PARENT_TIME_SELECT } },
     })
     if (!existing) throw new ApiError('Subtask nao encontrada', 404)
 
     assertCompanyAccess(existing.demanda.companyId, user)
 
     await db.subtask.delete({ where: { id: subtaskId } })
+
+    // Diário de horas: subtarefa excluída com horas → delta negativo (o total do card fecha)
+    if ((existing.spentMinutes ?? 0) !== 0) {
+      await logTimeDelta({
+        demanda: {
+          id: demandaId,
+          assignedToId: existing.demanda.assignedToId,
+          assignee: existing.demanda.assignee,
+          client: existing.demanda.client,
+        },
+        delta: -(existing.spentMinutes ?? 0),
+        source: 'subtask',
+        subtaskId,
+        actor: { id: user.id, name: user.name, email: user.email },
+      })
+    }
 
     await createAuditLog({
       action: 'DELETE',
