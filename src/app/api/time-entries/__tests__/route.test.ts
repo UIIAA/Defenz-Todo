@@ -71,6 +71,28 @@ describe('GET /api/time-entries', () => {
     expect(where.demanda).toEqual({ is: { companyId: 'company-defenz', teamId: 'team-de-outra-empresa' } })
   })
 
+  it('admin: filtra por empresa (companyId estreita livremente)', async () => {
+    mockAuthenticated() // admin
+    await GET(get({ companyId: 'company-2' }))
+    const where = mockDb.timeEntry.findMany.mock.calls[0][0].where
+    expect(where.demanda).toEqual({ is: { companyId: 'company-2' } })
+  })
+
+  it('gerência: companyId DENTRO do conjunto estreita o escopo', async () => {
+    mockAuthenticated({ role: 'gerencia', companyId: 'company-defenz', companyIds: ['company-2'] })
+    await GET(get({ companyId: 'company-2' }))
+    const where = mockDb.timeEntry.findMany.mock.calls[0][0].where
+    expect(where.demanda).toEqual({ is: { companyId: 'company-2' } })
+  })
+
+  it('gerência: companyId FORA do conjunto é IGNORADO (não escapa o escopo)', async () => {
+    mockAuthenticated({ role: 'gerencia', companyId: 'company-defenz', companyIds: ['company-2'] })
+    await GET(get({ companyId: 'company-de-outra-empresa' }))
+    const where = mockDb.timeEntry.findMany.mock.calls[0][0].where
+    // mantém o conjunto acessível, sem aplicar o companyId estranho
+    expect(where.demanda).toEqual({ is: { companyId: { in: ['company-defenz', 'company-2'] } } })
+  })
+
   it('cliente "__none__" filtra lançamentos sem cliente', async () => {
     mockAuthenticated()
     await GET(get({ client: '__none__' }))

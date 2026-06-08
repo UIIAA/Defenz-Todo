@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { resolveActor, isAdmin, companyScopeWhere } from '@/lib/auth'
+import { resolveActor, isAdmin, companyScopeWhere, accessibleCompanyIds } from '@/lib/auth'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 
 // Leitura do diário de horas (aba "Horas"). Read-only, sem CRUD manual.
@@ -33,11 +33,23 @@ export async function GET(request: NextRequest) {
     const from = params.get('from')
     const to = params.get('to')
     const clientFilter = params.get('client')
+    const companyFilter = params.get('companyId')
     const teamFilter = params.get('teamId')
     const userFilter = params.get('userId')
 
     // Escopo via a demanda relacionada (admin → {} = vê tudo; demais → conjunto de empresas).
     const demandaWhere: Record<string, unknown> = isAdmin(user) ? {} : { ...companyScopeWhere(user) }
+
+    // Filtro por empresa: admin estreita livremente; gerência só DENTRO do seu conjunto
+    // (companyId fora do conjunto é IGNORADO — nunca escapa o escopo).
+    if (companyFilter && companyFilter !== 'all') {
+      if (isAdmin(user)) {
+        demandaWhere.companyId = companyFilter
+      } else {
+        const ids = accessibleCompanyIds(user) ?? []
+        if (ids.includes(companyFilter)) demandaWhere.companyId = companyFilter
+      }
+    }
     if (teamFilter && teamFilter !== 'all') {
       demandaWhere.teamId = teamFilter
     }

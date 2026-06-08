@@ -17,6 +17,7 @@ import { groupBy, sumMinutes } from '@/lib/time-entries'
 import { minutesToHoursLabel } from '@/lib/duration'
 import { CLASSIFICATIONS } from '../helpers'
 import { getWeekRange, getMonthRange } from '@/lib/date'
+import { CompanySelector } from '@/components/company-selector'
 
 interface TimeEntry {
   id: string
@@ -55,6 +56,7 @@ export default function DemandasHorasPage() {
   const router = useRouter()
 
   const userRole = session?.user?.role || ''
+  const isAdmin = userRole === 'admin'
   const isAdminOrGerencia = userRole === 'admin' || userRole === 'gerencia'
 
   const [entries, setEntries] = useState<TimeEntry[]>([])
@@ -66,6 +68,7 @@ export default function DemandasHorasPage() {
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
   const [groupKey, setGroupKey] = useState<GroupKey>('client')
+  const [filterCompany, setFilterCompany] = useState('all')
   const [filterClient, setFilterClient] = useState('all')
   const [filterUser, setFilterUser] = useState('all')
   const [filterTeam, setFilterTeam] = useState('all')
@@ -103,6 +106,7 @@ export default function DemandasHorasPage() {
     const params = new URLSearchParams()
     if (from) params.set('from', from)
     if (to) params.set('to', to)
+    if (isAdmin && filterCompany !== 'all') params.set('companyId', filterCompany)
 
     setLoading(true)
     fetch(`/api/time-entries${params.toString() ? `?${params}` : ''}`)
@@ -115,7 +119,7 @@ export default function DemandasHorasPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [period, customFrom, customTo])
+  }, [period, customFrom, customTo, isAdmin, filterCompany])
 
   // Opções de filtro derivadas dos lançamentos carregados
   const clientOptions = useMemo(
@@ -192,6 +196,17 @@ export default function DemandasHorasPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {isAdmin && (
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Empresa</label>
+              <div className="mt-1">
+                <CompanySelector
+                  value={filterCompany}
+                  onChange={(v) => { setFilterCompany(v); setFilterTeam('all') }}
+                />
+              </div>
+            </div>
+          )}
           <div>
             <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Periodo</label>
             <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
