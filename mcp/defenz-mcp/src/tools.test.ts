@@ -84,6 +84,26 @@ describe('create_demanda handler', () => {
     expect(sc(res).id).toBe('c1')
     expect(res.content[0].text).toContain('Nova')
   })
+
+  it('resolve `company` (nome) para companyId antes de criar', async () => {
+    const client = fakeClient()
+    const h = buildHandlers(client as any)
+
+    await h.create_demanda({ title: 'X', company: 'Grafono' })
+
+    expect(client.create).toHaveBeenCalledWith({ title: 'X', companyId: 'cmnuwl2yg0002l7046rwhmxu9' })
+  })
+
+  it('empresa desconhecida retorna erro e NÃO chama a API', async () => {
+    const client = fakeClient()
+    const h = buildHandlers(client as any)
+
+    const res = await h.create_demanda({ title: 'X', company: 'Inexistente' })
+
+    expect(res.isError).toBe(true)
+    expect(client.create).not.toHaveBeenCalled()
+    expect(res.content[0].text).toMatch(/desconhecida/i)
+  })
 })
 
 describe('update_demanda handler', () => {
@@ -97,6 +117,15 @@ describe('update_demanda handler', () => {
 
     expect(client.update).toHaveBeenCalledWith({ id: 'u1', status: 'concluida' })
     expect(sc(res).id).toBe('u1')
+  })
+
+  it('resolve `company` para companyId (mover card entre projetos)', async () => {
+    const client = fakeClient()
+    const h = buildHandlers(client as any)
+
+    await h.update_demanda({ id: 'd1', company: 'Cow Cycling' })
+
+    expect(client.update).toHaveBeenCalledWith({ id: 'd1', companyId: 'cmnd3a1yr000q3oq80irkal13' })
   })
 })
 

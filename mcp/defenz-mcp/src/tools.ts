@@ -6,6 +6,20 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { DefenzApiError, type DefenzClient, type Demanda } from './client.js'
 import { resolveStatus, STATUSES, COLUMN_HELP } from './status.js'
+import { resolveCompanyId, COMPANY_HELP } from './companies.js'
+
+/**
+ * Resolve o parâmetro humano `company` (nome do projeto) para `companyId` e o remove
+ * do payload. Se `companyId` cru já veio, prevalece. Pode lançar (empresa desconhecida) —
+ * o handler captura e devolve erro acionável sem chamar a API.
+ */
+function withCompany(input: Record<string, unknown>): Record<string, unknown> {
+  const { company, ...rest } = input
+  if (!rest.companyId && typeof company === 'string' && company.trim()) {
+    rest.companyId = resolveCompanyId(company)
+  }
+  return rest
+}
 
 const CHARACTER_LIMIT = 25000
 
@@ -110,7 +124,7 @@ export function buildHandlers(client: DefenzClient): Handlers {
 
     async create_demanda(input) {
       try {
-        const created = await client.create(input)
+        const created = await client.create(withCompany(input))
         return ok(
           `Demanda criada: "${created.title}" (id ${created.id}, status ${created.status}).`,
           created as Record<string, unknown>
@@ -122,7 +136,7 @@ export function buildHandlers(client: DefenzClient): Handlers {
 
     async update_demanda(input) {
       try {
-        const updated = await client.update(input)
+        const updated = await client.update(withCompany(input) as { id: string } & Record<string, unknown>)
         return ok(
           `Demanda ${updated.id} atualizada (status ${updated.status}).`,
           updated as Record<string, unknown>
@@ -182,6 +196,11 @@ const ListInput = {
 
 const CreateInput = {
   title: z.string().min(1).describe('Título da demanda (obrigatório).'),
+  company: z
+    .string()
+    .optional()
+    .describe(`Empresa/projeto destino (admin). Nome humano: ${COMPANY_HELP}. Omita para usar a empresa primária do token.`),
+  companyId: z.string().optional().describe('companyId cru (cuid), alternativa a `company` para empresas fora do mapa.'),
   description: z.string().optional().describe('Descrição/detalhes (markdown aceito).'),
   status: z.enum(STATUSES).optional().describe(`Coluna inicial (${COLUMN_HELP}). Default: solicitada.`),
   priority: priorityEnum.optional().describe('Prioridade. Default: media.'),
@@ -193,6 +212,11 @@ const CreateInput = {
 
 const UpdateInput = {
   id: z.string().min(1).describe('ID da demanda a atualizar (obrigatório).'),
+  company: z
+    .string()
+    .optional()
+    .describe(`Move o card para outra empresa/projeto (admin). Nome humano: ${COMPANY_HELP}. Requer o fix de movimentação deployado.`),
+  companyId: z.string().optional().describe('companyId cru (cuid), alternativa a `company`.'),
   title: z.string().min(1).optional(),
   description: z.string().optional(),
   status: z.enum(STATUSES).optional().describe(`Novo status (${COLUMN_HELP}).`),
@@ -236,9 +260,10 @@ export function registerTools(server: McpServer, client: DefenzClient): void {
     {
       title: 'Criar demanda (Defenz)',
       description:
-        'Cria uma nova demanda (card) no Kanban Defenz. A empresa/equipe é resolvida pelo token — ' +
-        'não envie companyId. Campos: title (obrigatório), description, status, priority, classification, ' +
-        'assignee, deadline (YYYY-MM-DD), dependsOn.',
+        'Cria uma nova demanda (card) no Kanban Defenz. Use `company` (nome do projeto, ex.: "Grafono") ' +
+        'para escolher a empresa destino; admin pode qualquer empresa, demais só o próprio escopo. Omitir ' +
+        'company cria na empresa primária do token. Campos: title (obrigatório), company, description, ' +
+        'status, priority, classification, assignee, deadline (YYYY-MM-DD), dependsOn.',
       inputSchema: CreateInput,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     },
