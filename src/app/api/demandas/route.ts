@@ -219,6 +219,15 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Mover de empresa (companyId): admin livre; não-admin só dentro do conjunto (403, via
+    // assertCompanyAccess). Trocar de empresa LIMPA teamId — equipe pertence a uma empresa,
+    // manter a equipe antiga criaria vínculo cross-tenant. Responsável (assignedToId) é mantido.
+    let companyUpdate: { companyId: string; teamId: null } | null = null
+    if (data.companyId !== undefined && data.companyId !== current.companyId) {
+      assertCompanyAccess(data.companyId, user)
+      companyUpdate = { companyId: data.companyId, teamId: null }
+    }
+
     // Phase 2: resolver assignedToId no PUT também (se enviado)
     let assigneeUpdate: { assignedToId: string | null; assignee: string | null } | null = null
     if (data.assignedToId !== undefined) {
@@ -332,17 +341,24 @@ export async function PUT(request: NextRequest) {
         ...(data.estimatedMinutes !== undefined && { estimatedMinutes: data.estimatedMinutes }),
         ...(data.spentMinutes !== undefined && { spentMinutes: data.spentMinutes }),
         ...(dependsOnUpdate ?? {}),
+        ...(companyUpdate ?? {}),
         ...previousStatusUpdate,
         ...lifecycleUpdate,
         version: { increment: 1 },
       },
     })
 
-    const changes = diffChanges(
+    let changes = diffChanges(
       current as unknown as Record<string, unknown>,
       data as unknown as Record<string, unknown>,
       TRACKED_FIELDS
     )
+
+    // Movimentação de empresa: logada explicitamente (não via TRACKED_FIELDS, que diffa o
+    // body parcial e geraria falso-positivo quando callers omitem companyId).
+    if (companyUpdate) {
+      changes = { ...(changes ?? {}), companyId: { from: current.companyId, to: companyUpdate.companyId } }
+    }
 
     if (changes) {
       await createAuditLog({

@@ -113,6 +113,40 @@ describe('PUT multi-empresa', () => {
   })
 })
 
+// ==================== PUT — mover de empresa (companyId) ====================
+
+describe('PUT — mover de empresa', () => {
+  it('admin move demanda para outra empresa: seta companyId e limpa teamId', async () => {
+    mockAuthenticated({ role: 'admin' })
+    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, companyId: 'c1', teamId: 't1', updatedAt: new Date() })
+    mockDb.demanda.update.mockResolvedValue({ ...savedDemanda, companyId: 'c2' })
+    const res = await PUT(createRequest('PUT', { url: URL, body: { id: 'd', companyId: 'c2' } }))
+    expect(res.status).toBe(200)
+    const data = mockDb.demanda.update.mock.calls[0][0].data
+    expect(data.companyId).toBe('c2')
+    expect(data.teamId).toBeNull()
+  })
+
+  it('gerencia NÃO move demanda para empresa fora do conjunto (403)', async () => {
+    mockAuthenticated({ id: 'u', role: 'gerencia', companyId: 'c1', companyIds: ['c2'] })
+    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, companyId: 'c2', updatedAt: new Date() })
+    const res = await PUT(createRequest('PUT', { url: URL, body: { id: 'd', companyId: 'c3' } }))
+    expect(res.status).toBe(403)
+    expect(mockDb.demanda.update).not.toHaveBeenCalled()
+  })
+
+  it('PUT que não troca empresa não mexe em companyId/teamId', async () => {
+    mockAuthenticated({ role: 'admin' })
+    mockDb.demanda.findUnique.mockResolvedValue({ ...savedDemanda, companyId: 'c1', teamId: 't1', updatedAt: new Date() })
+    mockDb.demanda.update.mockResolvedValue({ ...savedDemanda })
+    const res = await PUT(createRequest('PUT', { url: URL, body: { id: 'd', priority: 'alta' } }))
+    expect(res.status).toBe(200)
+    const data = mockDb.demanda.update.mock.calls[0][0].data
+    expect(data.companyId).toBeUndefined()
+    expect(data.teamId).toBeUndefined()
+  })
+})
+
 // ==================== lifecycle: dateDone ao concluir (server-side) ====================
 
 describe('PUT — server seta dateDone ao concluir (para callers externos: MCP/curl)', () => {

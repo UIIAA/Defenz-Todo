@@ -412,7 +412,7 @@ export default function DemandasPage() {
             />
           </CardContent>
         </Card>
-        <DemandaModal demanda={editingDemanda} open={modalOpen} onOpenChange={(open) => { setModalOpen(open); if (!open) setEditingDemanda(null) }} onSave={handleSave} onDelete={handleDelete} onSubtaskChange={fetchDemandas} />
+        <DemandaModal demanda={editingDemanda} open={modalOpen} onOpenChange={(open) => { setModalOpen(open); if (!open) setEditingDemanda(null) }} onSave={handleSave} onDelete={handleDelete} onSubtaskChange={fetchDemandas} defaultCompanyId={isAdmin && filterCompany !== 'all' ? filterCompany : undefined} />
         <ImportModal open={importModalOpen} onOpenChange={setImportModalOpen} onImported={fetchDemandas} />
       </div>
     )
@@ -769,6 +769,7 @@ export default function DemandasPage() {
         onDelete={handleDelete}
         onSubtaskChange={fetchDemandas}
         onNavigate={openDemandaById}
+        defaultCompanyId={isAdmin && filterCompany !== 'all' ? filterCompany : undefined}
       />
 
       <ImportModal

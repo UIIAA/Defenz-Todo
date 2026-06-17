@@ -1,10 +1,13 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-06-08
+**Last updated:** 2026-06-17
 **Version:** 0.2.0
 **Branch:** main
 
 ## Current focus
+**`feature-demanda-company-selector`** — admin escolhe a empresa/projeto na criação e move cards entre projetos pelo modal. Resolve o bug "tudo cai em Defenz" (UI nunca enviava `companyId`). Backend do PUT (move) + UI + MCP estendido. 531 testes app + 39 MCP, `tsc`+`build` verdes. **MCP `defenz` plugado no Claude Code** (token `marcos-mcp` persistente; tools `create_demanda`/`update_demanda` ganharam `company` nome→id). Card "Habilitação para Tráfego e AdOps" alimentado em Defenz via API (11 subtarefas, 10h). Em deploy.
+
+### Histórico anterior
 **`feature-time-entries` (Desenho B) DEPLOYADA em prod (commit `8d22216`).** O push também levou as **Fases B+D** (commit `1fb3fcf`, MCP + multi-empresa) que estavam pendentes.
 
 - **feature-time-entries DONE + DEPLOYADO:** diário de horas delta-on-save + campo `Demanda.client` + aba `/dashboard/demandas/horas`. 31 testes novos (**523 total**), `tsc`+`build` verdes. Revisão adversarial multi-agente (2 rodadas) → achados corrigidos. **Deploy:** `prisma db push` no Neon (coluna `client` + tabela `time_entries`); backfill rodado (5 baseline); E2E autenticado em dev (GET admin → 200 c/ 5 lançamentos); push → Vercel (prod live). Ver [feature-time-entries.md](features/feature-time-entries.md).

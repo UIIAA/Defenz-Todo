@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -45,6 +46,7 @@ export function DemandaModal({
   onDelete,
   onSubtaskChange,
   onNavigate,
+  defaultCompanyId,
 }: {
   demanda: Demanda | null
   open: boolean
@@ -53,9 +55,14 @@ export function DemandaModal({
   onDelete: (id: string) => void
   onSubtaskChange?: () => void
   onNavigate?: (id: string) => void
+  defaultCompanyId?: string
 }) {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'admin'
+  const primaryCompanyId = (session?.user as { companyId?: string } | undefined)?.companyId
   const [form, setForm] = useState<DemandaForm>(emptyForm())
   const [modalUsers, setModalUsers] = useState<{ id: string; name: string | null; email: string }[]>([])
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([])
   const [subtasks, setSubtasks] = useState<Subtask[]>([])
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
   const [links, setLinks] = useState<DemandaLink[]>([])
@@ -79,6 +86,16 @@ export function DemandaModal({
     }
   }, [open])
 
+  // Empresas: só admin escolhe a empresa/projeto do card (espelha o CompanySelector do board)
+  useEffect(() => {
+    if (open && isAdmin) {
+      fetch('/api/companies')
+        .then((r) => r.json())
+        .then((d) => { if (d.success) setCompanies(d.data) })
+        .catch(() => {})
+    }
+  }, [open, isAdmin])
+
   useEffect(() => {
     if (demanda) {
       setForm({
@@ -90,6 +107,7 @@ export function DemandaModal({
         priority: demanda.priority,
         classification: demanda.classification || null,
         client: demanda.client || '',
+        companyId: demanda.companyId ?? null,
         assignee: demanda.assignee || '',
         assignedToId: demanda.assignedToId || null,
         dateIn: toDateStr(demanda.dateIn),
@@ -109,7 +127,7 @@ export function DemandaModal({
       setEstHoursStr(minutesToHoursInput(demanda.estimatedMinutes))
       setSubtaskHours(Object.fromEntries(sub.map((s) => [s.id, minutesToHoursInput(s.spentMinutes)])))
     } else {
-      setForm(emptyForm())
+      setForm({ ...emptyForm(), companyId: defaultCompanyId ?? primaryCompanyId ?? null })
       setSubtasks([])
       setLinks([])
       setSpentHoursStr('')
@@ -294,6 +312,29 @@ export function DemandaModal({
         </DialogHeader>
 
         <div className="space-y-4">
+          {isAdmin && companies.length > 1 && (
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Empresa / Projeto
+              </label>
+              <Select value={form.companyId || ''} onValueChange={(v) => upd('companyId', v)}>
+                <SelectTrigger className="mt-1 bg-white/80 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-700/30 text-slate-800 dark:text-slate-100">
+                  <SelectValue placeholder="Selecione a empresa" />
+                </SelectTrigger>
+                <SelectContent className="bg-white/90 dark:bg-slate-800/80 backdrop-blur-xl border-white/50 dark:border-slate-700/30">
+                  {companies.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="text-slate-800 dark:text-slate-200">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full shrink-0 bg-indigo-500" />
+                        {c.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Titulo
