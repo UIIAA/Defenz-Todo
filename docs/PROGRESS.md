@@ -1,11 +1,16 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-06-17
+**Last updated:** 2026-06-24
 **Version:** 0.2.0
 **Branch:** main
 
 ## Current focus
-**`feature-demanda-company-selector`** — admin escolhe a empresa/projeto na criação e move cards entre projetos pelo modal. Resolve o bug "tudo cai em Defenz" (UI nunca enviava `companyId`). Backend do PUT (move) + UI + MCP estendido. 531 testes app + 39 MCP, `tsc`+`build` verdes. **MCP `defenz` plugado no Claude Code** (token `marcos-mcp` persistente; tools `create_demanda`/`update_demanda` ganharam `company` nome→id). Card "Habilitação para Tráfego e AdOps" alimentado em Defenz via API (11 subtarefas, 10h). Em deploy.
+**Operação ativa via MCP/API + 3 features de produto no pipeline.** O `feature-demanda-company-selector` foi **DEPLOYADO** (commits `befcfde`+`15fa70a`, Vercel READY; E2E de move empresa→empresa verificado em prod). O MCP `defenz` está **plugado no Claude Code** (token persistente `marcos-mcp`, prefix `defz_066db3eb`, em `~/.claude.json` do projeto — ativa só após restart) e ganhou o param `company` (nome→id). Durante 17–24/06 alimentei MUITOS cards via API (token marcos-mcp) em Defenz e PSI.SheilaCarvalho (esteiras Meta, Apollo, LinkedIn, Sales AÍ, logs diários "Atividades DD/MM", etc.).
+
+**3 specs criadas (pendentes de implementação) — ver `docs/features/`:**
+- `feature-defenz-mcp-subtasks.md` — **APROVADA (design)**: estender o MCP com subtarefas (`add_subtask`/`complete_subtask`/`list_subtasks`) + `list_user_tasks` (tarefas de um usuário). Só mudança no pacote `mcp/defenz-mcp/`, **sem deploy do app**. → próximo a implementar (writing-plans).
+- `feature-playbooks-manuais.md` — **DRAFT**: menu "Playbooks / Manuais Defenz" (base de conhecimento). Precisa brainstorming.
+- `feature-service-desk.md` — **DRAFT**: menu Service Desk (tickets) vinculado ao Kanban. Tem análise das 3 opções de vínculo Ticket↔Demanda (lean = Opção C híbrida). REQUER brainstorming profundo.
 
 ### Histórico anterior
 **`feature-time-entries` (Desenho B) DEPLOYADA em prod (commit `8d22216`).** O push também levou as **Fases B+D** (commit `1fb3fcf`, MCP + multi-empresa) que estavam pendentes.
@@ -32,16 +37,22 @@
 **UI de gestão de tokens SHIPADA E DEPLOYADA (commit `8b53062`):** Configurações → Usuários → ação 🔑 "API Tokens" por usuário (**admin-only**) — gerar (plaintext 1x), listar, revogar. API `GET/POST/DELETE /api/users/[id]/api-tokens` (session-only, admin). Helpers em `src/lib/api-token.ts`. 442 testes. (Não depende mais de CLI/chat para gerar token.)
 
 ## ▶️ PRÓXIMA SESSÃO — começar aqui
-0. **Validar `feature-time-entries` em prod com clique real** (login): aba `/dashboard/demandas/horas` — editar horas de um card → ver lançamento aparecer; subtarefa idem; agrupar por cliente/responsável/equipe/área/card; filtro de período. Preencher o campo Cliente em alguns cards (campo novo, ainda vazio nas demandas existentes).
-1. **Validar Fases B+D em prod** (agora deployadas junto): UI multi-select "Empresas adicionais" + plugar o MCP do Marcos contra prod (gerar token via Configurações→Usuários→🔑 ou `scripts/create-api-token.ts`, então `mcp/defenz-mcp/README.md`).
-2. **Gerar o token do Marcos p/ o MCP** (quando for plugar): UI (Configurações→Usuários→🔑) ou `npx tsx scripts/create-api-token.ts --email marcos@defenz.com.br --name marcos-mcp`. Depois `cd mcp/defenz-mcp && npm install && npm run build` e `claude mcp add` (ver `mcp/defenz-mcp/README.md`).
-3. Deploy ordenado da Phase 2 do assignee-fk (independente; ver abaixo).
+1. **Implementar `feature-defenz-mcp-subtasks`** (design aprovado): subtarefas + `list_user_tasks` no MCP. Começar por `writing-plans` → TDD em `mcp/defenz-mcp/`. Confirmar na impl se há `GET /api/demandas/[id]` Bearer com subtasks (senão filtrar do GET geral). Rebuild + restart do Claude pra ativar. Sem deploy do app.
+2. **Brainstorming dos 2 menus novos** (specs Draft): `feature-playbooks-manuais` e `feature-service-desk` (este último: decidir o vínculo Ticket↔Demanda — ler a análise das 3 opções na spec, lean = Opção C híbrida).
+3. **Corrigir o bug do AuditLog em PUT parcial** (tarefa registrada via chip): `diffChanges` loga campos ausentes como `→ null` quando o body é parcial (MCP `move_demanda`/`update_demanda`, curl). Fix: ignorar campos ausentes do payload. TDD em `src/lib/audit.ts` + `src/app/api/demandas/route.ts`.
+4. Deploy ordenado da Phase 2 do assignee-fk (independente; ver abaixo).
+
+## Como operar dados em prod (resumo p/ contexto novo — detalhe em memória `project_api_access`)
+- **Token**: `marcos-mcp` (admin, 4 empresas) está ativo e persistente em `~/.claude.json` → `projects["<repo>"].mcpServers.defenz.env.DEFENZ_API_TOKEN`. Scripts leem dele.
+- **Banco único** dev=prod (Neon, ADR-008): `npx tsx scripts/<x>.ts` rodando da raiz do repo atinge prod. Padrão usado: criar card via `POST /api/demandas` (Bearer) e **horas de card via Prisma** (`demanda.update spentMinutes` + `timeEntry.create`) p/ NÃO disparar o bug do AuditLog (PUT parcial). Horas de **subtarefa** via `POST /api/demandas/[id]/subtasks` (limpo, lança no diário). IDs úteis: Defenz `cmn8wi8ze00003ouacf33hseb`, PSI `cmq3yyutf0000jo04bv6a5kmg`, Marcos `cmn7fk7u800013oi9yzq17egq`.
+- **Padrão de log diário** preferido do Marcos: itens novos → 1 card "Atividades DD/MM" (concluída, cliente Defenz) com subtarefas ☑; itens que já têm card → subtarefa `[DD/MM]` no card existente (checar antes p/ não duplicar).
 
 ## In progress
-- (nada em código aberto) — Fases B e D fechadas localmente, aguardando push/deploy.
+- (nada em código aberto) — `feature-demanda-company-selector` deployado; 3 specs aguardando implementação/brainstorming.
 - feature-assignee-fk-migration continua aguardando deploy ordenado (independente).
 
 ## Recently completed (last 5)
+- 2026-06-17→24 **`feature-demanda-company-selector` DEPLOYADO** (commits `befcfde`+`15fa70a`) — seletor Empresa/Projeto no modal (admin) + PUT move entre empresas (limpa teamId, AuditLog), E2E move verificado em prod. MCP `defenz` plugado (token `marcos-mcp`) + estendido c/ param `company`. 531 testes app + 39 MCP. Depois: muitos cards alimentados via API em Defenz/PSI (esteiras Meta/Apollo/LinkedIn/Sales AÍ + logs diários "Atividades DD/MM"). 3 specs novas criadas (mcp-subtasks aprovada; playbooks + service-desk draft). Relatório de horas do Leonardo (Defenz, 2 sem) — achados 3 outliers (36/36/28h) prováveis erros de lançamento.
 - 2026-06-08 **`feature-time-entries` (Desenho B) DEPLOYADA** (commit `8d22216`, push) — diário de horas delta-on-save + campo `Demanda.client` + aba `/dashboard/demandas/horas`. Schema (`Demanda.client`, modelo `TimeEntry`), helpers puros + `logTimeDelta`, hooks de delta em `PUT /api/demandas` + 3 rotas de subtarefa, `GET /api/time-entries` (admin/gerência, escopo por conjunto + filtros + TZ SP + cap 5000), modal c/ campo Cliente (board/horas inalterados), nav admin/gerência, seed `backfill-time-entries.ts` (baseline auto-corretivo). **31 testes novos (523 total), tsc+build verdes.** Revisão adversarial multi-agente (6 dims → verify, 2 rodadas) → 1 alto + 2 médios + baixos, todos corrigidos. **Deploy:** `db push` no Neon + backfill (5 baseline) + E2E autenticado dev (200 c/ 5 lançamentos) + push → Vercel (prod live). **O mesmo push levou Fases B+D (`1fb3fcf`) a prod.** Specs: feature-time-entries.
 - 2026-06-07 **Spec `feature-time-entries` (Desenho B)** APROVADA + commitada (`087eaa2`) via brainstorming. Diário de horas delta-on-save, campo Cliente (≠ Empresa-tenant), aba Horas. Iterou por 2 reframes: descartado "diário como fonte da verdade" e "diário manual" → ficou delta-on-save (livre edição preservada).
 - 2026-06-07 **Fase B (MCP `defenz-mcp`) + Fase D (resto multi-empresa)** (commit `1fb3fcf`) — pacote MCP standalone (4 tools, 31 testes + smoke E2E) + conversão de ~10 rotas p/ escopo por conjunto + `companyIds[]` sync em `users/[id]` PUT + UI multi-select + validação Zod `user.ts`. Revisão adversarial multi-agente → 4 fixes (1 crítico tenant: gerência editava usuário cross-company; 1 alto teamIds cross-tenant; 1 médio dateDone server-side ao concluir; 1 baixo strip primária UserCompany). 517 testes, build+tsc verdes. **Local; não deployado.** Specs: feature-defenz-mcp, feature-multi-company-membership, feature-external-kanban-feed.
@@ -57,7 +68,10 @@
 - 2026-04-05 feature-executive-report — relatório executivo com slides via Gemini (1c3787c)
 
 ## Next up (priority order)
-0. **Alimentar o Kanban de fora (chat/projeto externo)** — ver `docs/features/feature-external-kanban-feed.md`. Decidir: (a) auth de serviço (token + escopo company/team), (b) entrega via curl na API atual ou via MCP server Defenz. Brainstorm no início da próxima sessão.
+0. **`feature-defenz-mcp-subtasks`** (design APROVADO) — subtarefas + `list_user_tasks` no MCP. Implementar (writing-plans → TDD). Só pacote `mcp/defenz-mcp/`, sem deploy.
+0b. **Menu "Playbooks / Manuais Defenz"** (`feature-playbooks-manuais`, DRAFT) — base de conhecimento interna. Brainstorming.
+0c. **Menu "Service Desk" (tickets)** (`feature-service-desk`, DRAFT) — abrir/triar tickets vinculados ao Kanban. **Pensar com profundidade** o vínculo Ticket↔Demanda (3 opções na spec; lean = híbrida C). Brainstorming profundo.
+0d. **Bug AuditLog PUT parcial** (chip) — `diffChanges` loga campos ausentes como `→null`. Fix em `src/lib/audit.ts`.
 1. **Deploy ordenado da Phase 2** (manual, requer DIRECT_URL):
    1. `npx prisma migrate deploy` em staging
    2. `npx tsx scripts/backfill-assignee.ts` em staging
