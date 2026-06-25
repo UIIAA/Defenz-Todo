@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users, UsersRound, Home, Clock } from 'lucide-react'
+import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users, UsersRound, Home, Clock, LifeBuoy, Ticket } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { DefenzLogoIcon } from '@/components/defenz-logo'
 import { UserAvatar } from '@/components/user-avatar'
@@ -21,6 +21,7 @@ export default function DashboardLayout({
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [demandasOpen, setDemandasOpen] = useState(true)
+  const [serviceDeskOpen, setServiceDeskOpen] = useState(false)
   const [configOpen, setConfigOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchDemandas, setSearchDemandas] = useState<Demanda[]>([])
@@ -203,6 +204,37 @@ export default function DashboardLayout({
                           <span>Horas</span>
                         </a>
                       </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Service Desk dropdown */}
+              <div className="space-y-1">
+                <button
+                  onClick={() => setServiceDeskOpen(!serviceDeskOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <LifeBuoy className="h-5 w-5" />
+                    {sidebarOpen && <span className="font-medium text-white">Service Desk</span>}
+                  </div>
+                  {sidebarOpen && (
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${serviceDeskOpen ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+
+                {serviceDeskOpen && sidebarOpen && (
+                  <div className="pl-4 space-y-1">
+                    <a href="/dashboard/service-desk" className={navItemClass('/dashboard/service-desk')}>
+                      <Ticket className="h-4 w-4" />
+                      <span>Tickets</span>
+                    </a>
+                    {isAdmin && (
+                      <a href="/dashboard/service-desk/relatorio" className={navItemClass('/dashboard/service-desk/relatorio')}>
+                        <BarChart3 className="h-4 w-4" />
+                        <span>Relatorio</span>
+                      </a>
                     )}
                   </div>
                 )}
