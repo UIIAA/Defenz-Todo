@@ -12,6 +12,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { LifeBuoy, Plus, ArrowUpRight, MessageSquare, Link2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { CompanySelector } from '@/components/company-selector'
 import { TICKET_STATUS_META, TICKET_CHANNEL_LABELS } from '@/components/service-desk/ticket-helpers'
 import { TicketModal } from '@/components/service-desk/ticket-modal'
 
@@ -43,6 +45,7 @@ export default function ServiceDeskPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [companyId, setCompanyId] = useState('')
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
@@ -73,9 +76,15 @@ export default function ServiceDeskPage() {
           requester: form.requester || undefined,
           channel: form.channel,
           priority: form.priority,
+          companyId: companyId || undefined,
         }),
       })
-      if (r.ok) { setCreateOpen(false); setForm(emptyForm); load() }
+      const j = await r.json().catch(() => null)
+      if (r.ok) {
+        setCreateOpen(false); setForm(emptyForm); setCompanyId(''); load()
+      } else {
+        toast.error(j?.error ?? 'Falha ao criar ticket')
+      }
     } finally {
       setSaving(false)
     }
@@ -102,6 +111,8 @@ export default function ServiceDeskPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>Novo ticket</DialogTitle></DialogHeader>
             <div className="space-y-3">
+              {/* Seletor de empresa (renderiza só p/ admin) — admin multi-empresa precisa escolher o destino */}
+              <CompanySelector value={companyId} onChange={setCompanyId} />
               <Input placeholder="Assunto *" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
               <Textarea placeholder="Descrição" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
               <Input placeholder="Solicitante" value={form.requester} onChange={(e) => setForm({ ...form, requester: e.target.value })} />

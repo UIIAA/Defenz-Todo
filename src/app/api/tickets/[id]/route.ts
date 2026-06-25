@@ -42,6 +42,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json()
     const data = updateTicketSchema.parse(body)
 
+    // Guard de tenant no RESPONSÁVEL (espelha demandas): não atribuir a usuário de outra empresa.
+    if (data.assignedToId) {
+      const assignee = await db.user.findUnique({ where: { id: data.assignedToId } })
+      if (!assignee) throw new ApiError('Responsavel nao encontrado', 400)
+      assertCompanyAccess(assignee.companyId, user)
+    }
+
     // Timestamps de relógio derivados num único ponto (service layer).
     const ts = computeTicketTimestamps(
       { status: existing.status, resolvedAt: existing.resolvedAt },

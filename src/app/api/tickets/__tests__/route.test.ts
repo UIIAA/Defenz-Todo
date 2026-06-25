@@ -49,4 +49,14 @@ describe('POST /api/tickets', () => {
     expect(res.status).toBe(403)
     expect(mockDb.ticket.create).not.toHaveBeenCalled()
   })
+
+  it('atribuir a responsável de outra empresa → 403 (guard de tenant no assignee)', async () => {
+    mockAuthenticated({ role: 'gerencia', companyId: 'company-a', companyIds: [] })
+    mockDb.user.findUnique.mockResolvedValue({ id: 'u-b', companyId: 'company-b' })
+    const res = await POST(
+      createRequest('POST', { body: { subject: 'X', assignedToId: 'u-b' } })
+    )
+    expect(res.status).toBe(403)
+    expect(mockDb.ticket.create).not.toHaveBeenCalled()
+  })
 })

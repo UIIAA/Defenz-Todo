@@ -51,6 +51,17 @@ describe('PUT /api/tickets/[id]', () => {
     expect(res.status).toBe(403)
     expect(mockDb.ticket.update).not.toHaveBeenCalled()
   })
+
+  it('atribuir a responsável de outra empresa no PUT → 403', async () => {
+    mockAuthenticated({ role: 'gerencia', companyId: 'company-a', companyIds: [] })
+    mockDb.ticket.findUnique.mockResolvedValue({
+      id: 't1', status: 'open', resolvedAt: null, companyId: 'company-a',
+    })
+    mockDb.user.findUnique.mockResolvedValue({ id: 'u-b', companyId: 'company-b' })
+    const res = await PUT(createRequest('PUT', { body: { assignedToId: 'u-b' } }), params('t1'))
+    expect(res.status).toBe(403)
+    expect(mockDb.ticket.update).not.toHaveBeenCalled()
+  })
 })
 
 describe('DELETE /api/tickets/[id]', () => {

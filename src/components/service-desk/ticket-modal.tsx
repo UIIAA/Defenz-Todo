@@ -10,6 +10,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { ArrowUpRight, Link2, MessageSquare, StickyNote, Send } from 'lucide-react'
+import { toast } from 'sonner'
 import { TICKET_STATUS_META, TICKET_CHANNEL_LABELS, TICKET_PRIORITY_LABELS } from './ticket-helpers'
 
 interface TicketMessage {
@@ -71,11 +72,14 @@ export function TicketModal({
     else setTicket(null)
   }, [open, ticketId, load])
 
-  const act = async (fn: () => Promise<Response>) => {
+  const act = async (fn: () => Promise<Response>): Promise<boolean> => {
     setBusy(true)
     try {
       const r = await fn()
-      if (r.ok) { await load(); onChanged() }
+      const j = await r.json().catch(() => null)
+      if (r.ok) { await load(); onChanged(); return true }
+      toast.error(j?.error ?? 'Ação falhou')
+      return false
     } finally {
       setBusy(false)
     }
@@ -88,7 +92,7 @@ export function TicketModal({
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ body: msg, kind: msgKind }),
       })
-    ).then(() => setMsg(''))
+    ).then((ok) => { if (ok) setMsg('') })
   }
 
   const changeStatus = (status: string) =>
@@ -106,7 +110,7 @@ export function TicketModal({
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ escalatedTo: escalateTo }),
       })
-    ).then(() => setEscalateTo(''))
+    ).then((ok) => { if (ok) setEscalateTo('') })
   }
 
   const linkDemanda = () => {
@@ -116,7 +120,7 @@ export function TicketModal({
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ demandaId: linkId }),
       })
-    ).then(() => setLinkId(''))
+    ).then((ok) => { if (ok) setLinkId('') })
   }
 
   const sm = ticket ? TICKET_STATUS_META[ticket.status] : null

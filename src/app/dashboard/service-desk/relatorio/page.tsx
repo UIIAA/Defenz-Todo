@@ -21,6 +21,7 @@ interface Metrics {
   avgResolutionMinutes: number
   avgOpenAgeMinutes: number
   escalatedByPartner: { partner: string; count: number }[]
+  capped?: boolean
 }
 
 type Period = 'this_month' | 'this_week' | 'all'
@@ -81,9 +82,17 @@ export default function ServiceDeskReportPage() {
 
       {metrics && (
         <>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Coorte: tickets <strong>criados</strong> no período selecionado (fuso de São Paulo).
+          </p>
+          {metrics.capped && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Mostrando os 5000 tickets mais recentes do período — métricas podem estar truncadas.
+            </p>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Metric icon={Ticket} label="Tickets abertos (no período)" value={String(metrics.total)} />
-            <Metric icon={Inbox} label="Backlog (não resolvidos)" value={String(metrics.backlog)} />
+            <Metric icon={Ticket} label="Tickets criados no período" value={String(metrics.total)} />
+            <Metric icon={Inbox} label="Em aberto (não resolvidos)" value={String(metrics.backlog)} />
             <Metric icon={ArrowUpRight} label="Repassados ao N2" value={`${metrics.escalatedCount} (${metrics.escalatedPct.toFixed(0)}%)`} accent="amber" />
             <Metric icon={Timer} label="Tempo médio de resolução" value={formatMinutesHuman(metrics.avgResolutionMinutes)} />
             <Metric icon={Hourglass} label="Tempo médio em aberto" value={formatMinutesHuman(metrics.avgOpenAgeMinutes)} />

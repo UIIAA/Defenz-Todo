@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { resolveActor, companyScopeWhere, resolveActiveCompany } from '@/lib/auth'
+import { resolveActor, companyScopeWhere, resolveActiveCompany, assertCompanyAccess } from '@/lib/auth'
 import { handleApiError, successResponse, createdResponse, ApiError } from '@/lib/api-helpers'
 import { createTicketSchema } from '@/lib/validations/ticket'
 import { createAuditLog } from '@/lib/audit'
@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
         _count: { select: { messages: { where: { kind: 'reply' } } } },
       },
       orderBy: { createdAt: 'desc' },
+      take: 500,
     })
 
     return successResponse(tickets)
@@ -45,6 +46,13 @@ export async function POST(request: NextRequest) {
 
     const companyId = resolveActiveCompany(user, data.companyId)
     if (!companyId) throw new ApiError('Empresa não resolvida para o ticket', 400)
+
+    // Guard de tenant no RESPONSÁVEL (espelha demandas): não atribuir a usuário de outra empresa.
+    if (data.assignedToId) {
+      const assignee = await db.user.findUnique({ where: { id: data.assignedToId } })
+      if (!assignee) throw new ApiError('Responsavel nao encontrado', 400)
+      assertCompanyAccess(assignee.companyId, user)
+    }
 
     const { companyId: _omit, ...rest } = data
     const ticket = await db.ticket.create({

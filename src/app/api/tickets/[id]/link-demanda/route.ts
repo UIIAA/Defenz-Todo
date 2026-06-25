@@ -22,6 +22,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Tenant guard no ALVO: impede vincular a uma demanda de outra empresa.
     assertCompanyAccess(demanda.companyId, user)
 
+    // 1:1 (demandaId @unique): mensagem amigável em vez do P2002 cru "Registro duplicado".
+    const linked = await db.ticket.findUnique({ where: { demandaId } })
+    if (linked && linked.id !== id) {
+      throw new ApiError('Esta demanda já está vinculada a outro ticket', 409)
+    }
+
     const updated = await db.ticket.update({ where: { id }, data: { demandaId } })
 
     await createAuditLog({
