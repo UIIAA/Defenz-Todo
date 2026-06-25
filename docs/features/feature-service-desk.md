@@ -1,5 +1,5 @@
 # Feature: Menu "Service Desk" (tickets) — integrado ao Kanban Defenz
-**Status:** Approved (design) — pendente implementação
+**Status:** Implemented (código verificado: build+tsc+569 testes) — pendente `db push` no Neon + validação E2E + deploy
 **Priority:** P2
 **Date:** 2026-06-24 (design fechado após brainstorming + pesquisa multi-agente de 6 ferramentas renomadas)
 
@@ -109,13 +109,17 @@ model TicketMessage {
 - `GET /api/service-desk/metrics` — as 4 agregações (cada uma um `prisma.aggregate`/`count` separado), já scoped por `companyScopeWhere`, com filtros de período/empresa; retorna JSON consumido pela página de relatório.
 
 ## Acceptance Criteria
-- [ ] CRUD de Ticket scoped por empresa (admin cruza; gerência/user só seu conjunto); sad path empresa fora do escopo → 403.
-- [ ] `TicketMessage` reply incrementa as interações (derivado por COUNT); `note` não conta.
-- [ ] Ação escalonar grava `escalatedAt` + `escalatedTo` + AuditLog; idempotente (não sobrescreve `escalatedAt`).
-- [ ] Linkar Demanda valida empresa (mesma company) — sad path cross-company → 403.
-- [ ] `GET /api/service-desk/metrics` retorna: volume (criados no período), backlog (status≠resolved), interações/ticket (média), tempo médio aberto/resolução (calendar time), % escalado (escalatedAt≠null/total) + breakdown por `escalatedTo`.
-- [ ] Página `/dashboard/service-desk` renderiza o board/lista de tickets + sub-relatório no estilo da aba Horas (Recharts), nav com role gating.
-- [ ] `npm run build && npx tsc --noEmit && npm test` verdes; testes proporcionais (1 happy + 1 sad por rota/função nova).
+- [x] CRUD de Ticket scoped por empresa (admin cruza; gerência/user só seu conjunto); sad path empresa fora do escopo → 403.
+- [x] `TicketMessage` reply incrementa as interações (derivado por COUNT); `note` não conta.
+- [x] Ação escalonar grava `escalatedAt` + `escalatedTo` + AuditLog; idempotente (não sobrescreve `escalatedAt`).
+- [x] Linkar Demanda valida empresa (mesma company) — sad path cross-company → 403.
+- [x] `GET /api/service-desk/metrics` retorna: volume (criados no período), backlog (status≠resolved), interações/ticket (média), tempo médio aberto/resolução (calendar time), % escalado (escalatedAt≠null/total) + breakdown por `escalatedTo`.
+- [x] Página `/dashboard/service-desk` renderiza o board/lista de tickets + sub-relatório no estilo da aba Horas (Recharts), nav com role gating.
+- [x] `npm run build && npx tsc --noEmit && npm test` verdes; testes proporcionais (1 happy + 1 sad por rota/função nova).
+- [ ] Validação E2E autenticada contra Neon (requer `db push`) + deploy. **Pendente confirmação do Marcos** (toca prod).
+
+## Implementação (2026-06-24)
+Backend (TDD, mocks de prisma): schema `Ticket`+`TicketMessage` (`prisma/schema.prisma`); `src/lib/validations/ticket.ts`; service layer puro `src/lib/tickets-server.ts` (`computeTicketTimestamps` single-source + `computeServiceDeskMetrics`); rotas `GET/POST /api/tickets`, `GET/PUT/DELETE /api/tickets/[id]`, `POST .../messages`, `POST .../escalate`, `POST .../link-demanda`, `GET /api/service-desk/metrics`; `audit.ts` ganhou `action` ESCALATE/LINK. UI: nav (dropdown Service Desk), `/dashboard/service-desk` (lista+criar), `TicketModal` (thread+ações), `/dashboard/service-desk/relatorio` (cards+Recharts). **38 testes novos (569 total)**, build+tsc verdes. **Schema NÃO aplicado no Neon ainda** (rotas falham até `db push`).
 
 ## Technical Decisions
 - **Reuso real (verificado no código):** `companyScopeWhere`/`assertCompanyAccess` (`auth.ts`), `createAuditLog`/`diffChanges` (`audit.ts`), `handleApiError`/`successResponse` (`api-helpers.ts`), o **layout + Recharts** da aba `/dashboard/demandas/horas` (apenas o layout — a lógica de relatório é diferente: 4 agregações distintas, não um groupBy).
