@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 
 interface CreateAuditLogParams {
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'IMPORT'
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'IMPORT' | 'ESCALATE' | 'LINK'
   entityType: string
   entityId: string
   userId: string
