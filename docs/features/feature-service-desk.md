@@ -119,7 +119,16 @@ model TicketMessage {
 - [ ] Validação E2E autenticada contra Neon (requer `db push`) + deploy. **Pendente confirmação do Marcos** (toca prod).
 
 ## Implementação (2026-06-24)
-Backend (TDD, mocks de prisma): schema `Ticket`+`TicketMessage` (`prisma/schema.prisma`); `src/lib/validations/ticket.ts`; service layer puro `src/lib/tickets-server.ts` (`computeTicketTimestamps` single-source + `computeServiceDeskMetrics`); rotas `GET/POST /api/tickets`, `GET/PUT/DELETE /api/tickets/[id]`, `POST .../messages`, `POST .../escalate`, `POST .../link-demanda`, `GET /api/service-desk/metrics`; `audit.ts` ganhou `action` ESCALATE/LINK. UI: nav (dropdown Service Desk), `/dashboard/service-desk` (lista+criar), `TicketModal` (thread+ações), `/dashboard/service-desk/relatorio` (cards+Recharts). **38 testes novos (569 total)**, build+tsc verdes. **Schema NÃO aplicado no Neon ainda** (rotas falham até `db push`).
+Backend (TDD, mocks de prisma): schema `Ticket`+`TicketMessage` (`prisma/schema.prisma`); `src/lib/validations/ticket.ts`; service layer puro `src/lib/tickets-server.ts` (`computeTicketTimestamps` single-source + `computeServiceDeskMetrics`); rotas `GET/POST /api/tickets`, `GET/PUT/DELETE /api/tickets/[id]`, `POST .../messages`, `POST .../escalate`, `POST .../link-demanda`, `GET /api/service-desk/metrics`; `audit.ts` ganhou `action` ESCALATE/LINK. UI: nav (dropdown Service Desk), `/dashboard/service-desk` (lista+criar+seletor de empresa p/ admin), `TicketModal` (thread+ações), `/dashboard/service-desk/relatorio` (cards+Recharts). **40 testes novos (571 total)**, build+tsc verdes. **Schema NÃO aplicado no Neon ainda** (rotas falham até `db push`).
+
+## Revisão adversarial (2026-06-24)
+20 agentes (5 dimensões → verify), 13 achados confirmados, **todos endereçados** (commit "fix(service-desk): correcoes da revisao adversarial"):
+- **2 HIGH segurança:** `assignedToId` cross-company (POST+PUT) — adicionado guard `db.user.findUnique` + `assertCompanyAccess` no responsável (espelha demandas), +2 testes sad path.
+- **HIGH correção:** filtro de período das métricas migrado p/ **America/Sao_Paulo (−03:00)** (igual aba Horas; antes UTC mis-atribuía tickets da noite).
+- **HIGH UX:** criar ticket pro admin multi-empresa (Marcos, sem empresa primária) falhava silencioso → `CompanySelector` no modal + `toast` de erro.
+- **MED:** `TicketModal` mostra erro e só limpa input no sucesso; `GET /api/tickets` ganhou `take:500`; `capped` via sentinela (take CAP+1) + `orderBy` determinístico.
+- **Decisão de coorte (métricas):** o relatório é **coorte por data de CRIAÇÃO** do ticket (rotulado na UI: "Tickets criados no período", fuso SP). `avgResolution`/% escalado são "dos tickets criados no período" — viés de borda conhecido e documentado (achados #5/#6 medium); refinamento (filtrar por `resolvedAt`/`escalatedAt`) fica p/ fase 2 se necessário.
+- **LOW:** link-demanda 409 amigável; Logs ganham labels ESCALATE/LINK.
 
 ## Technical Decisions
 - **Reuso real (verificado no código):** `companyScopeWhere`/`assertCompanyAccess` (`auth.ts`), `createAuditLog`/`diffChanges` (`audit.ts`), `handleApiError`/`successResponse` (`api-helpers.ts`), o **layout + Recharts** da aba `/dashboard/demandas/horas` (apenas o layout — a lógica de relatório é diferente: 4 agregações distintas, não um groupBy).
