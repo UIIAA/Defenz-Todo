@@ -27,6 +27,7 @@ model Company {
   demandas    Demanda[]
   invites     InviteToken[]
   userCompanies UserCompany[] // memberships adicionais (multi-empresa)
+  tickets     Ticket[]      // service desk
 }
 
 model Team {
@@ -115,6 +116,9 @@ model User {
   userCompanies           UserCompany[]            // empresas adicionais (multi-empresa)
   apiTokens               ApiToken[]               // tokens de serviço (Bearer) deste usuario
   timeEntries             TimeEntry[]              // diário de horas (delta-on-save)
+  ticketsAsAgent          Ticket[]                 @relation("TicketAgent")
+  ticketsCreated          Ticket[]                 @relation("TicketCreator")
+  ticketMessages          TicketMessage[]          @relation("TicketMessageAuthor")
 
   @@index([email])
   @@index([companyId])
@@ -809,6 +813,7 @@ model Demanda {
   subtasks  Subtask[]
   links     DemandaLink[]
   timeEntries TimeEntry[]
+  ticket    Ticket?   // service desk: vínculo 1:1 opcional (lado inverso de Ticket.demandaId)
   dependsOn String    @default("[]") // JSON array de IDs de Demanda que esta depende
 
   estimatedMinutes Int?           // Horas estimadas (opcional), armazenadas em minutos
@@ -939,4 +944,68 @@ model TimeEntry {
   @@index([userId])
   @@index([createdAt])
   @@map("time_entries")
+}
+
+// ============================================================
+// SERVICE DESK (Tickets de atendimento) — ver feature-service-desk
+// ============================================================
+
+// Ticket de atendimento (Opção B enxuta). Mede o fluxo de atendimento; quando vira
+// trabalho, linka 1:1 (opcional) a uma Demanda (board + horas). Nível 2 = parceiro
+// EXTERNO (escalatedAt + escalatedTo), não tier interno. Timestamps de relógio gravados
+// num único service-layer (src/lib/tickets-server.ts). Interações = COUNT(TicketMessage
+// kind='reply'), sem contador materializado.
+model Ticket {
+  id           String    @id @default(cuid())
+  subject      String
+  description  String?
+  status       String    @default("open")   // open | paused | resolved
+  priority     String    @default("media")  // alta | media | baixa
+  channel      String?                       // email | whatsapp | telefone | chat | outro
+  requester    String?                       // solicitante (texto livre)
+
+  // --- escalonamento p/ Nível 2 EXTERNO ---
+  escalatedAt  DateTime?                      // setado SÓ na ação de encaminhar; null = nunca foi ao N2
+  escalatedTo  String?                        // parceiro destino (ex.: "SecuriSoft", "Bitdefender N2")
+
+  // --- relógio (calendar time) ---
+  firstReplyAt DateTime?                      // 1ª resposta de agente (kind='reply')
+  resolvedAt   DateTime?                      // fecha o relógio do ticket
+
+  // --- atribuição & multi-tenant ---
+  assignedToId String?
+  assignedTo   User?     @relation("TicketAgent", fields: [assignedToId], references: [id], onDelete: SetNull)
+  companyId    String
+  company      Company   @relation(fields: [companyId], references: [id])
+
+  // --- vínculo 1:1 OPCIONAL com o Kanban ---
+  demandaId    String?   @unique
+  demanda      Demanda?  @relation(fields: [demandaId], references: [id], onDelete: SetNull)
+
+  createdById  String
+  createdBy    User      @relation("TicketCreator", fields: [createdById], references: [id])
+  messages     TicketMessage[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([companyId, status])
+  @@index([companyId, createdAt])
+  @@index([escalatedAt])
+  @@index([assignedToId])
+  @@index([demandaId])
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  kind      String   @default("reply")        // reply (conta como interação) | note (interna)
+  authorId  String?
+  author    User?    @relation("TicketMessageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_messages")
 }
