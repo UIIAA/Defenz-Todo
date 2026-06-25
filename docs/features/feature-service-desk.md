@@ -1,5 +1,5 @@
 # Feature: Menu "Service Desk" (tickets) — integrado ao Kanban Defenz
-**Status:** Implemented (código verificado: build+tsc+569 testes) — pendente `db push` no Neon + validação E2E + deploy
+**Status:** Implemented + `db push` aplicado no Neon + **E2E local 14/14 ✓** (571 testes) — **deploy Vercel PENDENTE** (decisão do Marcos; rodando só em dev/localhost contra o Neon)
 **Priority:** P2
 **Date:** 2026-06-24 (design fechado após brainstorming + pesquisa multi-agente de 6 ferramentas renomadas)
 
@@ -116,7 +116,7 @@ model TicketMessage {
 - [x] `GET /api/service-desk/metrics` retorna: volume (criados no período), backlog (status≠resolved), interações/ticket (média), tempo médio aberto/resolução (calendar time), % escalado (escalatedAt≠null/total) + breakdown por `escalatedTo`.
 - [x] Página `/dashboard/service-desk` renderiza o board/lista de tickets + sub-relatório no estilo da aba Horas (Recharts), nav com role gating.
 - [x] `npm run build && npx tsc --noEmit && npm test` verdes; testes proporcionais (1 happy + 1 sad por rota/função nova).
-- [ ] Validação E2E autenticada contra Neon (requer `db push`) + deploy. **Pendente confirmação do Marcos** (toca prod).
+- [x] `db push` aplicado no Neon (tabelas `tickets`/`ticket_messages` criadas, aditivo) + **E2E autenticado 14/14** contra o Neon (criar→reply/note→escalar→vincular demanda→resolver→métricas→lista, com cleanup). Deploy Vercel **pendente** (decisão do Marcos).
 
 ## Implementação (2026-06-24)
 Backend (TDD, mocks de prisma): schema `Ticket`+`TicketMessage` (`prisma/schema.prisma`); `src/lib/validations/ticket.ts`; service layer puro `src/lib/tickets-server.ts` (`computeTicketTimestamps` single-source + `computeServiceDeskMetrics`); rotas `GET/POST /api/tickets`, `GET/PUT/DELETE /api/tickets/[id]`, `POST .../messages`, `POST .../escalate`, `POST .../link-demanda`, `GET /api/service-desk/metrics`; `audit.ts` ganhou `action` ESCALATE/LINK. UI: nav (dropdown Service Desk), `/dashboard/service-desk` (lista+criar+seletor de empresa p/ admin), `TicketModal` (thread+ações), `/dashboard/service-desk/relatorio` (cards+Recharts). **40 testes novos (571 total)**, build+tsc verdes. **Schema NÃO aplicado no Neon ainda** (rotas falham até `db push`).
