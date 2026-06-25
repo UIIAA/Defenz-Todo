@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:bundle": "npm run build && npx -y esbuild dist/index.js --bundle --platform=node --format=esm --target=node18 --outfile=bundle/defenz-mcp.mjs",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "clean": "rm -rf dist",
