@@ -11,7 +11,12 @@ describe('ServiceWorkerRegister', () => {
       ...navigator,
       serviceWorker: {
         register: vi.fn().mockResolvedValue(undefined),
+        getRegistrations: vi.fn().mockResolvedValue([]),
       },
+    })
+    vi.stubGlobal('caches', {
+      keys: vi.fn().mockResolvedValue([]),
+      delete: vi.fn().mockResolvedValue(true),
     })
   })
 
@@ -30,6 +35,19 @@ describe('ServiceWorkerRegister', () => {
     process.env.NODE_ENV = 'development'
     render(<ServiceWorkerRegister />)
     expect(navigator.serviceWorker.register).not.toHaveBeenCalled()
+  })
+
+  it('em desenvolvimento, desregistra SW legado e limpa caches (anti-stale)', async () => {
+    process.env.NODE_ENV = 'development'
+    const unregister = vi.fn().mockResolvedValue(true)
+    navigator.serviceWorker.getRegistrations = vi.fn().mockResolvedValue([{ unregister }])
+    ;(globalThis as { caches: { keys: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> } }).caches.keys =
+      vi.fn().mockResolvedValue(['defenz-v1'])
+
+    render(<ServiceWorkerRegister />)
+
+    await vi.waitFor(() => expect(unregister).toHaveBeenCalled())
+    expect(caches.delete).toHaveBeenCalledWith('defenz-v1')
   })
 
   it('lida com erro de registro gracefully', () => {

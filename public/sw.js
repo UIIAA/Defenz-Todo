@@ -1,4 +1,6 @@
-const CACHE_NAME = 'defenz-v1'
+// Bump a versão a cada release p/ o activate purgar o cache antigo de TODOS os clientes
+// (evita servir app shell/JS velho após deploy).
+const CACHE_NAME = 'defenz-v2'
 
 const PRECACHE_URLS = [
   '/dashboard/demandas',
@@ -35,7 +37,8 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Static assets: cache-first
+  // Static assets: stale-while-revalidate (serve do cache, mas SEMPRE rebusca e atualiza em
+  // background). Evita o cache-first servir JS velho pro MESMO URL — causa do "menu some/aparece".
   if (
     url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/icons/') ||
@@ -45,14 +48,16 @@ self.addEventListener('fetch', (event) => {
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
-        if (cached) return cached
-        return fetch(request).then((response) => {
-          if (response.ok) {
-            const clone = response.clone()
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
-          }
-          return response
-        })
+        const network = fetch(request)
+          .then((response) => {
+            if (response.ok) {
+              const clone = response.clone()
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+            }
+            return response
+          })
+          .catch(() => cached)
+        return cached || network
       })
     )
     return

@@ -21,7 +21,7 @@ Transformar o Service Desk numa ferramenta **interna da Defenz** (a agência), c
 2. **Cliente atendido = campo `client` (texto livre + autocomplete).** NÃO é a empresa-tenant. Espelha `Demanda.client`; autocomplete com os clientes já usados (Holanda, Magalu, Vivo, Bevicred…). É o dado que flui pro "Abrir Demanda". (Rejeitado: dropdown fixo / reusar CRM `Client` — over agora.)
 3. **Kanban 3 colunas:** `solicitado | em_atendimento | concluido` (migra os v1 open→solicitado / paused→em_atendimento / resolved→concluido). Drag-and-drop com `@dnd-kit` (padrão do board de Demandas). "Pausado" deixa de ser coluna; "aguardando N2" vira **badge** de escalado, não coluna.
 4. **WIP soft.** Limite por coluna (default só "Em atendimento", ex.: 5). Ao estourar: contador "6/5" + coluna destacada (vermelho), mas **deixa arrastar** (nudge, não trava). Limite configurável numa config simples.
-5. **Aging por `columnChangedAt`** (NÃO `updatedAt` — que reseta a cada edição). Novo campo setado **só na troca de status**. Cor (verde→âmbar→vermelho) por `agora − columnChangedAt` vs **limiares por coluna**; "Concluído" não envelhece. Card mostra selo "há Xd".
+5. **Aging por `columnChangedAt`** (NÃO `updatedAt` — que reseta a cada edição). Novo campo setado **só na troca de status**. Cor progride **verde → âmbar → PRETO** (não vermelho — o vermelho fica reservado p/ o estouro de WIP, sinal diferente) por `agora − columnChangedAt` vs **limiares por coluna**; "Concluído" não envelhece. Card mostra selo "há Xd".
 6. **"Abrir Demanda" cria, mas não move o ticket.** Cria `Demanda{companyId:Defenz, client:ticket.client, title:ticket.subject, description, status:'solicitada'}` + linka 1:1 (`ticket.demandaId`). **Não** muda a coluna do ticket (Marcos move manual). Mantém "vincular demanda existente" como ação secundária.
 7. **Detalhe em drawer lateral (Sheet), não modal central** — corrige o bug "menu some ao clicar no ticket" (o Radix Dialog modal faz scroll-lock e briga com o layout flex do sidebar).
 
@@ -52,7 +52,7 @@ export const AGING_HOURS = {
   concluido:     null, // não envelhece
 }
 ```
-Helper puro `ageColor(status, columnChangedAt, now)` → 'green'|'amber'|'red' (testável).
+Helper puro `ageColor(status, columnChangedAt, now)` → 'green'|'amber'|'black' (testável). 'black' = mais envelhecido (passou de `crit`); aplicado como fundo/borda escurecendo o card.
 
 ## Rotas (deltas sobre a v1)
 - `POST /api/tickets` — remove `companyId` do contrato; resolve Defenz server-side (helper `defenzCompanyId()` por nome, cacheado). Aceita `client`.
@@ -73,7 +73,7 @@ Helper puro `ageColor(status, columnChangedAt, now)` → 'green'|'amber'|'red' (
 - [ ] Campo `client` (autocomplete) na criação e no card; persiste.
 - [ ] Board Kanban 3 colunas com DnD que muda o status; `columnChangedAt` atualiza na troca (não em outras edições).
 - [ ] WIP soft: coluna mostra "N/limite" e destaca ao estourar, sem travar o drop.
-- [ ] Aging: `ageColor` puro testado (verde/âmbar/vermelho por coluna); card reflete a cor + "há Xd".
+- [ ] Aging: `ageColor` puro testado (verde/âmbar/**preto** por coluna); card escurece + "há Xd".
 - [ ] "Abrir Demanda" cria Demanda em Defenz com `client`/`title`/`description` do ticket, linka 1:1, **não** move o ticket; chip clicável abre a demanda.
 - [ ] Detalhe em Sheet lateral — clicar no ticket **não** some com o menu (bug v1 corrigido; verificar no navegador).
 - [ ] `npm run build && npx tsc --noEmit && npm test` verdes; testes proporcionais.
