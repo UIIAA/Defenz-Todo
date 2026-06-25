@@ -1,5 +1,5 @@
 # Feature: Menu "Service Desk" (tickets) — integrado ao Kanban Defenz
-**Status:** Implemented + `db push` aplicado no Neon + **E2E local 14/14 ✓** (571 testes) — **deploy Vercel PENDENTE** (decisão do Marcos; rodando só em dev/localhost contra o Neon)
+**Status:** v1 Implemented (em dev/localhost) → **Redesign v2 APROVADO em design (2026-06-25), pendente implementação** — ver seção "Redesign v2" abaixo. Deploy Vercel ainda não feito.
 **Priority:** P2
 **Date:** 2026-06-24 (design fechado após brainstorming + pesquisa multi-agente de 6 ferramentas renomadas)
 
@@ -7,6 +7,81 @@
 
 ## Objective
 Uma ferramenta de **Service Desk** própria da Defenz para abrir/triar/resolver **tickets** de atendimento, medir o fluxo (volume, interações, tempo aberto, escalonamento) e **vincular ao Kanban de Demandas** quando o ticket vira trabalho de execução — sem duplicar o trabalho nem poluir o board.
+
+---
+
+# Redesign v2 (2026-06-25) — Kanban Defenz-only com WIP, aging e "Abrir Demanda"
+> Esta seção **supersede** as partes correspondentes da v1 (lista simples + modal central). A v1 (modelo `Ticket`/`TicketMessage`, 6 rotas, métricas) é a **base** — o v2 muda UI (lista→Kanban), gating (multi-empresa→Defenz-only), o campo de cliente, e adiciona aging/WIP/"Abrir Demanda". Brainstorming + crítica do 1º pensamento registrados na sessão 25/06 (memória `project_session_2026_06_24b`).
+
+## Objetivo do redesign
+Transformar o Service Desk numa ferramenta **interna da Defenz** (a agência), com os tickets organizados em **Kanban** (Solicitado → Em atendimento → Concluído), limite de **WIP**, **card que envelhece de cor** conforme o tempo na coluna, e um botão **"Abrir Demanda"** que cria uma Demanda já com os dados do cliente do ticket — conexão natural entre atendimento (ticket) e execução (demanda).
+
+## Decisões fechadas (brainstorming 25/06)
+1. **Defenz-only.** O Service Desk é exclusivo da Defenz (a agência). `Ticket.companyId` é **sempre Defenz**, resolvido/forçado no servidor (não vem do cliente). Removido o seletor de empresa-tenant da criação. O menu só aparece p/ quem acessa Defenz.
+2. **Cliente atendido = campo `client` (texto livre + autocomplete).** NÃO é a empresa-tenant. Espelha `Demanda.client`; autocomplete com os clientes já usados (Holanda, Magalu, Vivo, Bevicred…). É o dado que flui pro "Abrir Demanda". (Rejeitado: dropdown fixo / reusar CRM `Client` — over agora.)
+3. **Kanban 3 colunas:** `solicitado | em_atendimento | concluido` (migra os v1 open→solicitado / paused→em_atendimento / resolved→concluido). Drag-and-drop com `@dnd-kit` (padrão do board de Demandas). "Pausado" deixa de ser coluna; "aguardando N2" vira **badge** de escalado, não coluna.
+4. **WIP soft.** Limite por coluna (default só "Em atendimento", ex.: 5). Ao estourar: contador "6/5" + coluna destacada (vermelho), mas **deixa arrastar** (nudge, não trava). Limite configurável numa config simples.
+5. **Aging por `columnChangedAt`** (NÃO `updatedAt` — que reseta a cada edição). Novo campo setado **só na troca de status**. Cor (verde→âmbar→vermelho) por `agora − columnChangedAt` vs **limiares por coluna**; "Concluído" não envelhece. Card mostra selo "há Xd".
+6. **"Abrir Demanda" cria, mas não move o ticket.** Cria `Demanda{companyId:Defenz, client:ticket.client, title:ticket.subject, description, status:'solicitada'}` + linka 1:1 (`ticket.demandaId`). **Não** muda a coluna do ticket (Marcos move manual). Mantém "vincular demanda existente" como ação secundária.
+7. **Detalhe em drawer lateral (Sheet), não modal central** — corrige o bug "menu some ao clicar no ticket" (o Radix Dialog modal faz scroll-lock e briga com o layout flex do sidebar).
+
+## Mudanças no modelo (Prisma)
+```prisma
+model Ticket {
+  // ... campos v1 mantidos (subject, description, priority, channel, requester,
+  //     escalatedAt, escalatedTo, firstReplyAt, resolvedAt, assignedToId, demandaId, messages) ...
+  status          String    @default("solicitado")  // solicitado | em_atendimento | concluido
+  client          String?                            // NOVO: cliente atendido (texto livre, autocomplete; ≠ company)
+  columnChangedAt DateTime  @default(now())          // NOVO: quando entrou na coluna atual (motor do aging)
+  companyId       String                             // sempre Defenz (forçado server-side)
+  // @@index([companyId, status]) já existe
+}
+```
+- **Migração de dados:** `db push` (aditivo: `client`, `columnChangedAt`). Backfill: `columnChangedAt = updatedAt` para os tickets existentes; status `open→solicitado`, `paused→em_atendimento`, `resolved→concluido` (1 ticket de teste hoje).
+- `computeTicketTimestamps` passa a: setar `columnChangedAt=now` em **toda** troca de status; `resolvedAt=now` ao ir p/ `concluido`; limpar `resolvedAt` ao sair de `concluido`. `firstReplyAt` inalterado.
+- Métricas: `backlog = status !== 'concluido'`; resto igual.
+
+## Config (constante, sem tabela — YAGNI)
+`src/lib/service-desk-config.ts`:
+```ts
+export const WIP_LIMITS = { solicitado: null, em_atendimento: 5, concluido: null } // null = sem limite
+// limiares de aging em horas, por coluna: [verde<warn, warn<=âmbar<crit, vermelho>=crit]
+export const AGING_HOURS = {
+  solicitado:    { warn: 24,  crit: 72 },
+  em_atendimento:{ warn: 48,  crit: 96 },
+  concluido:     null, // não envelhece
+}
+```
+Helper puro `ageColor(status, columnChangedAt, now)` → 'green'|'amber'|'red' (testável).
+
+## Rotas (deltas sobre a v1)
+- `POST /api/tickets` — remove `companyId` do contrato; resolve Defenz server-side (helper `defenzCompanyId()` por nome, cacheado). Aceita `client`.
+- `PUT /api/tickets/[id]` — troca de status seta `columnChangedAt`. Aceita `client`.
+- `POST /api/tickets/[id]/open-demanda` — **NOVA**: cria a Demanda a partir do ticket (Defenz, client/subject/description), seta `ticket.demandaId`, AuditLog `LINK`. (Reaproveita validação de tenant; a Demanda nasce em Defenz.)
+- `GET /api/tickets/clients` — **NOVA** (ou param no GET): lista de `client` distintos (Demandas + Tickets de Defenz) p/ o autocomplete.
+- `GET /api/service-desk/metrics` — relabel backlog; resto igual.
+- Gating: todas as rotas de ticket exigem acesso a Defenz (admin sempre; demais se Defenz no conjunto) — senão 403.
+
+## UI (deltas)
+- `/dashboard/service-desk` vira **board Kanban** (3 colunas DnD), substituindo a lista. Header de coluna com contador/WIP. Card: assunto, cliente, badges (escalado N2, prioridade), selo de aging colorido, contador de interações. Botão "Novo ticket" (sem seletor de empresa; com campo Cliente autocomplete).
+- Detalhe do ticket = **Sheet lateral** (substitui `TicketModal`): meta + thread (resposta/nota) + ações (escalar N2, **Abrir Demanda**, vincular existente). Mover de coluna = drag no board (ou select no drawer).
+- `/dashboard/service-desk/relatorio` — só relabel dos status.
+- Nav: item Service Desk visível só p/ quem acessa Defenz.
+
+## Acceptance Criteria (v2)
+- [ ] `Ticket.companyId` forçado a Defenz no servidor; criação sem seletor de empresa; não-acesso-Defenz → 403/menu oculto.
+- [ ] Campo `client` (autocomplete) na criação e no card; persiste.
+- [ ] Board Kanban 3 colunas com DnD que muda o status; `columnChangedAt` atualiza na troca (não em outras edições).
+- [ ] WIP soft: coluna mostra "N/limite" e destaca ao estourar, sem travar o drop.
+- [ ] Aging: `ageColor` puro testado (verde/âmbar/vermelho por coluna); card reflete a cor + "há Xd".
+- [ ] "Abrir Demanda" cria Demanda em Defenz com `client`/`title`/`description` do ticket, linka 1:1, **não** move o ticket; chip clicável abre a demanda.
+- [ ] Detalhe em Sheet lateral — clicar no ticket **não** some com o menu (bug v1 corrigido; verificar no navegador).
+- [ ] `npm run build && npx tsc --noEmit && npm test` verdes; testes proporcionais.
+
+## Fora do redesign (fase 2)
+- WIP hard (bloquear drop); aging/WIP configuráveis por UI; clientes como entidade; auto-mover ticket no "Abrir Demanda"; multi-empresa no Service Desk.
+
+---
 
 ## Decisões fechadas (brainstorming 2026-06-24)
 1. **Arquitetura = Opção B enxuta.** `Ticket` é entidade própria, com vínculo **1:1 opcional** a uma `Demanda` (`demandaId?`). O ticket mede o atendimento (SLA, canal, escalonamento); quando vira trabalho, **linka/gera uma Demanda** que toca o board + diário de horas existentes. Tickets que não geram execução não precisam de Demanda. (Rejeitada a Opção A = Ticket=Demanda, porque infla o "tempo aberto" e não tem campos canônicos de atendimento.)
