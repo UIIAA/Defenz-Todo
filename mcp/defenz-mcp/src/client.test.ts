@@ -84,6 +84,36 @@ describe('DefenzClient.update', () => {
   })
 })
 
+describe('DefenzClient.createSubtask', () => {
+  it('POSTs to /api/demandas/:id/subtasks and returns the subtask', async () => {
+    const created = { id: 's1', title: 'Sub', completed: false }
+    const { impl, calls } = fakeFetch({ status: 201, body: { success: true, data: created } })
+    const client = makeClient(impl)
+
+    const result = await client.createSubtask('d1', { title: 'Sub', spentMinutes: 30 })
+
+    expect(result).toEqual(created)
+    expect(calls[0].url).toBe('https://defenz.example/api/demandas/d1/subtasks')
+    expect(calls[0].init.method).toBe('POST')
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ title: 'Sub', spentMinutes: 30 })
+  })
+})
+
+describe('DefenzClient.updateSubtask', () => {
+  it('PUTs to /api/demandas/:id/subtasks/:subtaskId and returns the subtask', async () => {
+    const updated = { id: 's1', title: 'Sub', completed: true }
+    const { impl, calls } = fakeFetch({ body: { success: true, data: updated } })
+    const client = makeClient(impl)
+
+    const result = await client.updateSubtask('d1', 's1', { completed: true })
+
+    expect(result).toEqual(updated)
+    expect(calls[0].url).toBe('https://defenz.example/api/demandas/d1/subtasks/s1')
+    expect(calls[0].init.method).toBe('PUT')
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ completed: true })
+  })
+})
+
 describe('DefenzClient error handling', () => {
   it('throws DefenzApiError with status + server message on non-2xx JSON', async () => {
     const { impl } = fakeFetch({ status: 403, body: { success: false, error: 'Sem permissao' } })

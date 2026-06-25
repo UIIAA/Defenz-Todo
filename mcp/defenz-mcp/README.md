@@ -10,12 +10,23 @@ o MCP **nunca** envia `companyId`/`role`.
 
 ## Tools
 
+**Cards (Demandas):**
+
 | Tool | O que faz |
 |------|-----------|
 | `list_demandas` | Lista cards acessíveis. Filtros: `status`/coluna, `companyId` (admin), `teamId`, `limit`. |
-| `create_demanda` | Cria um card. Campos: `title` (obrigatório), `description`, `status`, `priority`, `classification`, `assignee`, `deadline` (YYYY-MM-DD), `dependsOn`. |
-| `update_demanda` | Atualiza campos de um card (`id` obrigatório). |
+| `create_demanda` | Cria um card. Campos: `title` (obrigatório), `company` (nome do projeto), `description`, `status`, `priority`, `classification`, `assignee`, `deadline` (YYYY-MM-DD), `dependsOn`. |
+| `update_demanda` | Atualiza campos de um card (`id` obrigatório). `company` move o card entre projetos (admin). |
 | `move_demanda` | Move um card de coluna. Aceita nome humano ("Em Andamento", "Concluída") ou status canônico. |
+
+**Subtarefas & tarefas por usuário:**
+
+| Tool | O que faz |
+|------|-----------|
+| `add_subtask` | Cria subtarefa num card (`demandaId`, `title`). Com `spentMinutes` lança no diário de horas (atribuído ao Responsável do card). Com `completed:true` nasce concluída. |
+| `complete_subtask` | Conclui (`completed:true`) ou reabre (`false`) uma subtarefa (`demandaId`, `subtaskId`). |
+| `list_subtasks` | Lista as subtarefas de um card (id, título, ✓, horas). Use para obter o `subtaskId`. |
+| `list_user_tasks` | Lista os cards de um usuário (`user` = nome ou e-mail, casa por aproximação). Filtro opcional `company`. |
 
 Status/colunas: `solicitada · selecionada · em_andamento · concluida · bloqueada`.
 

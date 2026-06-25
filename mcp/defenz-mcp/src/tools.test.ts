@@ -7,11 +7,23 @@ const sc = (r: { structuredContent?: Record<string, unknown> }) =>
   r.structuredContent as Record<string, any>
 
 
-function fakeClient(over: Partial<Record<'list' | 'create' | 'update', any>> = {}) {
+function fakeClient(
+  over: Partial<
+    Record<'list' | 'create' | 'update' | 'createSubtask' | 'updateSubtask', any>
+  > = {}
+) {
   return {
     list: vi.fn(over.list ?? (async () => [])),
     create: vi.fn(over.create ?? (async (x: any) => ({ id: 'new', ...x }))),
     update: vi.fn(over.update ?? (async (x: any) => ({ id: x.id, ...x }))),
+    createSubtask: vi.fn(
+      over.createSubtask ??
+        (async (_demandaId: string, x: any) => ({ id: 'st_new', completed: false, ...x }))
+    ),
+    updateSubtask: vi.fn(
+      over.updateSubtask ??
+        (async (_demandaId: string, subtaskId: string, x: any) => ({ id: subtaskId, ...x }))
+    ),
   }
 }
 
@@ -152,6 +164,177 @@ describe('move_demanda handler', () => {
     expect(res.isError).toBe(true)
     expect(client.update).not.toHaveBeenCalled()
     expect(res.content[0].text).toMatch(/coluna desconhecida/i)
+  })
+})
+
+describe('add_subtask handler', () => {
+  it('cria subtarefa via client.createSubtask e devolve o objeto criado', async () => {
+    const client = fakeClient({
+      createSubtask: async (_d: string, x: any) => ({
+        id: 'st1',
+        title: x.title,
+        completed: false,
+        spentMinutes: x.spentMinutes ?? 0,
+      }),
+    })
+    const h = buildHandlers(client as any)
+
+    const res = await h.add_subtask({ demandaId: 'd1', title: 'Sub A', spentMinutes: 60 })
+
+    expect(client.createSubtask).toHaveBeenCalledWith('d1', { title: 'Sub A', spentMinutes: 60 })
+    expect(res.isError).toBeFalsy()
+    expect(sc(res).id).toBe('st1')
+    expect(res.content[0].text).toContain('Sub A')
+  })
+
+  it('com completed:true cria e depois conclui a subtarefa (POST + PUT)', async () => {
+    const client = fakeClient({
+      createSubtask: async () => ({ id: 'st2', title: 'X', completed: false }),
+      updateSubtask: async (_d: string, id: string) => ({ id, title: 'X', completed: true }),
+    })
+    const h = buildHandlers(client as any)
+
+    const res = await h.add_subtask({ demandaId: 'd1', title: 'X', completed: true })
+
+    expect(client.createSubtask).toHaveBeenCalledWith('d1', { title: 'X' })
+    expect(client.updateSubtask).toHaveBeenCalledWith('d1', 'st2', { completed: true })
+    expect(sc(res).completed).toBe(true)
+    expect(res.content[0].text).toMatch(/conclu/i)
+  })
+
+  it('erro de API vira resultado de erro acionável (não lança)', async () => {
+    const client = fakeClient({
+      createSubtask: async () => {
+        throw new DefenzApiError('Demanda nao encontrada', 404)
+      },
+    })
+    const h = buildHandlers(client as any)
+
+    const res = await h.add_subtask({ demandaId: 'dX', title: 'Y' })
+
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/404|encontrada/i)
+  })
+})
+
+describe('complete_subtask handler', () => {
+  it('marca a subtarefa como concluída', async () => {
+    const client = fakeClient({
+      updateSubtask: async (_d: string, id: string, x: any) => ({ id, completed: x.completed }),
+    })
+    const h = buildHandlers(client as any)
+
+    const res = await h.complete_subtask({ demandaId: 'd1', subtaskId: 'st1', completed: true })
+
+    expect(client.updateSubtask).toHaveBeenCalledWith('d1', 'st1', { completed: true })
+    expect(sc(res).completed).toBe(true)
+    expect(res.content[0].text).toMatch(/conclu/i)
+  })
+
+  it('subtaskId inexistente vira erro 404 acionável', async () => {
+    const client = fakeClient({
+      updateSubtask: async () => {
+        throw new DefenzApiError('Subtask nao encontrada', 404)
+      },
+    })
+    const h = buildHandlers(client as any)
+
+    const res = await h.complete_subtask({ demandaId: 'd1', subtaskId: 'nope', completed: true })
+
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/404|encontrada/i)
+  })
+})
+
+describe('list_subtasks handler', () => {
+  it('lista as subtarefas do card a partir do GET de demandas', async () => {
+    const demandas = [
+      {
+        id: 'd1',
+        title: 'Card',
+        status: 'em_andamento',
+        subtasks: [
+          { id: 's1', title: 'Sub 1', completed: false, spentMinutes: 30 },
+          { id: 's2', title: 'Sub 2', completed: true, spentMinutes: 0 },
+        ],
+      },
+      { id: 'd2', title: 'Outro', status: 'solicitada', subtasks: [] },
+    ]
+    const client = fakeClient({ list: async () => demandas })
+    const h = buildHandlers(client as any)
+
+    const res = await h.list_subtasks({ demandaId: 'd1' })
+
+    expect(res.isError).toBeFalsy()
+    expect(sc(res).count).toBe(2)
+    expect(sc(res).subtasks[0].id).toBe('s1')
+    expect(res.content[0].text).toContain('s1')
+  })
+
+  it('card inexistente devolve erro acionável', async () => {
+    const client = fakeClient({ list: async () => [] })
+    const h = buildHandlers(client as any)
+
+    const res = await h.list_subtasks({ demandaId: 'nope' })
+
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(/encontrad/i)
+  })
+})
+
+describe('list_user_tasks handler', () => {
+  it('filtra os cards pelo responsável (nome OU e-mail, acento/caixa-insensível)', async () => {
+    const demandas = [
+      { id: 'd1', title: 'A', status: 'em_andamento', assignee: 'Leonardo Silva', spentMinutes: 120 },
+      { id: 'd2', title: 'B', status: 'solicitada', assignee: 'Marcos Cruz', spentMinutes: 0 },
+      {
+        id: 'd3',
+        title: 'C',
+        status: 'concluida',
+        assignee: null,
+        user: { name: 'leonardo silva', email: 'leo@defenz.com' },
+      },
+    ]
+    const client = fakeClient({ list: async () => demandas })
+    const h = buildHandlers(client as any)
+
+    const res = await h.list_user_tasks({ user: 'leonardo' })
+
+    expect(res.isError).toBeFalsy()
+    expect(sc(res).count).toBe(2)
+    expect(sc(res).tasks.map((t: any) => t.id)).toEqual(['d1', 'd3'])
+  })
+
+  it('com `company` resolve o nome para companyId no filtro do list', async () => {
+    const client = fakeClient({ list: async () => [] })
+    const h = buildHandlers(client as any)
+
+    await h.list_user_tasks({ user: 'qualquer', company: 'Grafono' })
+
+    expect(client.list).toHaveBeenCalledWith({ companyId: 'cmnuwl2yg0002l7046rwhmxu9' })
+  })
+
+  it('sem match retorna lista vazia com mensagem acionável (não erro)', async () => {
+    const demandas = [{ id: 'd1', title: 'A', status: 'em_andamento', assignee: 'Outra Pessoa' }]
+    const client = fakeClient({ list: async () => demandas })
+    const h = buildHandlers(client as any)
+
+    const res = await h.list_user_tasks({ user: 'fulano inexistente' })
+
+    expect(res.isError).toBeFalsy()
+    expect(sc(res).count).toBe(0)
+    expect(res.content[0].text).toMatch(/nenhuma tarefa/i)
+  })
+
+  it('empresa desconhecida retorna erro e NÃO chama a API', async () => {
+    const client = fakeClient()
+    const h = buildHandlers(client as any)
+
+    const res = await h.list_user_tasks({ user: 'x', company: 'Inexistente' })
+
+    expect(res.isError).toBe(true)
+    expect(client.list).not.toHaveBeenCalled()
+    expect(res.content[0].text).toMatch(/desconhecida/i)
   })
 })
 

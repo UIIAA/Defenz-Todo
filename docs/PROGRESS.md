@@ -7,10 +7,10 @@
 ## Current focus
 **Operação ativa via MCP/API + 3 features de produto no pipeline.** O `feature-demanda-company-selector` foi **DEPLOYADO** (commits `befcfde`+`15fa70a`, Vercel READY; E2E de move empresa→empresa verificado em prod). O MCP `defenz` está **plugado no Claude Code** (token persistente `marcos-mcp`, prefix `defz_066db3eb`, em `~/.claude.json` do projeto — ativa só após restart) e ganhou o param `company` (nome→id). Durante 17–24/06 alimentei MUITOS cards via API (token marcos-mcp) em Defenz e PSI.SheilaCarvalho (esteiras Meta, Apollo, LinkedIn, Sales AÍ, logs diários "Atividades DD/MM", etc.).
 
-**3 specs criadas (pendentes de implementação) — ver `docs/features/`:**
-- `feature-defenz-mcp-subtasks.md` — **APROVADA (design)**: estender o MCP com subtarefas (`add_subtask`/`complete_subtask`/`list_subtasks`) + `list_user_tasks` (tarefas de um usuário). Só mudança no pacote `mcp/defenz-mcp/`, **sem deploy do app**. → próximo a implementar (writing-plans).
-- `feature-playbooks-manuais.md` — **DRAFT**: menu "Playbooks / Manuais Defenz" (base de conhecimento). Precisa brainstorming.
-- `feature-service-desk.md` — **DRAFT**: menu Service Desk (tickets) vinculado ao Kanban. Tem análise das 3 opções de vínculo Ticket↔Demanda (lean = Opção C híbrida). REQUER brainstorming profundo.
+**Specs — ver `docs/features/`:**
+- `feature-defenz-mcp-subtasks.md` — **DONE (2026-06-24)**: 4 tools novas no MCP (`add_subtask`/`complete_subtask`/`list_subtasks`/`list_user_tasks`), só pacote `mcp/defenz-mcp/`, **sem deploy do app**. 52 testes MCP, build+type-check verdes. **Requer restart do Claude Code** para recarregar as tools.
+- `feature-service-desk.md` — **APROVADA (design, 2026-06-24)** pós-brainstorming + pesquisa multi-agente (6 ferramentas SD + crítica adversarial code-grounded). **Opção B enxuta**: `Ticket` próprio + vínculo 1:1 opcional a Demanda; **N2 = parceiro externo** (`escalatedAt`+`escalatedTo`, não tier interno); 3 estados (open/paused/resolved); `TicketMessage` (reply conta, note não); sem contador materializado; AuditLog ESCALATE; horas vivem na Demanda vinculada (logTimeDelta NÃO reusável). 5 métricas = queries diretas; relatório no estilo da aba Horas. → **PRÓXIMO A IMPLEMENTAR** (writing-plans → TDD).
+- `feature-playbooks-manuais.md` — **APROVADA (design, 2026-06-24)**. KB markdown-no-banco (sanitizado, dompurify+rehype-sanitize), 2 models (Playbook+PlaybookCategory, tags String[]), `companyId` nullable (global vs empresa via helper NOVO `playbookScopeWhere`), frescor (owner+verifiedAt+reviewDueAt, isStale derivado, reset reviewReminderSent no re-verify, editou-sem-dono→revisão), **busca full-text Postgres no MVP**, Cmd+K. Implementar **depois** do Service Desk.
 
 ### Histórico anterior
 **`feature-time-entries` (Desenho B) DEPLOYADA em prod (commit `8d22216`).** O push também levou as **Fases B+D** (commit `1fb3fcf`, MCP + multi-empresa) que estavam pendentes.
@@ -37,8 +37,8 @@
 **UI de gestão de tokens SHIPADA E DEPLOYADA (commit `8b53062`):** Configurações → Usuários → ação 🔑 "API Tokens" por usuário (**admin-only**) — gerar (plaintext 1x), listar, revogar. API `GET/POST/DELETE /api/users/[id]/api-tokens` (session-only, admin). Helpers em `src/lib/api-token.ts`. 442 testes. (Não depende mais de CLI/chat para gerar token.)
 
 ## ▶️ PRÓXIMA SESSÃO — começar aqui
-1. **Implementar `feature-defenz-mcp-subtasks`** (design aprovado): subtarefas + `list_user_tasks` no MCP. Começar por `writing-plans` → TDD em `mcp/defenz-mcp/`. Confirmar na impl se há `GET /api/demandas/[id]` Bearer com subtasks (senão filtrar do GET geral). Rebuild + restart do Claude pra ativar. Sem deploy do app.
-2. **Brainstorming dos 2 menus novos** (specs Draft): `feature-playbooks-manuais` e `feature-service-desk` (este último: decidir o vínculo Ticket↔Demanda — ler a análise das 3 opções na spec, lean = Opção C híbrida).
+1. ✅ **`feature-defenz-mcp-subtasks` IMPLEMENTADA (2026-06-24)** — 4 tools novas, 52 testes MCP, build verde. Confirmado: não há `GET /api/demandas/[id]` Bearer; `list_subtasks`/`list_user_tasks` usam o GET geral (que já embute `subtasks[]` + `user`). **Pendente do Marcos: restart do Claude Code** para recarregar as tools.
+2. **Brainstorming dos 2 menus novos** (specs Draft): `feature-playbooks-manuais` e `feature-service-desk` (este último: decidir o vínculo Ticket↔Demanda — ler a análise das 3 opções na spec, lean = Opção C híbrida). **Em andamento: pesquisa multi-agente de ferramentas renomadas + modelos.**
 3. **Corrigir o bug do AuditLog em PUT parcial** (tarefa registrada via chip): `diffChanges` loga campos ausentes como `→ null` quando o body é parcial (MCP `move_demanda`/`update_demanda`, curl). Fix: ignorar campos ausentes do payload. TDD em `src/lib/audit.ts` + `src/app/api/demandas/route.ts`.
 4. Deploy ordenado da Phase 2 do assignee-fk (independente; ver abaixo).
 
@@ -68,7 +68,7 @@
 - 2026-04-05 feature-executive-report — relatório executivo com slides via Gemini (1c3787c)
 
 ## Next up (priority order)
-0. **`feature-defenz-mcp-subtasks`** (design APROVADO) — subtarefas + `list_user_tasks` no MCP. Implementar (writing-plans → TDD). Só pacote `mcp/defenz-mcp/`, sem deploy.
+0. ✅ **`feature-defenz-mcp-subtasks` DONE** — 4 tools (subtarefas + `list_user_tasks`) no MCP, 52 testes. Só restart do Claude pendente.
 0b. **Menu "Playbooks / Manuais Defenz"** (`feature-playbooks-manuais`, DRAFT) — base de conhecimento interna. Brainstorming.
 0c. **Menu "Service Desk" (tickets)** (`feature-service-desk`, DRAFT) — abrir/triar tickets vinculados ao Kanban. **Pensar com profundidade** o vínculo Ticket↔Demanda (3 opções na spec; lean = híbrida C). Brainstorming profundo.
 0d. **Bug AuditLog PUT parcial** (chip) — `diffChanges` loga campos ausentes como `→null`. Fix em `src/lib/audit.ts`.

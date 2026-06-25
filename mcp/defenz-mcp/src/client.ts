@@ -5,6 +5,17 @@
  * Usa `fetch` nativo (Node ≥18). `fetchImpl` é injetável para testes.
  */
 
+export type Subtask = {
+  id: string
+  title: string
+  completed?: boolean
+  position?: number
+  estimatedMinutes?: number | null
+  spentMinutes?: number | null
+  demandaId?: string
+  [key: string]: unknown
+}
+
 export type Demanda = {
   id: string
   title: string
@@ -14,6 +25,12 @@ export type Demanda = {
   assignee?: string | null
   deadline?: string | null
   description?: string | null
+  spentMinutes?: number | null
+  estimatedMinutes?: number | null
+  /** Responsável (FK) resolvido — incluído pelo GET /api/demandas. */
+  user?: { name?: string | null; email?: string | null } | null
+  /** Subtarefas embutidas pelo GET /api/demandas (orderBy position asc). */
+  subtasks?: Subtask[]
   [key: string]: unknown
 }
 
@@ -77,6 +94,28 @@ export class DefenzClient {
   async update(input: { id: string } & Record<string, unknown>): Promise<Demanda> {
     const data = await this.request<Demanda>('PUT', '/api/demandas', input)
     return data as Demanda
+  }
+
+  /**
+   * Cria uma subtarefa num card. `input` aceita `title` (obrigatório),
+   * `position?`, `estimatedMinutes?`, `spentMinutes?`. Com `spentMinutes`,
+   * o servidor lança no diário de horas (atribuído ao Responsável do card pai).
+   */
+  async createSubtask(demandaId: string, input: Record<string, unknown>): Promise<Subtask> {
+    const path = `/api/demandas/${encodeURIComponent(demandaId)}/subtasks`
+    const data = await this.request<Subtask>('POST', path, input)
+    return data as Subtask
+  }
+
+  /** Atualiza uma subtarefa (ex.: `completed`, `title`, `spentMinutes`). */
+  async updateSubtask(
+    demandaId: string,
+    subtaskId: string,
+    input: Record<string, unknown>
+  ): Promise<Subtask> {
+    const path = `/api/demandas/${encodeURIComponent(demandaId)}/subtasks/${encodeURIComponent(subtaskId)}`
+    const data = await this.request<Subtask>('PUT', path, input)
+    return data as Subtask
   }
 
   private async request<T>(

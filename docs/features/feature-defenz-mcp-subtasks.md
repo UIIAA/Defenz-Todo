@@ -1,5 +1,5 @@
 # Feature: defenz-mcp — subtarefas + tarefas por usuário
-**Status:** Approved (design) — pendente implementação
+**Status:** Done
 **Priority:** P2
 **Date:** 2026-06-24
 
@@ -31,11 +31,17 @@ As 4 tools atuais permanecem: `list_demandas`, `create_demanda`, `update_demanda
 - **list_user_tasks** → `GET /api/demandas` (+ filtro client-side por `assignee`/`assignedToId` e por empresa).
 
 ## Acceptance Criteria
-- [ ] `add_subtask` cria subtarefa; com horas, aparece no diário; com `completed`, nasce ✓.
-- [ ] `complete_subtask` marca/reabre.
-- [ ] `list_subtasks` devolve ids usáveis em `complete_subtask`.
-- [ ] `list_user_tasks("Leonardo", "Defenz")` devolve os cards do Leonardo em Defenz.
-- [ ] As 4 tools existentes seguem funcionando. `npm test` (vitest do MCP) + `npm run build` verdes.
+- [x] `add_subtask` cria subtarefa; com horas, aparece no diário; com `completed`, nasce ✓.
+- [x] `complete_subtask` marca/reabre.
+- [x] `list_subtasks` devolve ids usáveis em `complete_subtask`.
+- [x] `list_user_tasks("Leonardo", "Defenz")` devolve os cards do Leonardo em Defenz.
+- [x] As 4 tools existentes seguem funcionando. `npm test` (vitest do MCP) + `npm run build` verdes.
+
+## Implementação (2026-06-24)
+- `client.ts`: tipo `Subtask` + campos `subtasks[]`/`user`/`spentMinutes`/`estimatedMinutes` em `Demanda`; métodos `createSubtask(demandaId, input)` (POST `/api/demandas/:id/subtasks`) e `updateSubtask(demandaId, subtaskId, input)` (PUT `/api/demandas/:id/subtasks/:subtaskId`).
+- `tools.ts`: 4 handlers + 4 schemas Zod + registro. `add_subtask` faz POST e, com `completed:true`, um PUT subsequente (o POST de subtask não aceita `completed`). `list_subtasks` e `list_user_tasks` são **client-side** sobre `client.list()` — o `GET /api/demandas` já embute `subtasks[]` (orderBy position) e o relation `user{name,email}`, então **nenhum endpoint novo / sem deploy do app**. `list_user_tasks` casa o responsável por substring normalizada (sem acento/caixa) contra `assignee`, `user.name` e `user.email`; empresa resolvida via `resolveCompanyId` ANTES da chamada (empresa desconhecida → erro sem request). Truncamento por `CHARACTER_LIMIT` reaproveitado (`renderItems`).
+- **Gate:** 52 testes MCP (eram 39, +13: 2 client + 11 handlers), `type-check` + `build` verdes. Smoke: server registra as 8 tools.
+- **Ativação:** `npm run build` no pacote feito. **Requer restart do Claude Code** para o MCP `defenz` recarregar as tools novas. Sem deploy do app.
 
 ## Technical Decisions
 - Só mudanças em `mcp/defenz-mcp/` — **não precisa deploy do app**. Ativa com `npm run build` no pacote + restart do Claude Code.
