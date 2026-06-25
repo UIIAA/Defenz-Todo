@@ -89,6 +89,22 @@ export const mockDb = {
     delete: vi.fn(),
     count: vi.fn(),
   },
+  ticket: {
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
+  ticketMessage: {
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    create: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
 }
 
 vi.mock('@/lib/db', () => ({
