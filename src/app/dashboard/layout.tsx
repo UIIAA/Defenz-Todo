@@ -49,6 +49,17 @@ export default function DashboardLayout({
   const companyLogoUrl = (session?.user as { companyLogoUrl?: string })?.companyLogoUrl
   const companyAccentColor = (session?.user as { companyAccentColor?: string })?.companyAccentColor
 
+  // Service Desk é Defenz-only (SD-ADR-001): só admin (cross-company) ou membro de Defenz
+  // vê o menu. A segurança real está nas rotas (assertCompanyAccess) — isto só esconde a nav.
+  // TODO: expor companyName na sessão p/ não hardcodar o id.
+  const DEFENZ_COMPANY_ID = 'cmn8wi8ze00003ouacf33hseb'
+  const userCompanyId = (session?.user as { companyId?: string })?.companyId
+  const userCompanyIds = (session?.user as { companyIds?: string[] })?.companyIds || []
+  const hasDefenzAccess =
+    userRole === 'admin' ||
+    userCompanyId === DEFENZ_COMPANY_ID ||
+    userCompanyIds.includes(DEFENZ_COMPANY_ID)
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/')
@@ -209,7 +220,8 @@ export default function DashboardLayout({
                 )}
               </div>
 
-              {/* Service Desk dropdown */}
+              {/* Service Desk dropdown (Defenz-only) */}
+              {hasDefenzAccess && (
               <div className="space-y-1">
                 <button
                   onClick={() => setServiceDeskOpen(!serviceDeskOpen)}
@@ -239,6 +251,7 @@ export default function DashboardLayout({
                   </div>
                 )}
               </div>
+              )}
 
               {/* Configuracoes dropdown - admin only */}
               {isAdmin && sidebarOpen && (

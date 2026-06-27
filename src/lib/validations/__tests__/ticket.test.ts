@@ -25,7 +25,7 @@ describe('createTicketSchema', () => {
 
 describe('updateTicketSchema', () => {
   it('aceita transição de status', () => {
-    expect(updateTicketSchema.parse({ status: 'resolved' }).status).toBe('resolved')
+    expect(updateTicketSchema.parse({ status: 'concluido' }).status).toBe('concluido')
   })
   it('rejeita status fora do conjunto', () => {
     expect(() => updateTicketSchema.parse({ status: 'fechado' })).toThrow()

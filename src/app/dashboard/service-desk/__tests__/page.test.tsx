@@ -13,8 +13,9 @@ beforeEach(() => {
 describe('ServiceDeskPage', () => {
   it('renderiza o cabeçalho e o estado vazio', async () => {
     render(<ServiceDeskPage />)
-    expect(screen.getByText('Service Desk')).toBeTruthy()
-    expect(screen.getByText('Novo ticket')).toBeTruthy()
+    // A página mostra Skeleton durante o load; conteúdo aparece após o fetch resolver.
+    expect(await screen.findByText('Service Desk')).toBeTruthy()
+    expect(await screen.findByText('Novo ticket')).toBeTruthy()
     expect(await screen.findByText(/nenhum ticket/i)).toBeTruthy()
   })
 })

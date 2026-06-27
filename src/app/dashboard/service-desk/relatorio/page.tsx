@@ -92,7 +92,7 @@ export default function ServiceDeskReportPage() {
           )}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Metric icon={Ticket} label="Tickets criados no período" value={String(metrics.total)} />
-            <Metric icon={Inbox} label="Em aberto (não resolvidos)" value={String(metrics.backlog)} />
+            <Metric icon={Inbox} label="Em aberto (não concluídos)" value={String(metrics.backlog)} />
             <Metric icon={ArrowUpRight} label="Repassados ao N2" value={`${metrics.escalatedCount} (${metrics.escalatedPct.toFixed(0)}%)`} accent="amber" />
             <Metric icon={Timer} label="Tempo médio de resolução" value={formatMinutesHuman(metrics.avgResolutionMinutes)} />
             <Metric icon={Hourglass} label="Tempo médio em aberto" value={formatMinutesHuman(metrics.avgOpenAgeMinutes)} />

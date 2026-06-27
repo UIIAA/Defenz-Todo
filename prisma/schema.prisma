@@ -959,18 +959,20 @@ model Ticket {
   id           String    @id @default(cuid())
   subject      String
   description  String?
-  status       String    @default("open")   // open | paused | resolved
-  priority     String    @default("media")  // alta | media | baixa
-  channel      String?                       // email | whatsapp | telefone | chat | outro
-  requester    String?                       // solicitante (texto livre)
+  status       String    @default("solicitado") // solicitado | em_atendimento | concluido
+  priority     String    @default("media")      // alta | media | baixa
+  channel      String?                           // email | whatsapp | telefone | chat | outro
+  requester    String?                           // solicitante (texto livre)
+  client       String?                           // NOVO v2: cliente atendido (≠ empresa-tenant; espelha Demanda.client)
 
   // --- escalonamento p/ Nível 2 EXTERNO ---
-  escalatedAt  DateTime?                      // setado SÓ na ação de encaminhar; null = nunca foi ao N2
-  escalatedTo  String?                        // parceiro destino (ex.: "SecuriSoft", "Bitdefender N2")
+  escalatedAt  DateTime?                          // setado SÓ na ação de encaminhar; null = nunca foi ao N2
+  escalatedTo  String?                            // parceiro destino (ex.: "SecuriSoft", "Bitdefender N2")
 
   // --- relógio (calendar time) ---
-  firstReplyAt DateTime?                      // 1ª resposta de agente (kind='reply')
-  resolvedAt   DateTime?                      // fecha o relógio do ticket
+  firstReplyAt    DateTime?                       // 1ª resposta de agente (kind='reply')
+  resolvedAt      DateTime?                       // fecha o relógio do ticket
+  columnChangedAt DateTime?                       // NOVO v2: quando entrou na coluna atual (motor do aging)
 
   // --- atribuição & multi-tenant ---
   assignedToId String?

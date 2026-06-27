@@ -3,45 +3,92 @@ import { computeTicketTimestamps, computeServiceDeskMetrics } from '../tickets-s
 
 const NOW = new Date('2026-06-24T12:00:00Z')
 
+// ─── computeTicketTimestamps ─────────────────────────────────────────────────
+
 describe('computeTicketTimestamps', () => {
-  it('seta resolvedAt ao ir para resolved', () => {
-    const r = computeTicketTimestamps({ status: 'open', resolvedAt: null }, { status: 'resolved' }, NOW)
+  it('seta resolvedAt e columnChangedAt ao ir para concluido', () => {
+    const r = computeTicketTimestamps(
+      { status: 'em_atendimento', resolvedAt: null },
+      { status: 'concluido' },
+      NOW
+    )
     expect(r.resolvedAt).toEqual(NOW)
+    expect(r.columnChangedAt).toEqual(NOW)
   })
 
-  it('limpa resolvedAt ao reabrir (resolved -> open)', () => {
-    const r = computeTicketTimestamps({ status: 'resolved', resolvedAt: NOW }, { status: 'open' }, NOW)
+  it('limpa resolvedAt e seta columnChangedAt ao reabrir (concluido -> solicitado)', () => {
+    const r = computeTicketTimestamps(
+      { status: 'concluido', resolvedAt: NOW },
+      { status: 'solicitado' },
+      NOW
+    )
     expect(r.resolvedAt).toBeNull()
+    expect(r.columnChangedAt).toEqual(NOW)
   })
 
-  it('não toca resolvedAt em mudança que não envolve resolved', () => {
-    const r = computeTicketTimestamps({ status: 'open', resolvedAt: null }, { status: 'paused' }, NOW)
+  it('seta columnChangedAt em troca lateral (solicitado -> em_atendimento) sem mexer em resolvedAt', () => {
+    const r = computeTicketTimestamps(
+      { status: 'solicitado', resolvedAt: null },
+      { status: 'em_atendimento' },
+      NOW
+    )
+    expect(r.columnChangedAt).toEqual(NOW)
     expect(r).not.toHaveProperty('resolvedAt')
   })
 
-  it('não toca resolvedAt quando status não muda', () => {
-    const r = computeTicketTimestamps({ status: 'open', resolvedAt: null }, {}, NOW)
-    expect(r).not.toHaveProperty('resolvedAt')
+  it('não retorna nada quando status não muda', () => {
+    const r = computeTicketTimestamps({ status: 'solicitado', resolvedAt: null }, {}, NOW)
+    expect(r).toEqual({})
+  })
+
+  it('não retorna nada quando patch.status é igual ao status atual', () => {
+    const r = computeTicketTimestamps(
+      { status: 'em_atendimento', resolvedAt: null },
+      { status: 'em_atendimento' },
+      NOW
+    )
+    expect(r).toEqual({})
+  })
+
+  // Edge: reabrir de concluido para em_atendimento (não só para solicitado)
+  it('limpa resolvedAt ao reabrir para em_atendimento', () => {
+    const r = computeTicketTimestamps(
+      { status: 'concluido', resolvedAt: NOW },
+      { status: 'em_atendimento' },
+      NOW
+    )
+    expect(r.resolvedAt).toBeNull()
+    expect(r.columnChangedAt).toEqual(NOW)
   })
 })
+
+// ─── computeServiceDeskMetrics ───────────────────────────────────────────────
 
 describe('computeServiceDeskMetrics', () => {
   it('calcula volume, backlog, interações, tempo e % escalado', () => {
     const tickets = [
       {
-        id: 't1', status: 'resolved',
-        createdAt: new Date('2026-06-20T10:00:00Z'), resolvedAt: new Date('2026-06-20T12:00:00Z'),
-        escalatedAt: new Date('2026-06-20T11:00:00Z'), escalatedTo: 'SecuriSoft', replyCount: 3,
+        id: 't1',
+        status: 'concluido',
+        createdAt: new Date('2026-06-20T10:00:00Z'),
+        resolvedAt: new Date('2026-06-20T12:00:00Z'),
+        escalatedAt: new Date('2026-06-20T11:00:00Z'),
+        escalatedTo: 'SecuriSoft',
+        replyCount: 3,
       },
       {
-        id: 't2', status: 'open',
-        createdAt: new Date('2026-06-24T10:00:00Z'), resolvedAt: null,
-        escalatedAt: null, escalatedTo: null, replyCount: 1,
+        id: 't2',
+        status: 'solicitado',
+        createdAt: new Date('2026-06-24T10:00:00Z'),
+        resolvedAt: null,
+        escalatedAt: null,
+        escalatedTo: null,
+        replyCount: 1,
       },
     ]
     const m = computeServiceDeskMetrics(tickets, NOW)
     expect(m.total).toBe(2)
-    expect(m.backlog).toBe(1)
+    expect(m.backlog).toBe(1) // só t2 (status !== 'concluido')
     expect(m.escalatedCount).toBe(1)
     expect(m.escalatedPct).toBeCloseTo(50)
     expect(m.avgRepliesPerTicket).toBeCloseTo(2) // (3+1)/2
@@ -56,6 +103,30 @@ describe('computeServiceDeskMetrics', () => {
     expect(m.escalatedPct).toBe(0)
     expect(m.avgRepliesPerTicket).toBe(0)
     expect(m.avgResolutionMinutes).toBe(0)
+    expect(m.avgOpenAgeMinutes).toBe(0)
     expect(m.escalatedByPartner).toEqual([])
+  })
+
+  it('backlog = apenas status !== concluido', () => {
+    const tickets = [
+      {
+        id: 't1', status: 'solicitado',
+        createdAt: new Date('2026-06-24T10:00:00Z'), resolvedAt: null,
+        escalatedAt: null, escalatedTo: null, replyCount: 0,
+      },
+      {
+        id: 't2', status: 'em_atendimento',
+        createdAt: new Date('2026-06-24T10:00:00Z'), resolvedAt: null,
+        escalatedAt: null, escalatedTo: null, replyCount: 0,
+      },
+      {
+        id: 't3', status: 'concluido',
+        createdAt: new Date('2026-06-24T08:00:00Z'), resolvedAt: new Date('2026-06-24T10:00:00Z'),
+        escalatedAt: null, escalatedTo: null, replyCount: 2,
+      },
+    ]
+    const m = computeServiceDeskMetrics(tickets, NOW)
+    expect(m.backlog).toBe(2) // t1 + t2
+    expect(m.total).toBe(3)
   })
 })

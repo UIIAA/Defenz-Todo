@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatMinutesHuman, TICKET_STATUS_META } from '../ticket-helpers'
+import { formatMinutesHuman, TICKET_CHANNEL_LABELS, TICKET_PRIORITY_LABELS } from '../ticket-helpers'
 
 describe('formatMinutesHuman', () => {
   it('formata faixas de minutos', () => {
@@ -14,10 +14,20 @@ describe('formatMinutesHuman', () => {
   })
 })
 
-describe('TICKET_STATUS_META', () => {
-  it('tem os 3 estados', () => {
-    expect(TICKET_STATUS_META.open.label).toBe('Aberto')
-    expect(TICKET_STATUS_META.paused.label).toBe('Pausado')
-    expect(TICKET_STATUS_META.resolved.label).toBe('Resolvido')
+describe('TICKET_CHANNEL_LABELS', () => {
+  it('tem os canais suportados', () => {
+    expect(TICKET_CHANNEL_LABELS.email).toBe('E-mail')
+    expect(TICKET_CHANNEL_LABELS.whatsapp).toBe('WhatsApp')
+    expect(TICKET_CHANNEL_LABELS.telefone).toBe('Telefone')
+    expect(TICKET_CHANNEL_LABELS.chat).toBe('Chat')
+    expect(TICKET_CHANNEL_LABELS.outro).toBe('Outro')
+  })
+})
+
+describe('TICKET_PRIORITY_LABELS', () => {
+  it('tem as 3 prioridades', () => {
+    expect(TICKET_PRIORITY_LABELS.alta).toBe('Alta')
+    expect(TICKET_PRIORITY_LABELS.media).toBe('Média')
+    expect(TICKET_PRIORITY_LABELS.baixa).toBe('Baixa')
   })
 })

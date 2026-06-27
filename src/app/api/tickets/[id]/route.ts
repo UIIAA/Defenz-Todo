@@ -6,7 +6,7 @@ import { updateTicketSchema } from '@/lib/validations/ticket'
 import { createAuditLog, diffChanges } from '@/lib/audit'
 import { computeTicketTimestamps } from '@/lib/tickets-server'
 
-const TRACKED = ['subject', 'description', 'status', 'priority', 'channel', 'requester', 'assignedToId']
+const TRACKED = ['subject', 'description', 'status', 'priority', 'channel', 'requester', 'client', 'assignedToId']
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

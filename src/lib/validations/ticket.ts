@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const TICKET_STATUS = ['open', 'paused', 'resolved'] as const
+export const TICKET_STATUS = ['solicitado', 'em_atendimento', 'concluido'] as const
 export const TICKET_CHANNELS = ['email', 'whatsapp', 'telefone', 'chat', 'outro'] as const
 const priorityEnum = z.enum(['alta', 'media', 'baixa'])
 
@@ -9,6 +9,7 @@ export const createTicketSchema = z.object({
   description: z.string().max(5000).optional(),
   companyId: z.string().optional(),
   requester: z.string().max(200).optional(),
+  client: z.string().max(200).optional(),
   channel: z.enum(TICKET_CHANNELS).optional(),
   priority: priorityEnum.default('media'),
   assignedToId: z.string().nullable().optional(),
@@ -21,6 +22,7 @@ export const updateTicketSchema = z.object({
   priority: priorityEnum.optional(),
   channel: z.enum(TICKET_CHANNELS).nullable().optional(),
   requester: z.string().max(200).nullable().optional(),
+  client: z.string().max(200).nullable().optional(),
   assignedToId: z.string().nullable().optional(),
 })
 

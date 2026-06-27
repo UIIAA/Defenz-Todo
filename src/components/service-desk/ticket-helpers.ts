@@ -1,6 +1,12 @@
 /** Helpers puros de apresentação do Service Desk (testáveis, sem React). */
 
+/** Status meta v2: solicitado | em_atendimento | concluido (+ aliases v1 p/ compatibilidade) */
 export const TICKET_STATUS_META: Record<string, { label: string; cls: string }> = {
+  // Status canônico v2
+  solicitado: { label: 'Solicitado', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300' },
+  em_atendimento: { label: 'Em atendimento', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
+  concluido: { label: 'Concluído', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' },
+  // Aliases v1 (legado — mantidos p/ compat com dados não migrados)
   open: { label: 'Aberto', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300' },
   paused: { label: 'Pausado', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
   resolved: { label: 'Resolvido', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' },

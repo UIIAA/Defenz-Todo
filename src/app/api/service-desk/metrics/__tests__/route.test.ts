@@ -13,13 +13,13 @@ describe('GET /api/service-desk/metrics', () => {
   it('retorna as métricas agregadas', async () => {
     mockDb.ticket.findMany.mockResolvedValue([
       {
-        id: 't1', status: 'resolved',
+        id: 't1', status: 'concluido',
         createdAt: new Date('2026-06-20T10:00:00Z'), resolvedAt: new Date('2026-06-20T12:00:00Z'),
         escalatedAt: new Date('2026-06-20T11:00:00Z'), escalatedTo: 'SecuriSoft',
         _count: { messages: 3 },
       },
       {
-        id: 't2', status: 'open',
+        id: 't2', status: 'solicitado',
         createdAt: new Date('2026-06-22T10:00:00Z'), resolvedAt: null,
         escalatedAt: null, escalatedTo: null, _count: { messages: 1 },
       },

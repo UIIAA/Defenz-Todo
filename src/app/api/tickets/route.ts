@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { resolveActor, companyScopeWhere, resolveActiveCompany, assertCompanyAccess } from '@/lib/auth'
+import { resolveActor, assertCompanyAccess } from '@/lib/auth'
 import { handleApiError, successResponse, createdResponse, ApiError } from '@/lib/api-helpers'
 import { createTicketSchema } from '@/lib/validations/ticket'
 import { createAuditLog } from '@/lib/audit'
+import { resolveDefenzCompanyId } from '@/lib/service-desk-server'
 
 /** Lista tickets do escopo do ator. Filtros: status, escalated, assignedToId, channel, período. */
 export async function GET(request: NextRequest) {
@@ -11,7 +12,12 @@ export async function GET(request: NextRequest) {
     const user = await resolveActor(request)
     const { searchParams } = new URL(request.url)
 
-    const where: Record<string, unknown> = { ...companyScopeWhere(user) }
+    // SD-ADR-001: Service Desk é Defenz-only. Gate de acesso + escopo FIXO Defenz
+    // (não usar companyScopeWhere — admin veria/teria escopo de todas as empresas).
+    const defenzId = await resolveDefenzCompanyId()
+    assertCompanyAccess(defenzId, user)
+
+    const where: Record<string, unknown> = { companyId: defenzId }
     const status = searchParams.get('status')
     if (status) where.status = status
     const channel = searchParams.get('channel')
@@ -37,15 +43,21 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** Cria um ticket no escopo do ator (companyId resolvido via resolveActiveCompany). */
+/**
+ * Cria um ticket. SD-ADR-001: Service Desk é Defenz-only.
+ * companyId é SEMPRE resolvido server-side (lookup por nome 'Defenz', cacheado).
+ * O body NÃO pode sobrescrever o tenant.
+ */
 export async function POST(request: NextRequest) {
   try {
     const user = await resolveActor(request)
     const body = await request.json()
     const data = createTicketSchema.parse(body)
 
-    const companyId = resolveActiveCompany(user, data.companyId)
-    if (!companyId) throw new ApiError('Empresa não resolvida para o ticket', 400)
+    // Defenz-only: ignora qualquer companyId do body; força o tenant correto.
+    const companyId = await resolveDefenzCompanyId()
+    // Gate: só quem tem acesso a Defenz pode abrir ticket (admin ou membro de Defenz).
+    assertCompanyAccess(companyId, user)
 
     // Guard de tenant no RESPONSÁVEL (espelha demandas): não atribuir a usuário de outra empresa.
     if (data.assignedToId) {
@@ -54,6 +66,8 @@ export async function POST(request: NextRequest) {
       assertCompanyAccess(assignee.companyId, user)
     }
 
+    // Desestrutura companyId do data (campo opcional do schema) para não duplicar.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { companyId: _omit, ...rest } = data
     const ticket = await db.ticket.create({
       data: { ...rest, companyId, createdById: user.id },
