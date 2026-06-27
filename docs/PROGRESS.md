@@ -70,7 +70,10 @@
 ## Next up (priority order)
 0. ✅ **`feature-defenz-mcp-subtasks` DONE** — 4 tools (subtarefas + `list_user_tasks`) no MCP, 52 testes. Só restart do Claude pendente.
 0b. **Menu "Playbooks / Manuais Defenz"** (`feature-playbooks-manuais`, DRAFT) — base de conhecimento interna. Brainstorming.
-0c. **Menu "Service Desk" (tickets)** (`feature-service-desk`, DRAFT) — abrir/triar tickets vinculados ao Kanban. **Pensar com profundidade** o vínculo Ticket↔Demanda (3 opções na spec; lean = híbrida C). Brainstorming profundo.
+0c. **Service Desk** — agora tem **GUIA MESTRE**: [`docs/features/service-desk-GUIA.md`](features/service-desk-GUIA.md) (visão, modelo de dados canônico, métricas, **Invariantes §9** = bugs já pagos, roadmap de features, ADRs). Ler SEMPRE antes de tocar Service Desk. Pipeline:
+   - **F1 Core** (`feature-service-desk.md`) — Kanban interno (Solicitado/Em atendimento/Concluído), WIP, aging→preto, "Abrir Demanda", drawer. v2 desenhado; v1 implementado (status open/paused/resolved a migrar). Aguarda implementação do redesign.
+   - **F2 Portal público** (`feature-service-desk-portal.md`, DRAFT) — `/abrir-ticket`: cliente abre ticket após verificar CNPJ+e-mail-na-console+nome contra `AuthorizedClient` (tabela sync do Zoho, **sem senha**); ticket cai na Defenz (`source=portal`) + notificação na tela. Em revisão adversarial multi-agente.
+   - **Fix SW/PWA** (commit `fix(pwa)`) JÁ FEITO — era a causa do "menu some/aparece".
 0d. **Bug AuditLog PUT parcial** (chip) — `diffChanges` loga campos ausentes como `→null`. Fix em `src/lib/audit.ts`.
 1. **Deploy ordenado da Phase 2** (manual, requer DIRECT_URL):
    1. `npx prisma migrate deploy` em staging

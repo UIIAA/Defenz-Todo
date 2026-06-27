@@ -38,6 +38,15 @@ model Ticket {
 }
 ```
 - **Migração de dados:** `db push` (aditivo: `client`, `columnChangedAt`). Backfill: `columnChangedAt = updatedAt` para os tickets existentes; status `open→solicitado`, `paused→em_atendimento`, `resolved→concluido` (1 ticket de teste hoje).
+- **Touch-points de status (checklist obrigatório — literais `open/paused/resolved` hardcoded em ~7 pontos):**
+  1. `src/lib/validations/ticket.ts` — enum/`default` do status.
+  2. `prisma/schema.prisma` — `@default("open")` → `@default("solicitado")`.
+  3. `src/lib/tickets-server.ts` — `computeTicketTimestamps` + `backlog = status !== 'resolved'`.
+  4. `src/app/api/service-desk/metrics/route.ts` — qualquer comparação de status.
+  5. `src/app/dashboard/service-desk/page.tsx` — filtros/colunas do board.
+  6. `src/app/dashboard/service-desk/relatorio/page.tsx` — labels/“backlog”.
+  7. Testes (`tickets-server.test.ts` etc.) — fixtures usam `open/resolved`.
+  ⚠️ Esta migração é **HARD BLOCK** da F2 (portal grava `status='solicitado'`).
 - `computeTicketTimestamps` passa a: setar `columnChangedAt=now` em **toda** troca de status; `resolvedAt=now` ao ir p/ `concluido`; limpar `resolvedAt` ao sair de `concluido`. `firstReplyAt` inalterado.
 - Métricas: `backlog = status !== 'concluido'`; resto igual.
 
