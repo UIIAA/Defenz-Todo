@@ -63,4 +63,12 @@ describe('ServiceWorkerRegister', () => {
     // Should not throw
     consoleSpy.mockRestore()
   })
+
+  it('nao registra SW na rota publica /abrir-ticket (portal)', () => {
+    process.env.NODE_ENV = 'production'
+    // Simula pathname do portal
+    vi.stubGlobal('location', { ...window.location, pathname: '/abrir-ticket' })
+    render(<ServiceWorkerRegister />)
+    expect(navigator.serviceWorker.register).not.toHaveBeenCalled()
+  })
 })

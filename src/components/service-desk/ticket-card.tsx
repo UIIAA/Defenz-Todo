@@ -11,6 +11,7 @@ export interface TicketCardData {
   priority: string
   client: string | null
   requester: string | null
+  createdAt: string
   escalatedAt: string | null
   escalatedTo: string | null
   columnChangedAt: string | null

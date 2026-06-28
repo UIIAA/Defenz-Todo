@@ -47,3 +47,30 @@ export const metricsQuerySchema = z.object({
 
 export type CreateTicketInput = z.infer<typeof createTicketSchema>
 export type UpdateTicketInput = z.infer<typeof updateTicketSchema>
+
+// ─── Portal público (F2) ──────────────────────────────────────────────────────
+
+/**
+ * Schema de validação para abertura de ticket pelo portal público.
+ *
+ * .strict() rejeita qualquer campo extra (assignedToId, status, companyId,
+ * source, createdById etc.) — o endpoint não confia no body para esses valores.
+ *
+ * CNPJ/e-mail são validados aqui apenas como strings não-vazias; a
+ * normalização e a verificação real (AuthorizedClient) ocorrem no handler.
+ */
+export const publicCreateTicketSchema = z
+  .object({
+    cnpj: z.string().min(1, 'CNPJ obrigatório'),
+    email: z.string().email('E-mail inválido'),
+    name: z.string().min(1, 'Nome obrigatório').max(200),
+    subject: z.string().min(1, 'Assunto obrigatório').max(200),
+    description: z.string().max(5000).optional(),
+    priority: z.enum(['alta', 'media', 'baixa']).optional(),
+    // Campos anti-bot (não persistidos)
+    _hp: z.string().optional(),   // honeypot: deve estar vazio
+    _t: z.number().optional(),    // tempo desde render em ms (mínimo verificado no handler)
+  })
+  .strict()
+
+export type PublicCreateTicketInput = z.infer<typeof publicCreateTicketSchema>

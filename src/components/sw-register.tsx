@@ -6,6 +6,10 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
 
+    // Pagina publica de portal: nao registrar SW (evita que o app-shell cacheado
+    // controle a rota publica e cause comportamentos inesperados em modo offline)
+    if (window.location.pathname.startsWith('/abrir-ticket')) return
+
     if (process.env.NODE_ENV === 'production') {
       navigator.serviceWorker.register('/sw.js').catch((err) => {
         console.warn('SW registration failed:', err)

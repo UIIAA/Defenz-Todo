@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LifeBuoy, Plus } from 'lucide-react'
@@ -10,6 +10,10 @@ import { TicketBoard } from '@/components/service-desk/ticket-board'
 import { TicketDrawer } from '@/components/service-desk/ticket-drawer'
 import { NewTicketDialog } from '@/components/service-desk/new-ticket-dialog'
 import type { TicketCardData } from '@/components/service-desk/ticket-card'
+import { usePolling } from '@/hooks/use-polling'
+import { contarNovos } from '@/lib/service-desk-badge'
+
+const LS_KEY = 'sd:lastSeen'
 
 export default function ServiceDeskPage() {
   const [tickets, setTickets] = useState<TicketCardData[]>([])
@@ -17,6 +21,23 @@ export default function ServiceDeskPage() {
   const [selectedTicket, setSelectedTicket] = useState<TicketCardData | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [newTicketOpen, setNewTicketOpen] = useState(false)
+  const [lastSeen, setLastSeen] = useState<string | null>(null)
+
+  // Lê lastSeen do localStorage apenas no cliente
+  const lastSeenInitialized = useRef(false)
+  useEffect(() => {
+    if (lastSeenInitialized.current) return
+    lastSeenInitialized.current = true
+    const stored = localStorage.getItem(LS_KEY)
+    setLastSeen(stored)
+  }, [])
+
+  /** Marca "visto agora" — zera badge e persiste */
+  const markSeen = useCallback(() => {
+    const now = new Date().toISOString()
+    localStorage.setItem(LS_KEY, now)
+    setLastSeen(now)
+  }, [])
 
   const load = useCallback(async () => {
     try {
@@ -35,9 +56,23 @@ export default function ServiceDeskPage() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  // Polling a cada 20s (o hook já trata visibilitychange + fetch imediato no mount)
+  usePolling({ fetchFn: load, intervalMs: 20_000 })
+
+  // Ao focar a aba (visibilitychange para visible), marca visto
+  useEffect(() => {
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') markSeen()
+    }
+    document.addEventListener('visibilitychange', handleFocus)
+    return () => document.removeEventListener('visibilitychange', handleFocus)
+  }, [markSeen])
+
+  // Badge: tickets com createdAt depois do lastSeen
+  const novos = contarNovos(tickets, lastSeen)
 
   const handleTicketClick = (t: TicketCardData) => {
+    markSeen()
     setSelectedTicket(t)
     setDrawerOpen(true)
   }
@@ -75,9 +110,21 @@ export default function ServiceDeskPage() {
             <LifeBuoy className="h-5 w-5 text-blue-500" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Service Desk
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                Service Desk
+              </h1>
+              {novos > 0 && (
+                <button
+                  type="button"
+                  onClick={markSeen}
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-pointer"
+                  title="Clique para marcar como visto"
+                >
+                  {novos} novo{novos !== 1 ? 's' : ''}
+                </button>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">
               {tickets.length} ticket{tickets.length !== 1 ? 's' : ''} · Kanban de atendimento
             </p>
