@@ -1,5 +1,5 @@
 # Feature: Menu "Service Desk" (tickets) — integrado ao Kanban Defenz
-**Status:** v1 Implemented (em dev/localhost) → **Redesign v2 APROVADO em design (2026-06-25), pendente implementação** — ver seção "Redesign v2" abaixo. Deploy Vercel ainda não feito.
+**Status:** **v2 IMPLEMENTADO em local (2026-06-27)** — Kanban 3 colunas (DnD/WIP/aging→preto), campo `client`+autocomplete, drawer, "Abrir Demanda" 1:1, migração status v1→v2, Defenz-only. db push no Neon feito. 666 testes + smoke E2E navegador OK. **Deploy Vercel ainda NÃO feito** (decisão do Marcos). Revisão Opus (12 achados) aplicada. Ver seção "Redesign v2" abaixo + GUIA.
 **Priority:** P2
 **Date:** 2026-06-24 (design fechado após brainstorming + pesquisa multi-agente de 6 ferramentas renomadas)
 

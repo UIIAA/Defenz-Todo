@@ -1,16 +1,20 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-06-24
-**Version:** 0.2.0
+**Last updated:** 2026-06-27
+**Version:** 0.3.0
 **Branch:** main
 
 ## Current focus
-**Operação ativa via MCP/API + 3 features de produto no pipeline.** O `feature-demanda-company-selector` foi **DEPLOYADO** (commits `befcfde`+`15fa70a`, Vercel READY; E2E de move empresa→empresa verificado em prod). O MCP `defenz` está **plugado no Claude Code** (token persistente `marcos-mcp`, prefix `defz_066db3eb`, em `~/.claude.json` do projeto — ativa só após restart) e ganhou o param `company` (nome→id). Durante 17–24/06 alimentei MUITOS cards via API (token marcos-mcp) em Defenz e PSI.SheilaCarvalho (esteiras Meta, Apollo, LinkedIn, Sales AÍ, logs diários "Atividades DD/MM", etc.).
+**Service Desk F1 + F2 IMPLEMENTADOS e verificados em localhost — NÃO deployados pro Vercel (decisão do Marcos: validar local primeiro). DB (Neon, dev=prod) já tem o schema aplicado.** Sessão de 25–27/06: MCP Subtasks (commit `f6ed430`), fix do bug PWA/Service Worker (menu "some/aparece" — era SW servindo app shell velho, commit `fix(pwa)`), **GUIA mestre do Service Desk** + spec do portal (revisão adversarial de 48 achados aplicada), **F1** (Kanban v2 + migração de status, commit `feat(service-desk): F1`) e **F2** (portal público `/abrir-ticket`, commit `feat(service-desk): F2`). Orquestração: Sonnets em paralelo p/ build + Opus p/ review, gate (build/tsc/test + smoke no navegador) pelo main loop. **666 testes verdes.**
+
+> ⚠️ **Para um contexto novo entender o Service Desk:** ler `docs/features/service-desk-GUIA.md` (guia mestre — visão, modelo de dados, **Invariantes §9**, roadmap, ADRs). F1 = `feature-service-desk.md`, F2 = `feature-service-desk-portal.md`.
 
 **Specs — ver `docs/features/`:**
-- `feature-defenz-mcp-subtasks.md` — **DONE (2026-06-24)**: 4 tools novas no MCP (`add_subtask`/`complete_subtask`/`list_subtasks`/`list_user_tasks`), só pacote `mcp/defenz-mcp/`, **sem deploy do app**. 52 testes MCP, build+type-check verdes. **Requer restart do Claude Code** para recarregar as tools.
-- `feature-service-desk.md` — **IMPLEMENTADA + db push + E2E ✓ (2026-06-24)**; **deploy Vercel PENDENTE** (decisão do Marcos — roda só em dev/localhost contra o Neon). Opção B enxuta: `Ticket`+`TicketMessage`, vínculo 1:1 opcional a Demanda, N2=parceiro externo (`escalatedAt`+`escalatedTo`), 3 estados, service-layer puro (timestamps+métricas), 6 rotas + `/api/service-desk/metrics`, UI (nav+lista+TicketModal+relatório Recharts). 40 testes novos (**571 total**), build+tsc verdes. Revisão adversarial (20 agentes, 13 achados, todos corrigidos). `db push` aplicado no Neon (aditivo); E2E autenticado 14/14. Plano: `docs/plans/2026-06-24-service-desk.md`. **Para publicar: `git push` → Vercel.**
-- `feature-playbooks-manuais.md` — **APROVADA (design, 2026-06-24)**. KB markdown-no-banco (sanitizado, dompurify+rehype-sanitize), 2 models (Playbook+PlaybookCategory, tags String[]), `companyId` nullable (global vs empresa via helper NOVO `playbookScopeWhere`), frescor (owner+verifiedAt+reviewDueAt, isStale derivado, reset reviewReminderSent no re-verify, editou-sem-dono→revisão), **busca full-text Postgres no MVP**, Cmd+K. Implementar **depois** do Service Desk.
+- `feature-defenz-mcp-subtasks.md` — **DONE** (commit `f6ed430`): 4 tools novas no MCP. **Requer restart do Claude Code** p/ recarregar (já reconectou nesta sessão).
+- `service-desk-GUIA.md` — **GUIA MESTRE (vivo)** do Service Desk. Fonte de verdade. ADRs 001–007.
+- `feature-service-desk.md` (F1) — **IMPLEMENTADO local** (Kanban v2, migração status, "Abrir Demanda"). db push feito. Não deployado.
+- `feature-service-desk-portal.md` (F2) — **IMPLEMENTADO local** (portal `/abrir-ticket`). db push + seed feitos. Não deployado. **Subdomínio `suporte.` + DNS = pendente.**
+- `feature-playbooks-manuais.md` — **APROVADA (design)**, não implementada. KB markdown. Próxima feature de produto candidata.
 
 ### Histórico anterior
 **`feature-time-entries` (Desenho B) DEPLOYADA em prod (commit `8d22216`).** O push também levou as **Fases B+D** (commit `1fb3fcf`, MCP + multi-empresa) que estavam pendentes.
@@ -37,10 +41,16 @@
 **UI de gestão de tokens SHIPADA E DEPLOYADA (commit `8b53062`):** Configurações → Usuários → ação 🔑 "API Tokens" por usuário (**admin-only**) — gerar (plaintext 1x), listar, revogar. API `GET/POST/DELETE /api/users/[id]/api-tokens` (session-only, admin). Helpers em `src/lib/api-token.ts`. 442 testes. (Não depende mais de CLI/chat para gerar token.)
 
 ## ▶️ PRÓXIMA SESSÃO — começar aqui
-1. ✅ **`feature-defenz-mcp-subtasks` IMPLEMENTADA (2026-06-24)** — 4 tools novas, 52 testes MCP, build verde. Confirmado: não há `GET /api/demandas/[id]` Bearer; `list_subtasks`/`list_user_tasks` usam o GET geral (que já embute `subtasks[]` + `user`). **Pendente do Marcos: restart do Claude Code** para recarregar as tools.
-2. **Brainstorming dos 2 menus novos** (specs Draft): `feature-playbooks-manuais` e `feature-service-desk` (este último: decidir o vínculo Ticket↔Demanda — ler a análise das 3 opções na spec, lean = Opção C híbrida). **Em andamento: pesquisa multi-agente de ferramentas renomadas + modelos.**
-3. **Corrigir o bug do AuditLog em PUT parcial** (tarefa registrada via chip): `diffChanges` loga campos ausentes como `→ null` quando o body é parcial (MCP `move_demanda`/`update_demanda`, curl). Fix: ignorar campos ausentes do payload. TDD em `src/lib/audit.ts` + `src/app/api/demandas/route.ts`.
-4. Deploy ordenado da Phase 2 do assignee-fk (independente; ver abaixo).
+**Ler primeiro `docs/features/service-desk-GUIA.md` (§9 Invariantes são obrigatórias).** Service Desk F1+F2 estão prontos em local, schema no Neon, mas NÃO no Vercel. Opções (Marcos escolhe):
+1. **Subdomínio do portal** (F2 polish): `suporte.defenz.com.br` = mesma app Vercel via **host-rewrite** (middleware/`vercel.ts`) → `/abrir-ticket`, mesmo origin (sem CORS); **bloquear `/dashboard` no host `suporte.`**; DNS hoje na **YCORN** → migrar p/ Cloudflare/Vercel p/ gerir via prompt. (Spec já tem a seção "Domínio / hospedagem".)
+2. **F4 — Sync do Zoho** p/ popular `AuthorizedClient` de verdade (hoje só o seed `scripts/seed-portal.ts` com "Cliente Teste"). Criar a spec `feature-service-desk-zoho-sync.md` sob o GUIA.
+3. **Deploy pro Vercel** quando Marcos validar (schema já está no Neon dev=prod, então só `git push`). Lembrar: SW `CACHE_NAME` já está em `defenz-v3`.
+4. **`feature-playbooks-manuais`** (aprovada, não implementada) — KB markdown. Outra feature de produto.
+5. **Bug do AuditLog em PUT parcial** (chip, ainda aberto): `diffChanges` loga campos ausentes como `→ null` (afeta MCP `move/update_demanda` + curl). Fix: ignorar campos ausentes do payload. TDD em `src/lib/audit.ts`. (GUIA §9.6 lembra: o fix do ticket vive na rota, não centralizado.)
+6. Deploy ordenado da Phase 2 do assignee-fk (independente; ver abaixo).
+
+### Como testar o portal F2 (localhost)
+`npm run dev` → `http://localhost:3000/abrir-ticket` → CNPJ `11.222.333/0001-81` · e-mail `teste@cliente.com.br` · nome qualquer → abre ticket + protocolo `SD-2026-...`. Qualquer outro CNPJ/e-mail → 422 genérico (anti-enumeração). Ticket aparece em `/dashboard/service-desk` (Solicitado). Seed: `npx tsx scripts/seed-portal.ts` (idempotente). Usuário-sistema: `portal@defenz.com.br`.
 
 ## Como operar dados em prod (resumo p/ contexto novo — detalhe em memória `project_api_access`)
 - **Token**: `marcos-mcp` (admin, 4 empresas) está ativo e persistente em `~/.claude.json` → `projects["<repo>"].mcpServers.defenz.env.DEFENZ_API_TOKEN`. Scripts leem dele.
@@ -48,10 +58,13 @@
 - **Padrão de log diário** preferido do Marcos: itens novos → 1 card "Atividades DD/MM" (concluída, cliente Defenz) com subtarefas ☑; itens que já têm card → subtarefa `[DD/MM]` no card existente (checar antes p/ não duplicar).
 
 ## In progress
-- (nada em código aberto) — `feature-demanda-company-selector` deployado; 3 specs aguardando implementação/brainstorming.
+- (nada em código aberto) — Service Desk F1+F2 implementados e commitados **local**; aguardam **deploy pro Vercel** (decisão do Marcos). Schema já no Neon (dev=prod).
+- Pendente de produto: subdomínio `suporte.` (host-rewrite+DNS), F4 sync Zoho, Playbooks.
 - feature-assignee-fk-migration continua aguardando deploy ordenado (independente).
+- Bug AuditLog PUT parcial: ainda aberto (chip).
 
 ## Recently completed (last 5)
+- 2026-06-25→27 **Service Desk: MCP Subtasks + fix PWA/SW + GUIA + F1 + F2** (commits `f6ed430`, `fix(pwa)`, `e59448e` specs, `feat(service-desk): F1`, `feat(service-desk): F2`, + docs). **MCP Subtasks** (4 tools). **Fix PWA/Service Worker**: o "menu some/aparece" era o SW servindo app shell cacheado — dev autodesregistra + `CACHE_NAME` bump + stale-while-revalidate + SW fora da rota pública. **GUIA mestre** do Service Desk + spec do portal (revisão adversarial 48 achados aplicada). **F1** (Kanban v2: 3 colunas DnD, WIP soft vermelho, aging verde→âmbar→**preto**, campo `client`+autocomplete, drawer, "Abrir Demanda" 1:1, migração status open/paused/resolved→solicitado/em_atendimento/concluido, Defenz-only). **F2** (portal público `/abrir-ticket`: verifica CNPJ+e-mail contra `AuthorizedClient`, ticket Defenz `source=portal`, protocolo atômico `TicketSequence`, usuário-sistema `portal@defenz.com.br`, endpoint burro + anti-enumeração 422 uniforme + honeypot + rate-limit; badge "novos"). Orquestração Sonnet(∥)+Opus(review), gate main loop. **666 testes, tsc+build verdes. db push + seed no Neon. Smoke E2E navegador OK** (F1: board/aging/PUT status; F2: protocolo SD-2026-000001, 4 falhas→422 idêntico, ticket no board). **NÃO deployado pro Vercel.**
 - 2026-06-17→24 **`feature-demanda-company-selector` DEPLOYADO** (commits `befcfde`+`15fa70a`) — seletor Empresa/Projeto no modal (admin) + PUT move entre empresas (limpa teamId, AuditLog), E2E move verificado em prod. MCP `defenz` plugado (token `marcos-mcp`) + estendido c/ param `company`. 531 testes app + 39 MCP. Depois: muitos cards alimentados via API em Defenz/PSI (esteiras Meta/Apollo/LinkedIn/Sales AÍ + logs diários "Atividades DD/MM"). 3 specs novas criadas (mcp-subtasks aprovada; playbooks + service-desk draft). Relatório de horas do Leonardo (Defenz, 2 sem) — achados 3 outliers (36/36/28h) prováveis erros de lançamento.
 - 2026-06-08 **`feature-time-entries` (Desenho B) DEPLOYADA** (commit `8d22216`, push) — diário de horas delta-on-save + campo `Demanda.client` + aba `/dashboard/demandas/horas`. Schema (`Demanda.client`, modelo `TimeEntry`), helpers puros + `logTimeDelta`, hooks de delta em `PUT /api/demandas` + 3 rotas de subtarefa, `GET /api/time-entries` (admin/gerência, escopo por conjunto + filtros + TZ SP + cap 5000), modal c/ campo Cliente (board/horas inalterados), nav admin/gerência, seed `backfill-time-entries.ts` (baseline auto-corretivo). **31 testes novos (523 total), tsc+build verdes.** Revisão adversarial multi-agente (6 dims → verify, 2 rodadas) → 1 alto + 2 médios + baixos, todos corrigidos. **Deploy:** `db push` no Neon + backfill (5 baseline) + E2E autenticado dev (200 c/ 5 lançamentos) + push → Vercel (prod live). **O mesmo push levou Fases B+D (`1fb3fcf`) a prod.** Specs: feature-time-entries.
 - 2026-06-07 **Spec `feature-time-entries` (Desenho B)** APROVADA + commitada (`087eaa2`) via brainstorming. Diário de horas delta-on-save, campo Cliente (≠ Empresa-tenant), aba Horas. Iterou por 2 reframes: descartado "diário como fonte da verdade" e "diário manual" → ficou delta-on-save (livre edição preservada).

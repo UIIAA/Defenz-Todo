@@ -1,5 +1,5 @@
 # Feature: Service Desk — Portal público de abertura de ticket
-**Status:** Reviewed — revisão adversarial multi-agente aplicada (48 achados) — pronta p/ `writing-plans`
+**Status:** **IMPLEMENTADO em local (2026-06-27)** — página `/abrir-ticket` + endpoint `POST /api/public/tickets` + `AuthorizedClient`/`TicketSequence` + usuário-sistema. db push + seed no Neon. 666 testes + smoke E2E navegador OK (protocolo SD-2026-000001; anti-enum 4×422). **Subdomínio `suporte.` + DNS = PENDENTE.** **Deploy Vercel NÃO feito.** (Revisão adversarial de 48 achados na spec + 8 da impl aplicadas.)
 **Priority:** P1
 **Date:** 2026-06-25
 **Guia:** [`service-desk-GUIA.md`](service-desk-GUIA.md) — herda TODAS as invariantes da §9.
