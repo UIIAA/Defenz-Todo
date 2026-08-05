@@ -29,6 +29,16 @@ export const mockDb = {
     findMany: vi.fn(),
     count: vi.fn(),
   },
+  playbook: {
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
   inviteToken: {
     findMany: vi.fn(),
     findUnique: vi.fn(),

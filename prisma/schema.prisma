@@ -29,6 +29,7 @@ model Company {
   userCompanies     UserCompany[]     // memberships adicionais (multi-empresa)
   tickets           Ticket[]          // service desk
   authorizedClients AuthorizedClient[] // portal: clientes autorizados
+  playbooks         Playbook[]        // portal defenz: POPs e biblioteca
 }
 
 model Team {
@@ -120,6 +121,9 @@ model User {
   ticketsAsAgent          Ticket[]                 @relation("TicketAgent")
   ticketsCreated          Ticket[]                 @relation("TicketCreator")
   ticketMessages          TicketMessage[]          @relation("TicketMessageAuthor")
+  playbooksOwned          Playbook[]               @relation("PlaybookOwner")
+  playbooksVerified       Playbook[]               @relation("PlaybookVerifier")
+  playbooksCreated        Playbook[]               @relation("PlaybookCreator")
 
   @@index([email])
   @@index([companyId])
@@ -1049,4 +1053,50 @@ model TicketSequence {
   lastSeq Int @default(0)
 
   @@map("ticket_sequences")
+}
+
+// ---------------------------------------------------------------------------
+// PORTAL DEFENZ (feature-portal-defenz.md v2)
+// Um modelo para POP (conteudo markdown no app) e BIBLIOTECA (ficha + link Drive).
+// companyId null = conteudo GLOBAL Defenz. Escopo via scopedPlaybookWhere().
+// ---------------------------------------------------------------------------
+
+enum PlaybookKind {
+  POP
+  BIBLIOTECA
+}
+
+model Playbook {
+  id          String       @id @default(cuid())
+  kind        PlaybookKind @default(POP)
+  title       String
+  body        String // POP: markdown | BIBLIOTECA: ficha descritiva
+  externalUrl String? // obrigatorio quando kind=BIBLIOTECA (https only)
+  isArchived  Boolean      @default(false)
+  tags        String[]     @default([])
+
+  // multi-tenant: null = GLOBAL Defenz; setado = por-empresa
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  // --- FRESCOR (o diferencial) ---
+  ownerId            String?
+  owner              User?     @relation("PlaybookOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  verifiedAt         DateTime?
+  verifiedById       String?
+  verifiedBy         User?     @relation("PlaybookVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+  reviewIntervalDays Int?      @default(90) // null = evergreen
+  reviewDueAt        DateTime? // setado na CRIACAO e em cada verify
+  reviewReminderSent Boolean   @default(false)
+
+  createdById String? // nullable + SetNull: deletar autor nao trava (cf. FK do AuditLog)
+  createdBy   User?    @relation("PlaybookCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId, isArchived])
+  @@index([kind, isArchived])
+  @@index([ownerId])
+  @@index([reviewDueAt, reviewReminderSent])
+  @@map("playbooks")
 }

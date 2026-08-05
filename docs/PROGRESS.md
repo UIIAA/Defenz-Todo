@@ -1,13 +1,17 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-07-20
+**Last updated:** 2026-08-05
 **Version:** 0.3.0
 **Branch:** main
 
-## 🔜 PRÓXIMA FEATURE — Portal Defenz (pedido do Marcos em 20/07)
-**Nova página que centraliza 3 pilares: (1) IA Defenz [pesquisas], (2) Central de POPs/procedimentos com imagens, (3) Biblioteca de manuais + modelos de apresentação/proposta.**
-👉 Spec inicial + estudo de formato ("links diretos ou não") + **5 decisões pendentes (D1–D5)** em [`docs/features/feature-portal-defenz.md`](features/feature-portal-defenz.md).
-⚠️ **Descoberta-chave:** `feature-playbooks-manuais.md` (já **aprovada**) cobre o Pilar 2 — o Portal deve ser o **guarda-chuva** que a absorve, não uma feature do zero. **Não implementar antes de fechar D1–D5 com o Marcos** (Spec-First).
+## ▶️ EM CURSO — Portal Defenz (D1–D5 fechadas · spec v2 · **F1 implementada local**)
+**Página que centraliza 3 pilares: (1) IA Defenz, (2) POPs com imagens, (3) Biblioteca de manuais/modelos.** Menu próprio em `/dashboard/portal`.
+- **Decisões (05/08):** D1 = IA pesquisa **base interna E web** · D1b = **híbrido** (interna no app, web no n8n via webhook) · D2 = imagens por **link do Drive** · D3 = Portal **interno** (`/abrir-ticket` segue a única superfície pública) · D4 = **menu próprio**, absorve o "Playbooks" da spec antiga · D5 = começar com **3–5 POPs** reais.
+- **Documentos:** spec [`feature-portal-defenz.md`](features/feature-portal-defenz.md) **v2** · crítica adversarial [`feature-portal-defenz-review.md`](features/feature-portal-defenz-review.md) (4 críticos + 8 médios, com disposição) · plano [`2026-08-05-portal-defenz-f1.md`](superpowers/plans/2026-08-05-portal-defenz-f1.md).
+- **F1 (Fundação POPs) IMPLEMENTADA local:** model `Playbook` + `db push` no Neon, `scopedPlaybookWhere`, frescor derivado, 4 rotas, `<PortalMarkdown>` + `<FreshnessBadge>`, 3 páginas, nav, passo no cron. **711 testes** (era 668), `tsc`+`build` verdes. **NÃO deployado pro Vercel.**
+- **Smoke ao vivo (Neon, via Bearer):** criar POP → `reviewDueAt` já preenchido na criação ✓ · busca por palavra que só existe **no corpo** ✓ · verify reseta relógio + `reviewReminderSent` ✓ · PUT parcial logou **só** o campo enviado (bug do `→ null` não reintroduzido) ✓ · rotas 401/307 sem credencial, zero 500. Registro de teste removido do banco depois (0 playbooks).
+- ⚠️ **PENDENTE — R1 (bloqueia o fechamento da F1):** falta o **smoke do hotlink do Drive**. Precisa do Marcos subir 1 print no Drive e mandar o link. Se a URL não renderizar dentro de `<img>` (o Drive costuma bloquear hotlink), a saída é `/api/portal/image-proxy`; plano C = Vercel Blob. Enquanto isso o `<PortalMarkdown>` já mostra placeholder explícito em vez de quadro branco.
+- **Próximas fases:** F2 conteúdo (3–5 POPs reais) · F3 Biblioteca · F4 IA interna (**pipeline novo em `src/lib/portal/ask.ts`** — `src/lib/ai/` é dead code, não serve) · F5 IA web via n8n.
 
 ## Current focus
 **Service Desk MVP local "polido" — F1 + F2 + métricas (5 do GUIA §8) prontos e verificados em localhost; NÃO deployado pro Vercel (decisão do Marcos: validar local primeiro). DB (Neon, dev=prod) já tem o schema aplicado.**

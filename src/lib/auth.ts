@@ -23,7 +23,7 @@ export type SessionUser = {
   image?: string | null
 }
 
-type ScopeUser = Pick<SessionUser, 'role' | 'companyId' | 'companyIds'>
+export type ScopeUser = Pick<SessionUser, 'role' | 'companyId' | 'companyIds'>
 
 export async function getSession() {
   return await getServerSession(authOptions)

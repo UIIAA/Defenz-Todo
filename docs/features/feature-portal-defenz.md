@@ -1,95 +1,316 @@
 # Feature: Portal Defenz
 
-**Status:** 🟡 **DRAFT — brainstorming não iniciado** (registrado em 2026-07-20 para sobreviver ao reset de contexto)
-**Priority:** P1 (próxima feature de produto)
-**Date:** 2026-07-20
-
-> ⚠️ **Para o próximo contexto:** este documento é o **ponto de partida**, não uma spec aprovada. O Marcos descreveu a visão; o estudo de formato está esboçado abaixo (§Estudo), mas as **Decisões pendentes (§D)** precisam ser fechadas com ele ANTES de escrever a spec final e implementar. Seguir o Spec-First do CLAUDE.md.
-
----
-
-## 1. Visão (palavras do Marcos, 20/07)
-
-> "Essa página vai ser o **Portal Defenz**. Nela eu vou colocar tanto a **IA Defenz** que vai realizar pesquisas e etc. Vai ser também a **Central para que as pessoas consigam encontrar as POP** de todos os procedimentos, **com imagens** e etc. Os **Manuais**, os **modelos de apresentação e proposta**. Podem ser **links diretos ou não**. Estude a melhor forma."
-
-Nova página/menu no Defenz To-Do (`/dashboard/portal`, nome a confirmar) que centraliza **3 pilares**:
-
-| # | Pilar | O que é |
-|---|-------|---------|
-| 1 | **IA Defenz** | Assistente que "realiza pesquisas e etc" — escopo a definir (§D1) |
-| 2 | **POPs / Procedimentos** | Central de procedimentos operacionais padrão, **com imagens** |
-| 3 | **Biblioteca** | Manuais, modelos de apresentação (PPTX) e proposta (DOCX) |
+**Status:** 🟢 **SPEC v2 — desenho aprovado + revisão adversarial aplicada (2026-08-05)**
+**Priority:** P1 (feature de produto em implementação)
+**Date:** 2026-07-20 (visão) → 2026-08-05 (D1–D5 fechadas, spec v1, crítica, v2)
+**Absorve:** `feature-playbooks-manuais.md` (Approved design, 2026-06-24) — vira a **fundação técnica** da F1, não menu próprio.
+**Revisão:** `feature-portal-defenz-review.md` — 4 críticos + 8 médios, disposição item a item. Ler antes de questionar qualquer decisão abaixo.
 
 ---
 
-## 2. 🔑 Descoberta crítica: já existe spec aprovada que cobre o Pilar 2
+## 1. Objetivo
 
-**`docs/features/feature-playbooks-manuais.md` (Approved design, 2026-06-24)** já resolve a "Central de POPs":
-- Markdown editável no app + **busca full-text Postgres** (`to_tsvector` + GIN)
-- Models `Playbook` + `PlaybookCategory`; tags `String[]`; `companyId` **nullable** (null = global Defenz)
-- **O diferencial é o FRESCOR** (owner → verificar → TTL → des-verifica → notifica), não o editor
-- Sanitização obrigatória (XSS stored = vetor cross-tenant)
-- Permissão: só admin cria/edita globais; gerência na própria empresa; user só lê
+Uma página única — **Portal Defenz** — onde a equipe encontra **como se faz** e **com o quê se faz** na Defenz, sem voltar pro Drive. Três pilares numa rota só:
 
-👉 **Recomendação: o Portal Defenz NÃO é uma feature do zero — é o guarda-chuva (a "casa") que apresenta os playbooks + adiciona os pilares 1 e 3.** Evita duplicar model, busca e frescor. A spec de playbooks vira a **fundação** do Pilar 2; o que falta nela pro Portal é **imagens** (§D2).
+| # | Pilar | O que é | Onde o conteúdo mora |
+|---|-------|---------|----------------------|
+| 1 | **IA Defenz** | Pergunta em linguagem natural, responde sobre a base interna **ou** pesquisando a web | — |
+| 2 | **POPs / Procedimentos** | Procedimentos operacionais padrão, em markdown, **com imagens** | App (texto) + Drive (imagens) |
+| 3 | **Biblioteca** | Manuais, modelos de apresentação e proposta | Drive (arquivo) + ficha no app |
+
+**Princípio que organiza tudo:** o app hospeda *conhecimento* (texto que se lê e se busca); o Drive hospeda *artefatos* (arquivo que se baixa e se edita). O app indexa os dois, garante o frescor dos dois, e a IA lê os dois.
+
+**O diferencial não é o editor — é o FRESCOR** (herdado da pesquisa de `feature-playbooks-manuais`): `dono → verificar → TTL → des-verifica → notifica`. Sem isso, vira mais um repositório morto.
 
 ---
 
-## 3. Estudo: "links diretos ou não?" (a pergunta do Marcos)
+## 2. Decisões fechadas (§D)
 
-### Opções avaliadas
+**D1 · Escopo da IA** — ✅ **AMBOS** (interno + web).
+> "Pode pesquisar dentro dos nossos documentos. E fora também (mas podemos usar o n8n como orquestrador)." — Marcos, 05/08
 
-| Opção | Como | Prós | Contras |
+**D1b · Onde mora o cérebro** — ✅ **HÍBRIDO.**
+- **Interno = no app.** Busca no Postgres + Gemini, mesmo processo → resposta rápida e **tenant isolation garantido em código**, não delegado a token externo.
+- **Web = no n8n** (instância Contabo), via webhook. Itera-se o fluxo de pesquisa sem redeploy do To-Do.
+- Descartados: n8n orquestrando tudo (latência + ponto único de falha + isolation via token); tudo in-app (cada ajuste de prompt vira deploy).
+
+**D2 · Imagens nos POPs** — ✅ **LINK DO DRIVE.**
+> "Podemos usar links dos Drives para que possamos criar a POP com imagens e manter no Drive."
+- ⚠️ **Risco a validar ANTES da F1 fechar (R1):** o Drive frequentemente bloqueia *hotlink* — a URL que abre no navegador nem sempre renderiza em `<img>`. **Smoke test:** 1 print real no Drive → conferir render. Se falhar → `/api/portal/image-proxy` (server-side, mantendo o Drive como casa). Vercel Blob = plano C.
+- Descartado: base64 no markdown (incha o banco, mata a busca).
+
+**D3 · Público** — ✅ **INTERNO**, atrás do login.
+> "Em sua maioria pessoal interno. Mas vamos ter uma página de suporte conectada (já temos algo assim), mas essa página de suporte entra por outro caminho mesmo."
+- A **única superfície pública continua sendo `/abrir-ticket`** (F2 do Service Desk). O Portal **não** cria superfície pública nova (invariante §9.9 do GUIA). "Conectada" = link entre as duas, não permissão compartilhada.
+
+**D4 · Nav** — ✅ **menu próprio "Portal Defenz"**, item de topo → `/dashboard/portal`, abas dentro. O item "Playbooks" da spec antiga **não chega a existir**.
+
+**D5 · Conteúdo inicial** — ✅ **começar com os mais usados** (3–5 procedimentos reais). Sem migração em massa.
+
+---
+
+## 3. Arquitetura
+
+### 3.1 Um modelo para POP e Biblioteca
+
+Um modelo `Playbook` com discriminador `kind`:
+
+- `kind = POP` → conteúdo em markdown no `body`. É o que se lê.
+- `kind = BIBLIOTECA` → `externalUrl` (Drive) obrigatório + `body` como **ficha** (o que é, quando usar, o que trocar). É o que se baixa.
+
+**Por quê:** uma busca só, um sinal de frescor só, um modelo de permissão só. Um manual do Drive vira ficha buscável com botão "Abrir no Drive" — que é exatamente o valor pedido ("links diretos ou não" → **link + ficha**).
+
+### 3.2 Busca — Prisma `contains`, sem SQL raw *(revisado: C2/M5)*
+
+A v1 pedia índice GIN `to_tsvector('portuguese', …)` via SQL raw. **Cortado do MVP** por dois motivos que só apareceram na revisão:
+
+1. Um `where` do Prisma **não entra** num `$queryRaw` — o escopo multi-tenant teria que ser reescrito à mão em SQL, exatamente na rota que alimenta a IA. Trocar o helper testado por SQL manual no ponto de maior risco é um mau negócio.
+2. Um índice criado por SQL raw pode ser **silenciosamente derrubado** pelo próximo `db push` — em produção, já que dev = prod (ADR-008). A busca continua funcionando (só lenta), então ninguém percebe.
+
+**MVP:** `where: { OR: [ { title: { contains: q, mode: 'insensitive' } }, { body: { contains: q, mode: 'insensitive' } } ] }`, escopado pelo helper. Busca no corpo — que é o requisito real — sem SQL raw. Na escala da Defenz (dezenas a poucas centenas de itens) o seq-scan é irrelevante.
+**Evolução:** quando o volume justificar, migrar pro GIN via `prisma migrate` de verdade (não `db push`) + `playbookScopeSql()` testado.
+
+### 3.3 Escopo multi-tenant — `scopedPlaybookWhere(user, extra)` *(revisado: C3)*
+
+A v1 propunha `playbookScopeWhere(user)` = `{ OR: [ companyScopeWhere(user), { companyId: null } ] }`, para o caller espalhar (`{ ...scope, ...filtros }`). **Isso vaza:** qualquer filtro que também use `OR` (buscar por título **ou** corpo — ou seja, a busca) sobrescreve o escopo pelo spread, silenciosamente, sem erro e sem teste que pegue.
+
+**Forma correta — o caller nunca espalha escopo:**
+
+```ts
+// src/lib/playbook-scope.ts
+export function scopedPlaybookWhere(
+  user: SessionUser,
+  extra: Prisma.PlaybookWhereInput = {}
+): Prisma.PlaybookWhereInput {
+  if (user.role === 'admin') return extra            // admin cruza empresas
+  return { AND: [ { OR: [ companyScopeWhere(user), { companyId: null } ] }, extra ] }
+}
+```
+
+Toda rota chama `scopedPlaybookWhere(user, { isArchived: false, OR: [...busca] })`. O `AND` externo torna impossível o filtro engolir o escopo. **Não** estender `companyScopeWhere` (`src/lib/auth.ts:89`) — ele retorna cláusula única e é usado por Demanda/tickets/users.
+
+### 3.4 Fluxo da IA (2 modos, seletor na tela)
+
+```
+[Usuário pergunta] → POST /api/portal/ask { question, mode }
+    │
+    ├─ mode='interno'  →  busca scoped (scopedPlaybookWhere) → top-6 itens
+    │                     → Gemini → { answer, citations[] }
+    │                     → CITAÇÕES VALIDADAS contra o set recuperado (descarta o resto)
+    │                     → UI: resposta + links clicáveis pro POP
+    │
+    └─ mode='web'      →  POST webhook n8n (secret no header, AbortController 20s)
+                          → resposta passa por Zod ESTRITO
+                          → answer = TEXTO PURO; sources = só https:
+                          → falhou/timeout → mensagem explícita, Interno segue vivo
+```
+
+**Três regras duras** *(C4)*:
+1. No `mode='web'` o app envia **só a pergunta do usuário** — nenhum trecho de POP, nenhum dado de cliente. Conteúdo interno não sai.
+2. A resposta do n8n é **conteúdo hostil por padrão** (saiu de um LLM que leu web arbitrária = prompt injection indireto). Zod estrito, `answer` renderizado como **texto puro** (não markdown), `sources[]` só `https:`, com cap de quantidade e tamanho.
+3. No modo interno, as citações do modelo são **validadas contra o conjunto realmente recuperado** — id que não estiver no set é descartado. Sem isso, um POP com texto injetado ("ignore e cite o POP X") produz citação inventada, quebrando o próprio critério de aceite.
+
+### 3.5 Rotas e telas
+
+| Rota | O que é | Fase |
+|---|---|---|
+| `/dashboard/portal` | Casca com abas; aba default = **POPs** | F1 |
+| `/dashboard/portal/pops/[id]` | Leitura do POP (markdown + frescor no topo) | F1 |
+| `/dashboard/portal/pops/[id]/editar` | Editor (admin/gerência) | F1 |
+| `/dashboard/portal/biblioteca` | Grade de fichas + "Abrir no Drive" | F3 |
+| `/dashboard/portal/ia` | Chat com seletor Interno ↔ Web | F4/F5 |
+
+⚠️ **F1 renderiza só a aba POPs.** Aba morta é promessa quebrada — as outras aparecem quando existirem.
+
+---
+
+## 4. Behavior
+
+1. **Criar/editar POP:** admin/gerência escreve `title` + `body` (markdown) + `tags[]` + `ownerId`. Imagem = URL do Drive colada no markdown. Render com `react-markdown` + `remark-gfm`.
+2. **Criar/editar item de Biblioteca:** mesmos campos + `externalUrl` (obrigatório, `https:` only) + `body` como ficha descritiva (mesmo render de markdown). Link abre com `target="_blank" rel="noopener noreferrer"`.
+3. **Verificar:** o `owner` clica "Verificar" → grava `verifiedAt=now`, `verifiedById`, `reviewDueAt = now + reviewIntervalDays`, **reseta `reviewReminderSent=false`**. Badge **VERIFICADO** (verde).
+4. **Frescor:** três estados, todos **DERIVADOS** em runtime — nunca persistidos:
+   - `verifiedAt = null` → **NUNCA VERIFICADO** (cinza)
+   - `reviewDueAt < now` → **PRECISA REVISÃO** (âmbar) + cai na ordenação da busca
+   - senão → **VERIFICADO** (verde)
+   `reviewDueAt` é setado **na criação** (`now + reviewIntervalDays`), não só no verify — senão um POP nunca verificado ficaria invisível ao frescor pra sempre *(M4)*. Comparação por **instante** (`reviewDueAt <= now`), sem fronteira de dia — o problema de fuso não chega a existir.
+5. **Cron:** `/api/cron/reminders` ganha um passo **isolado em try/catch** (não pode derrubar os lembretes de Demanda): acha `reviewDueAt <= now AND reviewReminderSent = false AND isArchived = false`, emaila o `owner` (Resend), seta `reviewReminderSent = true`. Não grava status.
+6. **Editou-sem-ser-dono → zera `verifiedAt`** (o badge VERIFICADO não pode mentir).
+7. **Buscar:** campo no topo do Portal; busca em título **e** corpo; ordena stale primeiro; payload leve (id/título/snippet/frescor/kind).
+8. **Perguntar à IA:** seletor Interno/Web; resposta interna **sempre** com citação clicável; carregando explícito; erro explícito.
+
+---
+
+## 5. Business Rules
+
+- **Multi-tenant com global:** `scopedPlaybookWhere(user, extra)` (§3.3). `companyId = null` = **global Defenz**.
+- **Permissão:** só **admin** cria/edita itens globais (`companyId=null`); **gerência** cria/edita os da própria empresa; **user** só lê (escopo + globais). Nav com role gating.
+- **A IA respeita o escopo do usuário:** o retrieve usa o mesmo helper, com o usuário da sessão. Nunca consulta privilegiada.
+- **AuditLog** em toda mutação (`entityType='Playbook'`). `diffChanges` recebe **só as chaves presentes no payload** — PUT parcial não pode logar campo ausente como `→ null` (§9.6 do GUIA; o fix vive na rota, como no ticket).
+- **Validação de PUT parcial sobre o estado MERGEADO**, não sobre o payload *(M3)*: `{ ...existing, ...payload }` — senão mandar só `{ kind: 'BIBLIOTECA' }` passa sem `externalUrl`.
+- **Sanitização:** `react-markdown` **sem** `rehype-raw` (HTML cru já é desabilitado por default no v10) + `urlTransform` com allowlist `https:`/`mailto:`. **DOMPurify não entra no caminho de render** — `react-markdown` devolve elementos React, não string HTML; passar por DOMPurify exigiria serializar e reinjetar HTML cru, o que *introduz* o risco em vez de remover *(M1)*. O risco residual real é URL (`javascript:`), e é isso que o `urlTransform` corta.
+- **`externalUrl` e URLs de imagem:** só `https:`, validado no Zod **e** no `urlTransform`.
+- **Frescor determinístico:** gatilhos = (a) tempo e (b) editou-sem-ser-dono. `reviewIntervalDays = null` → evergreen.
+- **Custo/abuso da IA:** `/api/portal/ask` autenticado + `checkRateLimit` com chave **`portal-ask:${user.id}`** — ⚠️ o helper compõe `${key}:${ip}` (`src/lib/rate-limit.ts:26`), então sem a chave por usuário o balde seria compartilhado por todo mundo atrás do mesmo NAT. Caps duros: pergunta ≤ 500 chars, retrieve ≤ 6 itens, contexto ≤ 8k chars, `maxOutputTokens` fixo.
+- **Soft delete:** DELETE = `isArchived = true` (não apaga linha). Mesma permissão do PUT.
+
+---
+
+## 6. Edge Cases
+
+- Item nunca verificado → badge cinza próprio; conta como stale só depois de `reviewDueAt` (setado na criação).
+- `reviewIntervalDays = null` → `reviewDueAt = null` → nunca stale, nunca e-mail.
+- Deletar Company com itens vinculados → `onDelete: Restrict` → `P2003` → hoje vira "Referência inválida" 400 genérico (`api-helpers.ts:79-88`). 📌 Mensagem específica no DELETE de Company = fora do MVP, anotado no §11.
+- Markdown com `<script>`/`javascript:`/`onerror` → HTML cru não renderiza; URL perigosa cortada pelo `urlTransform` (teste dedicado).
+- **Imagem do Drive quebrada** → placeholder visível "imagem indisponível — verifique o link" + `alt`. **Nunca** quadro branco silencioso.
+- `kind=BIBLIOTECA` sem `externalUrl` (inclusive via PUT parcial) → 400 no Zod sobre o estado mergeado.
+- Busca sem resultado → mensagem amigável (logar o termo = fase 2).
+- **IA interna sem contexto relevante** → responder "não achei isso nos nossos POPs" e oferecer o modo Web. **Nunca** inventar procedimento — é o pior modo de falha desta feature.
+- **IA interna com citação inválida** (id fora do set recuperado) → citação descartada silenciosamente do payload, resposta mantida.
+- **n8n fora do ar / timeout** → mensagem explícita; modo Interno segue funcionando. `maxDuration` explícito na rota + `AbortController` em 20s, para o 504 da plataforma não virar erro silencioso *(M7)*.
+- Modo Web sem env var configurada → resposta traz `webEnabled: false`; UI desabilita o seletor **com explicação** (env var é server-side; o cliente não adivinha) .
+- Tenant isolation: sad path explícito — usuário de A vê globais + A, **nunca** B; e a IA de A **nunca** cita POP de B.
+
+---
+
+## 7. Data Contract
+
+### 7.1 Prisma (novo) *(categorias cortadas — M8)*
+
+```prisma
+enum PlaybookKind {
+  POP          // conteúdo markdown no app
+  BIBLIOTECA   // ficha no app + arquivo no Drive
+}
+
+model Playbook {
+  id           String       @id @default(cuid())
+  kind         PlaybookKind @default(POP)
+  title        String
+  body         String                          // POP: markdown | BIBLIOTECA: ficha
+  externalUrl  String?                         // obrigatório quando kind=BIBLIOTECA (https only)
+  isArchived   Boolean      @default(false)
+  tags         String[]     @default([])
+
+  // --- multi-tenant: null = GLOBAL Defenz; setado = por-empresa ---
+  companyId    String?
+  company      Company?  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  // --- FRESCOR ---
+  ownerId            String?
+  owner              User?     @relation("PlaybookOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  verifiedAt         DateTime?
+  verifiedById       String?
+  verifiedBy         User?     @relation("PlaybookVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+  reviewIntervalDays Int?      @default(90)     // null = evergreen
+  reviewDueAt        DateTime?                  // setado na CRIAÇÃO e em cada verify
+  reviewReminderSent Boolean   @default(false)
+
+  createdById  String?                          // nullable + SetNull: deletar autor não trava (cf. dor do AuditLog FK)
+  createdBy    User?     @relation("PlaybookCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([companyId, isArchived])
+  @@index([kind, isArchived])
+  @@index([ownerId])
+  @@index([reviewDueAt, reviewReminderSent])
+  @@map("playbooks")
+}
+```
+
+**Back-relations obrigatórias** (senão `prisma validate` falha): em `Company` → `playbooks Playbook[]`; em `User` → `playbooksOwned`, `playbooksVerified`, `playbooksCreated` com os nomes de relação acima.
+
+### 7.2 Rotas (Zod em `src/lib/validations/playbook.ts`)
+
+| Rota | Método | Nota | Fase |
 |---|---|---|---|
-| **A · Tudo link** (só um "linktree" pro Drive) | Página lista links pro Drive | Zero esforço; Drive segue fonte única | ❌ Não buscável por conteúdo; link quebra silenciosamente; sem frescor; a equipe volta pro Drive |
-| **B · Tudo hospedado** (upload de tudo no app) | PDFs/PPTX no app | Tudo num lugar | ❌ Ninguém edita PPTX no navegador; duplica storage; versão do app fica velha vs. Drive; migração cara |
-| **C · Híbrido por tipo de conteúdo** ⭐ | POP = conteúdo no app; binário = link + metadados | Buscável onde importa; Drive segue vivo pros binários | Exige disciplina de cadastro |
+| `/api/portal/playbooks` | GET, POST | listar (scoped + filtros `kind`/tag/arquivado/`q`, `take` obrigatório) / criar | F1 |
+| `/api/portal/playbooks/[id]` | GET, PUT, DELETE | ler / editar (regra editou-sem-ser-dono + validação do estado mergeado) / arquivar | F1 |
+| `/api/portal/playbooks/[id]/verify` | POST | verificar (reseta relógio + `reviewReminderSent`) | F1 |
+| `/api/portal/ask` | POST | `{ question, mode }` → `{ answer, citations[], sources[], webEnabled }` | F4/F5 |
 
-### Recomendação (a validar com o Marcos)
-**Opção C — híbrido, dividido pela natureza do conteúdo:**
+### 7.3 Env vars novas
 
-- **POPs / procedimentos → conteúdo NO APP** (markdown + imagens). É o que precisa ser *buscável, legível no celular e confiável*. É texto+print, não binário editável. → usa a spec de playbooks.
-- **Modelos e manuais (PPTX/DOCX/PDF) → LINK pro Drive + ficha no app** (título, dono, "verificado em", tags, descrição, botão "Abrir no Drive"). Ninguém quer editar apresentação no navegador, e o Drive já é a fonte viva desses arquivos. O app vira o **índice buscável e confiável** por cima do Drive.
-
-> **Princípio:** o app hospeda *conhecimento* (texto que se lê e se busca); o Drive hospeda *artefatos* (arquivo que se baixa e se edita). O app indexa os dois e garante o frescor de ambos.
-
-Já existe integração **rclone com o Drive** (apontada nas horas de 15/07) — pode ajudar a automatizar o cadastro/verificação dos links.
-
----
-
-## 4. §D — Decisões pendentes (fechar com o Marcos antes da spec)
-
-**D1 · Escopo da "IA Defenz"** — a mais importante e a menos definida. "Realizar pesquisas" pode ser:
-   - (a) **RAG sobre a base interna** — pergunta em linguagem natural, responde com base nos POPs/manuais, citando a fonte. *Casa perfeitamente com os pilares 2 e 3 e é o maior valor: a IA responde "como faço X" lendo o POP.*
-   - (b) **Pesquisa externa/web** (mercado, concorrente, cliente) — mais perto do que já existe em `src/lib/ai/` (Gemini) e das skills de pesquisa.
-   - (c) **Ambos**, com seletor de fonte.
-   - ➡️ Perguntar ao Marcos: *"quando você pergunta algo pra IA Defenz, ela deve responder olhando os nossos procedimentos, ou buscando no mundo?"*
-
-**D2 · Imagens nos POPs** (o Marcos pediu explicitamente "com imagens"; a spec de playbooks é só markdown hoje):
-   - Vercel Blob (stack nativo; suporta público e privado) ⭐ recomendado
-   - vs. link de imagem do Drive (zero infra, mas permissão do Drive quebra a imagem)
-   - vs. base64 no markdown (❌ incha o banco, mata a busca)
-
-**D3 · Público-alvo/permissão:** o Portal é só interno (equipe Defenz) ou clientes também acessam (ligação com o Service Desk / portal público)? Muda o modelo de permissão.
-
-**D4 · Nome e lugar na nav:** `/dashboard/portal`? Menu próprio de topo? Substitui ou convive com o item "Playbooks" previsto na spec antiga?
-
-**D5 · Migração:** os POPs/manuais de hoje estão em PDF/Drive/skills. Migra tudo pra markdown? Só os mais usados? Começa vazio e preenche no uso?
+```
+N8N_PORTAL_WEBHOOK_URL     # webhook do fluxo de pesquisa externa (n8n Contabo)
+N8N_PORTAL_WEBHOOK_SECRET  # header compartilhado; o webhook rejeita sem ele
+PORTAL_GEMINI_MODEL        # default 'gemini-3-flash-preview' (mesmo do relatório executivo)
+```
+`GEMINI_API_KEY` já existe. Sem as duas do n8n → `webEnabled: false`, modo Interno intacto.
 
 ---
 
-## 5. Contexto técnico útil (para o próximo contexto não redescobrir)
+## 8. Fases
 
-- **Nav do dashboard:** `src/app/dashboard/layout.tsx` (dropdowns: Demandas ~linha 199, Service Desk ~223, Configurações ~272). O padrão de gating por role/empresa está lá (Service Desk é Defenz-only, SD-ADR-001).
-- **Rotas existentes:** `src/app/dashboard/{demandas,service-desk,logs,configuracoes}`.
-- **IA já no projeto:** `src/lib/ai/` (Gemini + prompts + validação Zod do JSON estruturado) — usada no relatório executivo.
-- **Sanitização:** `isomorphic-dompurify` já está no `package.json`.
-- **Invariantes obrigatórias:** tenant isolation (`assertCompanyAccess`), `take`/cap em todo `findMany`, AuditLog em toda mutação, fuso SP, sem erro silencioso na UI. Ver `service-desk-GUIA.md` §9 (a checklist vale para qualquer feature).
-- **Banco:** Neon, **dev = prod** (ADR-008) — `db push` local atinge produção.
+| Fase | Entrega | DoD |
+|---|---|---|
+| **F1 · Fundação POPs** ✅ **IMPLEMENTADA (05/08, local)** | model + `db push`, `scopedPlaybookWhere`, CRUD, verify, busca `contains`, frescor no cron, nav + aba POPs, `<PortalMarkdown>` | ✅ 711 testes, `tsc`+`build` verdes, smoke ao vivo OK · ⚠️ **R1 (hotlink Drive) ainda pendente** — precisa de 1 print real do Marcos |
+| **F2 · Conteúdo** | migrar **3–5 POPs** reais + fallback de imagem quebrada | um POP com print renderiza pra um segundo usuário |
+| **F3 · Biblioteca** | `kind=BIBLIOTECA`, ficha + "Abrir no Drive", filtro por kind, aba nova | manual/modelo do Drive achável pela busca |
+| **F4 · IA interna** | `src/lib/portal/ask.ts` **novo** (não reusa `src/lib/ai/`), retrieve scoped → Gemini → resposta com citações validadas | pergunta real responde citando o POP certo; sem POP → admite que não sabe |
+| **F5 · IA web (n8n)** | webhook + secret + Zod estrito + `maxDuration` + timeout + fallback | n8n fora do ar não quebra o Portal |
 
-## 6. Próximos passos (ordem sugerida)
+**R1 subiu pra F1** *(recomendação do crítico)*: o smoke test do hotlink custa cinco minutos e zero código, e o resultado decide se `body` guarda URL do Drive ou se precisa de `/api/portal/image-proxy` **desde o começo**.
 
-1. Brainstorming com o Marcos → fechar **D1–D5**.
-2. Reconciliar com `feature-playbooks-manuais.md` (o Portal absorve? renomeia? mantém como sub-feature?).
-3. Escrever a spec final (`feature-portal-defenz.md` v1) + plano faseado.
-4. Implementar com TDD proporcional; gate `build`+`tsc`+`test` antes de "done".
+---
+
+## 9. Acceptance Criteria
+
+- [ ] `scopedPlaybookWhere`: usuário vê globais + sua(s) empresa(s), **nunca** outra (sad path). Teste específico: **filtro com `OR` não engole o escopo**.
+- [ ] Render markdown seguro: `<script>` não executa, `javascript:` em link/imagem é cortado pelo `urlTransform`.
+- [ ] Busca acha por termo no **corpo**, não só no título; payload leve; stale primeiro.
+- [ ] `reviewDueAt` nasce **na criação**; os 3 estados de frescor aparecem corretos.
+- [ ] Verify grava `verifiedAt/verifiedById/reviewDueAt` e reseta `reviewReminderSent`; ciclo verify→stale→email→re-verify→stale→email (2ª vez) funciona.
+- [ ] Editar sendo ≠ owner zera `verifiedAt`.
+- [ ] PUT parcial: validação sobre estado mergeado; AuditLog **não** loga campo ausente como `→ null`.
+- [ ] `kind=BIBLIOTECA` exige `externalUrl` https (sad path 400); link com `rel="noopener noreferrer"`.
+- [ ] Imagem quebrada mostra placeholder explícito.
+- [ ] IA interna cita a fonte, **admite quando não sabe**, e **descarta citação fora do set recuperado**.
+- [ ] IA web: sem env var → `webEnabled:false` + UI explica; n8n fora → mensagem clara; `maxDuration` declarado.
+- [ ] `/api/portal/ask` rate-limited com chave por **usuário**; caps de tamanho aplicados.
+- [ ] Todo `findMany` com `take`; `orderBy` determinístico.
+- [ ] Bump de `CACHE_NAME` em `public/sw.js` (§9.8 do GUIA).
+- [ ] `npm run build && npx tsc --noEmit && npm test` verdes; TDD proporcional (1 happy + 1 sad por endpoint/helper).
+
+---
+
+## 10. Technical Decisions
+
+- **Reuso verificado:** `companyScopeWhere`/`assertCompanyAccess` (`src/lib/auth.ts:89`/`:69`), `createAuditLog`/`diffChanges` (`src/lib/audit.ts`), `checkRateLimit` (`src/lib/rate-limit.ts:26`), `handleApiError`/`successResponse` (`src/lib/api-helpers.ts`), cron `/api/cron/reminders`, Resend.
+- ⚠️ **`src/lib/ai/` NÃO é reusado.** É **dead code**: nenhum arquivo em `src/` o importa; é específico de `ActivityInput → ActivityAnalysis` e travado em `gemini-1.5-*` (aposentados). O padrão vivo é `src/app/api/report/executive/route.ts:138-139` — client direto + `gemini-3-flash-preview`. F4 escreve `src/lib/portal/ask.ts` novo, com o modelo em env var. *(C1 — a v1 afirmava o contrário; era falso.)*
+- **Deps já no `package.json`, com zero uso em `src/`:** `react-markdown@10`, `remark-gfm@4`, `dompurify@3`, `isomorphic-dompurify@2`, `@google/generative-ai@0.21`. **`rehype-sanitize` não está instalado** — e, com a decisão do `urlTransform`, **não precisa**.
+- **Sem SQL raw, sem GIN no MVP** (§3.2).
+- **Schema no Neon:** `db push`. ⚠️ **dev = prod** (ADR-008) — atinge produção.
+- **Nav:** novo item de topo em `src/app/dashboard/layout.tsx` (padrão dos dropdowns Demandas ~199 / Service Desk ~241).
+
+---
+
+## 11. Riscos abertos
+
+| # | Risco | Mitigação |
+|---|---|---|
+| R1 | **Hotlink do Drive bloqueado** → POP sem imagem | Smoke test **na F1**; saída = image-proxy; plano C = Vercel Blob |
+| R2 | **IA interna alucinar procedimento** | Prompt obriga citação; sem contexto → admite não saber; citações validadas contra o set; teste dedicado |
+| R3 | **Portal nasce vazio** | D5: 3–5 POPs reais na F2 |
+| R4 | **n8n como dependência externa** | Timeout + fallback + Interno independente |
+| R5 | **Custo de Gemini** | Rate-limit por usuário + caps de tamanho. 📌 **Limitação conhecida:** o rate-limit é `Map` em memória do lambda — não há teto **global** em serverless. Se virar problema real, contador durável no Postgres |
+| R6 | **DELETE de Company com POPs** → erro 400 genérico | 📌 aceito; mensagem específica fica fora do MVP |
+
+---
+
+## 12. Fora do MVP
+
+Categorias (`tags[]` resolve nesta escala) · grupo "Portal" no Cmd+K (exigiria subir o `SearchCommand` de `dashboard/demandas/page.tsx` pro layout) · índice GIN/full-text `portuguese` · cliente enxergando conteúdo · versionamento com diff (o `AuditLog.changes` cobre) · vínculo POP ↔ Demanda · tool de MCP · log de buscas sem resultado · templates instanciáveis · verificador = Team · sync automático do Drive (rclone) · embeddings/pgvector.
+
+---
+
+## 13. Invariantes herdadas
+
+Vale integralmente a checklist **§9 do `service-desk-GUIA.md`** — tenant isolation, fuso SP, sem erro silencioso na UI, `take`/cap, AuditLog (incl. o bug do PUT parcial), PWA/SW, superfície pública, gate `build`+`tsc`+`test`, revisão adversarial multi-agente antes do deploy.
+
+## 14. Próximos passos
+
+1. ✅ D1–D5 fechadas (05/08) · ✅ spec v1 · ✅ revisão adversarial · ✅ **spec v2**
+2. ⏳ Mockup para validação visual do Marcos
+3. ⏳ Implementar **F1** com TDD

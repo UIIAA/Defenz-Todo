@@ -1,6 +1,6 @@
 // Bump a versão a cada release p/ o activate purgar o cache antigo de TODOS os clientes
 // (evita servir app shell/JS velho após deploy).
-const CACHE_NAME = 'defenz-v3'
+const CACHE_NAME = 'defenz-v4'
 
 const PRECACHE_URLS = [
   '/dashboard/demandas',

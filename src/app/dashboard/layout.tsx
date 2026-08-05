@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users, UsersRound, Home, Clock, LifeBuoy, Ticket } from 'lucide-react'
+import { BarChart3, LogOut, Menu, ClipboardList, ChevronDown, LayoutGrid, FileText, Settings, User, Search, Users, UsersRound, Home, Clock, LifeBuoy, Ticket, BookOpen } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { DefenzLogoIcon } from '@/components/defenz-logo'
 import { UserAvatar } from '@/components/user-avatar'
@@ -251,6 +251,14 @@ export default function DashboardLayout({
                   </div>
                 )}
               </div>
+              )}
+
+              {/* Portal Defenz - todo usuario logado le (feature-portal-defenz) */}
+              {sidebarOpen && (
+                <a href="/dashboard/portal" className={navItemClass('/dashboard/portal')}>
+                  <BookOpen className="h-5 w-5" />
+                  <span className="font-medium">Portal Defenz</span>
+                </a>
               )}
 
               {/* Configuracoes dropdown - admin only */}

@@ -3,7 +3,68 @@ import { db } from '@/lib/db'
 import { sendEmailWithChecks } from '@/lib/email'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { ReminderEmail } from './email-template'
+import { PlaybookReviewEmail } from './playbook-email-template'
 import crypto from 'crypto'
+
+/** Cap do passo de frescor: um lote grande não pode estourar o tempo do cron. */
+const MAX_PLAYBOOK_REMINDERS = 200
+
+/**
+ * Portal Defenz: avisa os donos de POPs cujo prazo de revisão venceu.
+ * Retorna quantos e-mails saíram.
+ *
+ * Compara instantes (`reviewDueAt <= now`), sem fronteira de dia — por isso não
+ * há questão de fuso aqui. Marca `reviewReminderSent` para não reavisar até a
+ * próxima verificação (que reseta a flag).
+ */
+export async function notificarPlaybooksVencidos(): Promise<number> {
+  const vencidos = await db.playbook.findMany({
+    where: {
+      isArchived: false,
+      reviewReminderSent: false,
+      reviewDueAt: { lte: new Date() },
+    },
+    select: {
+      id: true,
+      title: true,
+      owner: { select: { id: true, email: true, name: true } },
+    },
+    take: MAX_PLAYBOOK_REMINDERS,
+  })
+
+  const appUrl = process.env.NEXTAUTH_URL || 'https://defenz-todo.vercel.app'
+  let enviados = 0
+
+  for (const playbook of vencidos) {
+    // Sem dono não há para quem mandar — e marcar como avisado esconderia o item
+    // para sempre. Deixa pendente de propósito.
+    if (!playbook.owner?.email) continue
+
+    await sendEmailWithChecks(
+      {
+        userId: playbook.owner.id,
+        emailType: 'deadline',
+        to: playbook.owner.email,
+        subject: `Revisar POP: ${playbook.title}`,
+        react: PlaybookReviewEmail({
+          playbookTitle: playbook.title,
+          ownerName: playbook.owner.name,
+          playbookId: playbook.id,
+          appUrl,
+        }),
+      },
+      'deadlineApproaching'
+    )
+
+    await db.playbook.update({
+      where: { id: playbook.id },
+      data: { reviewReminderSent: true },
+    })
+    enviados++
+  }
+
+  return enviados
+}
 
 function timingSafeEqual(a: string, b: string): boolean {
   const bufA = Buffer.from(a)
@@ -92,9 +153,18 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    // Passo do Portal ISOLADO: uma falha no frescor dos POPs não pode derrubar
+    // os lembretes de Demanda, que já rodaram acima.
+    let playbooksNotificados = 0
+    try {
+      playbooksNotificados = await notificarPlaybooksVencidos()
+    } catch (err) {
+      console.error('Cron de frescor de playbooks falhou:', err)
+    }
+
     return successResponse(
-      { total: demandas.length, sent, skipped },
-      `Lembretes processados: ${sent} enviados, ${skipped} ignorados`
+      { total: demandas.length, sent, skipped, playbooksNotificados },
+      `Lembretes processados: ${sent} enviados, ${skipped} ignorados, ${playbooksNotificados} POPs a revisar`
     )
   } catch (error) {
     return handleApiError(error)
