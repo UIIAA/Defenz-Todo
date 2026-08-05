@@ -47,6 +47,12 @@ Uma página única — **Portal Defenz** — onde a equipe encontra **como se fa
 
 **D5 · Conteúdo inicial** — ✅ **começar com os mais usados** (3–5 procedimentos reais). Sem migração em massa.
 
+**D6 · Domínio do conteúdo** — ✅ **DECIDIDO (Marcos, 2026-08-05): Bitdefender.**
+> "Aqui estamos falando de cloud.bitdefender, a console do cliente sempre vai ser da Bitdefender — é tudo relativo a Bitdefender. Não vai haver habilitação de Tráfego e AdOps."
+- Os POPs do Portal são **operação Bitdefender**: console do cliente, agente/endpoint, políticas, licenças, suporte do fabricante. O cliente sempre tem console Bitdefender.
+- **Não** entram procedimentos de tráfego pago / AdOps / Business Manager — aquilo é de outras frentes (PSI, Marketing), não do Portal.
+- Consequência prática: os exemplos da spec, do mockup e os placeholders da UI usam vocabulário Bitdefender. A escolha dos 3–5 POPs da F2 sai desse domínio.
+
 ---
 
 ## 3. Arquitetura
@@ -246,7 +252,7 @@ PORTAL_GEMINI_MODEL        # default 'gemini-3-flash-preview' (mesmo do relatór
 | Fase | Entrega | DoD |
 |---|---|---|
 | **F1 · Fundação POPs** ✅ **IMPLEMENTADA (05/08, local)** | model + `db push`, `scopedPlaybookWhere`, CRUD, verify, busca `contains`, frescor no cron, nav + aba POPs, `<PortalMarkdown>` | ✅ 711 testes, `tsc`+`build` verdes, smoke ao vivo OK · ⚠️ **R1 (hotlink Drive) ainda pendente** — precisa de 1 print real do Marcos |
-| **F2 · Conteúdo** | migrar **3–5 POPs** reais + fallback de imagem quebrada | um POP com print renderiza pra um segundo usuário |
+| **F2 · Conteúdo** | migrar **3–5 POPs reais de operação Bitdefender** (D6) + fallback de imagem quebrada | um POP com print renderiza pra um segundo usuário |
 | **F3 · Biblioteca** | `kind=BIBLIOTECA`, ficha + "Abrir no Drive", filtro por kind, aba nova | manual/modelo do Drive achável pela busca |
 | **F4 · IA interna** | `src/lib/portal/ask.ts` **novo** (não reusa `src/lib/ai/`), retrieve scoped → Gemini → resposta com citações validadas | pergunta real responde citando o POP certo; sem POP → admite que não sabe |
 | **F5 · IA web (n8n)** | webhook + secret + Zod estrito + `maxDuration` + timeout + fallback | n8n fora do ar não quebra o Portal |

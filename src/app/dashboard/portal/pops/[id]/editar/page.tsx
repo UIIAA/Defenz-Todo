@@ -108,7 +108,7 @@ export default function EditarPopPage({ params }: { params: Promise<{ id: string
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Acesso ao Business Manager do cliente"
+          placeholder="Criar o cliente no console Bitdefender"
         />
       </div>
 
@@ -121,7 +121,7 @@ export default function EditarPopPage({ params }: { params: Promise<{ id: string
             onChange={(e) => setBody(e.target.value)}
             rows={18}
             className="font-mono text-xs"
-            placeholder={'1. Primeiro passo\n\n![print do painel](https://drive.google.com/...)'}
+            placeholder={'1. Entre no console Bitdefender com o usuário da Defenz.\n\n![print do console](https://drive.google.com/...)'}
           />
           <p className="text-xs text-slate-500">
             Para imagem, cole o link do Drive no formato{' '}
