@@ -34,10 +34,29 @@ Uma página única — **Portal Defenz** — onde a equipe encontra **como se fa
 - **Web = no n8n** (instância Contabo), via webhook. Itera-se o fluxo de pesquisa sem redeploy do To-Do.
 - Descartados: n8n orquestrando tudo (latência + ponto único de falha + isolation via token); tudo in-app (cada ajuste de prompt vira deploy).
 
-**D2 · Imagens nos POPs** — ✅ **LINK DO DRIVE.**
-> "Podemos usar links dos Drives para que possamos criar a POP com imagens e manter no Drive."
-- ⚠️ **Risco a validar ANTES da F1 fechar (R1):** o Drive frequentemente bloqueia *hotlink* — a URL que abre no navegador nem sempre renderiza em `<img>`. **Smoke test:** 1 print real no Drive → conferir render. Se falhar → `/api/portal/image-proxy` (server-side, mantendo o Drive como casa). Vercel Blob = plano C.
+**D2 · Onde ficam os arquivos (imagens dos POPs e artefatos da Biblioteca)** — 🔄 **REVISADO em 2026-08-05: OneDrive, não Google Drive.**
+> Primeira versão (manhã): "Podemos usar links dos Drives para que possamos criar a POP com imagens e manter no Drive."
+> Revisão (tarde): **"Vamos usar o OneDrive."** — Marcos
+
+- **Host = OneDrive/SharePoint do tenant** (`10Xd Soluções em comercio e representação LTDA`). Faz mais sentido que o Google Drive: a empresa já está em **Microsoft 365**, então quem clica no link já está autenticado e a permissão é gerida pelo próprio M365 — sem link público solto.
+- **Teste feito (05/08):** pasta `.../ESTRATEGICO_VENDAS/DESCRICAO_FORMAL_CARGO/KPIs_DE_VENDAS` lida com sucesso; `KPIs_GESTAO_VISTA_V1.docx` (18.886 caracteres) extraído e carregado no Portal → **busca pelo corpo funcionando** ("CAC", "close rate" encontram o documento; termo inexistente retorna zero).
+- ⚠️ **Descoberta importante:** a leitura acima foi do **diretório sincronizado local** (`~/Library/CloudStorage/OneDrive-…`). O app roda na **Vercel** e **não** tem esse diretório. Toda integração com OneDrive precisa ser por **link** ou por **API (Microsoft Graph)**.
+- ⚠️ **Credencial:** hoje **não existe** credencial de OneDrive/SharePoint em lugar nenhum. O `.env.local` do `Defenz_Chief` não tem `AZURE_BOT_*` (só o placeholder no `.env.example`); o n8n tem `Marcos@Defenz` e `Fernando@defenz`, mas do tipo `microsoftOutlookOAuth2Api` (**escopo de e-mail**). Ler arquivo do OneDrive exige **credencial nova**.
 - Descartado: base64 no markdown (incha o banco, mata a busca).
+
+**D2b · Como o app alcança o OneDrive** — ✅ **DECIDIDO (Marcos, 2026-08-05): via n8n + Microsoft Graph. A credencial JÁ EXISTE.**
+> "O n8n já tem credencial — vá no projeto Chief Defenz, ele já consegue inclusive escrever lá."
+
+- **Onde estava:** workflow `TMP Upload OneDrive (resumo mensal)` (n8n `6fn2jssVT55O1V9S`). Ele faz `PUT https://graph.microsoft.com/v1.0/drives/{driveId}/root:/ADMINISTRATIVO/…/arquivo.pptx:/content` com um nó **HTTP Request** usando `authentication: predefinedCredentialType` + `nodeCredentialType: microsoftOutlookOAuth2Api` e a credencial **`Marcos@Defenz`** (`tuFzJdPvNnOt3TD3`).
+- 🔑 **O ponto não-óbvio:** a credencial se chama "Outlook", mas o app registration por trás dela **tem escopo de arquivos no Graph**. Ou seja, não é preciso criar credencial nova — basta apontar o HTTP Request para o endpoint de `drives`. Não procure por uma credencial chamada "OneDrive"; ela não existe.
+- **`driveId` da Defenz:** `b!U_mU5dfLRUaHL-AHPbqvGbvYNDjS5ThMkED0qj3lv1l8SgPtsIgySIbDpNp5crG2`. O caminho no Graph começa em `root:/ADMINISTRATIVO/…` (o que localmente aparece como `OneDrive-10Xd…/Defenz - ADMINISTRATIVO/…`).
+- **Teste de LEITURA feito e aprovado (05/08):** workflow temporário `GET …:/children` sobre `ADMINISTRATIVO/ESTRATEGICO_VENDAS/DESCRICAO_FORMAL_CARGO/KPIs_DE_VENDAS` → devolveu os 3 arquivos com nome, tamanho e data. **Cada item traz `@microsoft.graph.downloadUrl`** (URL pré-autenticada de curta duração). Workflow de teste **apagado em seguida** (era webhook sem auth sobre arquivo da empresa).
+- **Consequências para o desenho:**
+  1. **Imagem inline no POP passa a ser viável de verdade** — `/api/portal/image-proxy` chama o webhook, que devolve o `downloadUrl`, e o app serve os bytes. Mata o R1 por construção (não depende de hotlink).
+  2. **A Biblioteca pode indexar a pasta sozinha** — listar `:/children` e criar/atualizar as fichas. Cai o "exige disciplina de cadastro" que era o contra da Opção C do estudo original.
+  3. **A IA interna pode ler os documentos** (o teste com `KPIs_GESTAO_VISTA_V1.docx` já provou que o texto extraído indexa e é encontrado pela busca).
+  4. **Nenhuma credencial Microsoft entra na Vercel** — o app só conhece a URL do webhook e um segredo de header. Mesmo desenho do D1b.
+- ⚠️ **A construir na implementação:** o webhook do Portal precisa de **autenticação de header** (o teste rodou sem, por ser efêmero) e de **allowlist de caminho** — o app não pode pedir um caminho arbitrário do OneDrive da empresa.
 
 **D3 · Público** — ✅ **INTERNO**, atrás do login.
 > "Em sua maioria pessoal interno. Mas vamos ter uma página de suporte conectada (já temos algo assim), mas essa página de suporte entra por outro caminho mesmo."
@@ -296,7 +315,8 @@ PORTAL_GEMINI_MODEL        # default 'gemini-3-flash-preview' (mesmo do relatór
 
 | # | Risco | Mitigação |
 |---|---|---|
-| R1 | **Hotlink do Drive bloqueado** → POP sem imagem | Smoke test **na F1**; saída = image-proxy; plano C = Vercel Blob |
+| ~~R1~~ | ~~Hotlink bloqueado → POP sem imagem~~ | ✅ **RESOLVIDO por D2b (05/08).** Com Graph via n8n a imagem não depende de hotlink: o proxy busca o `@microsoft.graph.downloadUrl` e serve os bytes. O risco deixou de existir. |
+| R7 | **Webhook do Portal no n8n vira porta dos fundos** para o OneDrive da empresa | Auth de header obrigatória + **allowlist de caminho** (o app só pede caminhos sob a raiz do Portal, nunca caminho arbitrário) + só leitura. Critério de aceite da F3. |
 | R2 | **IA interna alucinar procedimento** | Prompt obriga citação; sem contexto → admite não saber; citações validadas contra o set; teste dedicado |
 | R3 | **Portal nasce vazio** | D5: 3–5 POPs reais na F2 |
 | R4 | **n8n como dependência externa** | Timeout + fallback + Interno independente |
