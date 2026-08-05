@@ -80,6 +80,15 @@ describe('POST /api/tickets', () => {
     expect(data.companyId).toBe('company-defenz')
   })
 
+  it('seta columnChangedAt na criação (motor do aging — senão ticket novo nunca envelhece)', async () => {
+    mockDb.ticket.create.mockResolvedValue({ id: 't4', subject: 'Z', status: 'solicitado', client: null })
+
+    await POST(createRequest('POST', { body: { subject: 'Z' } }))
+
+    const data = mockDb.ticket.create.mock.calls[0][0].data
+    expect(data.columnChangedAt).toBeInstanceOf(Date)
+  })
+
   it('persiste campo client no POST', async () => {
     mockDb.ticket.create.mockResolvedValue({
       id: 't3',

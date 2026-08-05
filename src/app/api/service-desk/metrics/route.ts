@@ -13,7 +13,8 @@ const SP_OFFSET = '-03:00'
 const dayStart = (s: string) => (s.length === 10 ? new Date(`${s}T00:00:00.000${SP_OFFSET}`) : new Date(s))
 const dayEnd = (s: string) => (s.length === 10 ? new Date(`${s}T23:59:59.999${SP_OFFSET}`) : new Date(s))
 
-/** Métricas do Service Desk (4 agregações), scoped por empresa. Período opcional via createdAt. */
+/** Métricas do Service Desk (as 5 do GUIA §8: volume+breakdown origem, interações, tempo, %N2),
+ * scoped por empresa. Período opcional via createdAt (fuso SP). */
 export async function GET(request: NextRequest) {
   try {
     const user = await resolveActor(request)
@@ -40,6 +41,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         status: true,
+        source: true,
         createdAt: true,
         resolvedAt: true,
         escalatedAt: true,
@@ -55,6 +57,7 @@ export async function GET(request: NextRequest) {
     const mapped: MetricTicket[] = rows.map((r) => ({
       id: r.id,
       status: r.status,
+      source: r.source,
       createdAt: r.createdAt,
       resolvedAt: r.resolvedAt,
       escalatedAt: r.escalatedAt,

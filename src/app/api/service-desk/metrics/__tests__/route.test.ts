@@ -13,13 +13,13 @@ describe('GET /api/service-desk/metrics', () => {
   it('retorna as métricas agregadas', async () => {
     mockDb.ticket.findMany.mockResolvedValue([
       {
-        id: 't1', status: 'concluido',
+        id: 't1', status: 'concluido', source: 'interno',
         createdAt: new Date('2026-06-20T10:00:00Z'), resolvedAt: new Date('2026-06-20T12:00:00Z'),
         escalatedAt: new Date('2026-06-20T11:00:00Z'), escalatedTo: 'SecuriSoft',
         _count: { messages: 3 },
       },
       {
-        id: 't2', status: 'solicitado',
+        id: 't2', status: 'solicitado', source: 'portal',
         createdAt: new Date('2026-06-22T10:00:00Z'), resolvedAt: null,
         escalatedAt: null, escalatedTo: null, _count: { messages: 1 },
       },
@@ -29,11 +29,17 @@ describe('GET /api/service-desk/metrics', () => {
     const json = await res.json()
     expect(res.status).toBe(200)
     expect(json.data.total).toBe(2)
+    expect(json.data.portalCount).toBe(1) // t2 via portal
+    expect(json.data.internoCount).toBe(1) // t1 interno
     expect(json.data.backlog).toBe(1)
     expect(json.data.escalatedCount).toBe(1)
     expect(json.data.escalatedPct).toBeCloseTo(50)
     expect(json.data.avgRepliesPerTicket).toBeCloseTo(2)
     expect(json.data.escalatedByPartner).toEqual([{ partner: 'SecuriSoft', count: 1 }])
+
+    // §9.4: o select pede `source` (senão o breakdown não funciona)
+    const select = mockDb.ticket.findMany.mock.calls[0][0].select
+    expect(select.source).toBe(true)
   })
 
   it('gerência: filtro scoped por empresa (companyScopeWhere aplicado)', async () => {

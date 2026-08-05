@@ -70,7 +70,9 @@ export async function POST(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { companyId: _omit, ...rest } = data
     const ticket = await db.ticket.create({
-      data: { ...rest, companyId, createdById: user.id },
+      // columnChangedAt = now na criação: o ticket "entra" na coluna inicial agora.
+      // Sem isso, o aging (verde→âmbar→preto) só começaria após o 1º arraste.
+      data: { ...rest, companyId, createdById: user.id, columnChangedAt: new Date() },
     })
 
     await createAuditLog({

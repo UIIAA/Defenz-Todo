@@ -14,6 +14,8 @@ import { formatMinutesHuman } from '@/components/service-desk/ticket-helpers'
 
 interface Metrics {
   total: number
+  portalCount: number
+  internoCount: number
   backlog: number
   escalatedCount: number
   escalatedPct: number
@@ -91,7 +93,12 @@ export default function ServiceDeskReportPage() {
             </p>
           )}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Metric icon={Ticket} label="Tickets criados no período" value={String(metrics.total)} />
+            <Metric
+              icon={Ticket}
+              label="Tickets criados no período"
+              value={String(metrics.total)}
+              sub={`${metrics.portalCount ?? 0} via portal (cliente) · ${metrics.internoCount ?? 0} internos`}
+            />
             <Metric icon={Inbox} label="Em aberto (não concluídos)" value={String(metrics.backlog)} />
             <Metric icon={ArrowUpRight} label="Repassados ao N2" value={`${metrics.escalatedCount} (${metrics.escalatedPct.toFixed(0)}%)`} accent="amber" />
             <Metric icon={Timer} label="Tempo médio de resolução" value={formatMinutesHuman(metrics.avgResolutionMinutes)} />
@@ -124,12 +131,13 @@ export default function ServiceDeskReportPage() {
 }
 
 function Metric({
-  icon: Icon, label, value, accent,
+  icon: Icon, label, value, accent, sub,
 }: {
   icon: typeof Ticket
   label: string
   value: string
   accent?: 'amber'
+  sub?: string
 }) {
   return (
     <Card>
@@ -139,6 +147,7 @@ function Metric({
           {label}
         </div>
         <p className="text-2xl font-bold">{value}</p>
+        {sub && <p className="text-[11px] text-muted-foreground mt-1">{sub}</p>}
       </CardContent>
     </Card>
   )

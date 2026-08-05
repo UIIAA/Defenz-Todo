@@ -2,7 +2,7 @@
 
 **Status:** Guia vivo (living document) — atualizar a cada feature nova
 **Owner:** Marcos
-**Última atualização:** 2026-06-25
+**Última atualização:** 2026-06-28
 **Specs-filhas:** ver seção [Roadmap de Features](#roadmap-de-features)
 
 > Este é o documento-guia do módulo **Service Desk**. Ele define a visão, o modelo de dados canônico, as métricas, e — o mais importante — as **invariantes obrigatórias** que TODA feature do Service Desk herda (as lições de bug que já pagamos). Cada feature nova ganha sua própria `docs/features/feature-service-desk-<slug>.md` e **deve** respeitar este guia. Quando algo aqui mudar, as specs-filhas seguem.
@@ -147,8 +147,8 @@ Cada item vira (ou já é) uma spec própria. Ordem sugerida:
 
 | # | Feature | Spec | Status |
 |---|---|---|---|
-| F1 | Core: Kanban interno (3 colunas, WIP, aging→preto), métricas, "Abrir Demanda", drawer | `feature-service-desk.md` | Em redesign (v2 desenhado) |
-| F2 | **Portal público de abertura de ticket** (CNPJ+e-mail+nome → verifica → ticket) | `feature-service-desk-portal.md` | **Draft (esta entrega)** |
+| F1 | Core: Kanban interno (3 colunas, WIP, aging→preto), métricas, "Abrir Demanda", drawer | `feature-service-desk.md` | **v2 implementado + polido (local; não deployado)** |
+| F2 | **Portal público de abertura de ticket** (CNPJ+e-mail+nome → verifica → ticket) | `feature-service-desk-portal.md` | **Implementado + polido (local; subdomínio/DNS + deploy pendentes)** |
 | F3 | Notificações (tela → depois e-mail/push) | a criar | Futuro |
 | F4 | Sync Zoho ao vivo + gestão de `AuthorizedClient` na UI | a criar | Futuro |
 | F5 | SLA / horário comercial / CSAT | a criar | Futuro (YAGNI até pedir) |

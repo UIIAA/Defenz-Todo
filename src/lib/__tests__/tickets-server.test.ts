@@ -70,6 +70,7 @@ describe('computeServiceDeskMetrics', () => {
       {
         id: 't1',
         status: 'concluido',
+        source: 'interno',
         createdAt: new Date('2026-06-20T10:00:00Z'),
         resolvedAt: new Date('2026-06-20T12:00:00Z'),
         escalatedAt: new Date('2026-06-20T11:00:00Z'),
@@ -79,6 +80,7 @@ describe('computeServiceDeskMetrics', () => {
       {
         id: 't2',
         status: 'solicitado',
+        source: 'portal',
         createdAt: new Date('2026-06-24T10:00:00Z'),
         resolvedAt: null,
         escalatedAt: null,
@@ -88,6 +90,8 @@ describe('computeServiceDeskMetrics', () => {
     ]
     const m = computeServiceDeskMetrics(tickets, NOW)
     expect(m.total).toBe(2)
+    expect(m.portalCount).toBe(1) // t2 (source === 'portal')
+    expect(m.internoCount).toBe(1) // t1
     expect(m.backlog).toBe(1) // só t2 (status !== 'concluido')
     expect(m.escalatedCount).toBe(1)
     expect(m.escalatedPct).toBeCloseTo(50)
@@ -100,6 +104,8 @@ describe('computeServiceDeskMetrics', () => {
   it('lista vazia → zeros sem divisão por zero', () => {
     const m = computeServiceDeskMetrics([], NOW)
     expect(m.total).toBe(0)
+    expect(m.portalCount).toBe(0)
+    expect(m.internoCount).toBe(0)
     expect(m.escalatedPct).toBe(0)
     expect(m.avgRepliesPerTicket).toBe(0)
     expect(m.avgResolutionMinutes).toBe(0)
@@ -110,17 +116,17 @@ describe('computeServiceDeskMetrics', () => {
   it('backlog = apenas status !== concluido', () => {
     const tickets = [
       {
-        id: 't1', status: 'solicitado',
+        id: 't1', status: 'solicitado', source: 'interno',
         createdAt: new Date('2026-06-24T10:00:00Z'), resolvedAt: null,
         escalatedAt: null, escalatedTo: null, replyCount: 0,
       },
       {
-        id: 't2', status: 'em_atendimento',
+        id: 't2', status: 'em_atendimento', source: 'interno',
         createdAt: new Date('2026-06-24T10:00:00Z'), resolvedAt: null,
         escalatedAt: null, escalatedTo: null, replyCount: 0,
       },
       {
-        id: 't3', status: 'concluido',
+        id: 't3', status: 'concluido', source: 'interno',
         createdAt: new Date('2026-06-24T08:00:00Z'), resolvedAt: new Date('2026-06-24T10:00:00Z'),
         escalatedAt: null, escalatedTo: null, replyCount: 2,
       },
@@ -128,5 +134,25 @@ describe('computeServiceDeskMetrics', () => {
     const m = computeServiceDeskMetrics(tickets, NOW)
     expect(m.backlog).toBe(2) // t1 + t2
     expect(m.total).toBe(3)
+  })
+
+  it('breakdown por origem (§8.1): conta portal vs interno separadamente', () => {
+    const base = {
+      status: 'solicitado',
+      createdAt: new Date('2026-06-24T10:00:00Z'),
+      resolvedAt: null,
+      escalatedAt: null,
+      escalatedTo: null,
+      replyCount: 0,
+    }
+    const tickets = [
+      { ...base, id: 'a', source: 'portal' },
+      { ...base, id: 'b', source: 'portal' },
+      { ...base, id: 'c', source: 'interno' },
+    ]
+    const m = computeServiceDeskMetrics(tickets, NOW)
+    expect(m.total).toBe(3)
+    expect(m.portalCount).toBe(2)
+    expect(m.internoCount).toBe(1)
   })
 })

@@ -40,6 +40,7 @@ export function computeTicketTimestamps(
 export type MetricTicket = {
   id: string
   status: string
+  source: string
   createdAt: Date
   resolvedAt: Date | null
   escalatedAt: Date | null
@@ -49,6 +50,8 @@ export type MetricTicket = {
 
 export type ServiceDeskMetrics = {
   total: number
+  portalCount: number
+  internoCount: number
   backlog: number
   escalatedCount: number
   escalatedPct: number
@@ -60,9 +63,12 @@ export type ServiceDeskMetrics = {
 
 /** Agrega as 5 prioridades do Marcos a partir dos tickets (calendar time puro).
  * backlog = status !== 'concluido' (v2; era !== 'resolved')
+ * Métrica #1 (GUIA §8.1): volume COM breakdown por origem (interno vs portal).
  */
 export function computeServiceDeskMetrics(tickets: MetricTicket[], now: Date): ServiceDeskMetrics {
   const total = tickets.length
+  const portalCount = tickets.filter((t) => t.source === 'portal').length
+  const internoCount = total - portalCount
   const backlog = tickets.filter((t) => t.status !== 'concluido').length
   const escalated = tickets.filter((t) => t.escalatedAt !== null)
   const escalatedCount = escalated.length
@@ -91,6 +97,8 @@ export function computeServiceDeskMetrics(tickets: MetricTicket[], now: Date): S
 
   return {
     total,
+    portalCount,
+    internoCount,
     backlog,
     escalatedCount,
     escalatedPct: total ? (escalatedCount / total) * 100 : 0,

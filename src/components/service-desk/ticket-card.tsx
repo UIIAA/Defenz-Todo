@@ -57,8 +57,11 @@ export function TicketCard({
   })
 
   const now = new Date()
-  const color = ageColor(ticket.status, ticket.columnChangedAt, now)
-  const days = ageDays(ticket.columnChangedAt, now)
+  // Aging: base = quando entrou na coluna atual. Tickets nunca movidos têm columnChangedAt nulo
+  // → cai pra createdAt, senão ficariam "há 0d" verde pra sempre em Solicitado (onde o backlog acumula).
+  const agingFrom = ticket.columnChangedAt ?? ticket.createdAt
+  const color = ageColor(ticket.status, agingFrom, now)
+  const days = ageDays(agingFrom, now)
   const prio = PRIORITY_STYLES[ticket.priority]
   const isEscalated = !!ticket.escalatedAt
   const isConcluido = ticket.status === 'concluido'

@@ -59,13 +59,15 @@ export function TicketBoard({
     // Verifica se newStatus é um status válido
     if (!STATUS_ORDER.includes(newStatus as TicketStatus)) return
 
-    // Verifica WIP antes do drop — avisa mas não bloqueia (soft)
+    // Verifica WIP antes do drop — avisa mas não bloqueia (soft).
+    // Dispara só no estouro real (pós-drop > limite), alinhado ao destaque vermelho da coluna;
+    // "no limite" (=) fica âmbar sem toast. colCount exclui o card arrastado → +1 = total pós-drop.
     const wipLimit = WIP_LIMITS[newStatus as TicketStatus]
     if (wipLimit !== null) {
-      const colCount = displayTickets.filter((t) => t.status === newStatus && t.id !== ticketId).length
-      if (colCount >= wipLimit) {
+      const afterDrop = displayTickets.filter((t) => t.status === newStatus && t.id !== ticketId).length + 1
+      if (afterDrop > wipLimit) {
         toast.warning(
-          `Coluna "${STATUS_LABELS[newStatus as TicketStatus] ?? newStatus}" atingiu o limite WIP (${colCount}/${wipLimit})`
+          `Coluna "${STATUS_LABELS[newStatus as TicketStatus] ?? newStatus}" acima do limite WIP (${afterDrop}/${wipLimit})`
         )
         // Não bloqueia — deixa mover
       }

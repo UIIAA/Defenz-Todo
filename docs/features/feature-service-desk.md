@@ -1,5 +1,5 @@
 # Feature: Menu "Service Desk" (tickets) — integrado ao Kanban Defenz
-**Status:** **v2 IMPLEMENTADO em local (2026-06-27)** — Kanban 3 colunas (DnD/WIP/aging→preto), campo `client`+autocomplete, drawer, "Abrir Demanda" 1:1, migração status v1→v2, Defenz-only. db push no Neon feito. 666 testes + smoke E2E navegador OK. **Deploy Vercel ainda NÃO feito** (decisão do Marcos). Revisão Opus (12 achados) aplicada. Ver seção "Redesign v2" abaixo + GUIA.
+**Status:** **v2 IMPLEMENTADO + POLIDO em local (2026-06-28)** — Kanban 3 colunas (DnD/WIP/aging→preto), campo `client`+autocomplete, drawer, "Abrir Demanda" 1:1, migração status v1→v2, Defenz-only. db push no Neon feito. **668 testes** + smoke E2E navegador OK. **Deploy Vercel ainda NÃO feito** (decisão do Marcos). Revisão Opus (12 achados) + **rodada de polish 28/06** (auditoria multi-agente → fixes: aging inerte na criação [`columnChangedAt` nulo → rotas setam + card fallback `??createdAt`]; WIP toast alinhado ao vermelho) aplicadas. Ver seção "Redesign v2" abaixo + GUIA + CHANGELOG `Fixed (2026-06-28)`.
 **Priority:** P2
 **Date:** 2026-06-24 (design fechado após brainstorming + pesquisa multi-agente de 6 ferramentas renomadas)
 

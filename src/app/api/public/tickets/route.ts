@@ -55,9 +55,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const { cnpj, email, name, subject, description, priority, _hp, _t } = parsed.data
 
-  // c. Anti-bot: honeypot não-vazio, OU `_t` ausente (bot omitindo o campo), OU tempo desde
-  // render < 2000ms. O form legítimo sempre envia `_t` (set no mount).
-  if ((_hp !== undefined && _hp !== '') || _t === undefined || Date.now() - _t < 2000) {
+  // c. Anti-bot: honeypot não-vazio, OU `_t` ausente (bot omitindo o campo), OU tempo de
+  // preenchimento < 2000ms. `_t` é o tempo DECORRIDO desde o render (delta em ms enviado pelo
+  // form) — bot/submit instantâneo manda delta pequeno e é barrado. (Antes lia como timestamp
+  // absoluto e o guard nunca disparava.) O form legítimo sempre envia `_t` (set no mount).
+  const MIN_FILL_MS = 2000
+  if ((_hp !== undefined && _hp !== '') || _t === undefined || _t < MIN_FILL_MS) {
     return generic422()
   }
 
@@ -104,6 +107,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data: {
         companyId,
         status: 'solicitado',
+        columnChangedAt: new Date(), // entra na coluna inicial agora (motor do aging)
         source: 'portal',
         client: v.client.clientName,
         subject,

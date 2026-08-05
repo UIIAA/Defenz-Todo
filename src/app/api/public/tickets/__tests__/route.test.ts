@@ -45,7 +45,7 @@ const VALID_BODY = {
   subject: 'Problema de acesso',
   description: 'Não consigo logar no sistema',
   _hp: '',
-  _t: Date.now() - 5000, // 5s atrás — passa o limiar de 2s
+  _t: 5000, // 5s decorridos desde o render (delta, como o form envia) — passa o limiar de 2s
 }
 
 const AUTHORIZED_CLIENT = {
@@ -106,6 +106,7 @@ describe('POST /api/public/tickets — happy path', () => {
     expect(createData.source).toBe('portal')
     expect(createData.createdById).toBe('system-user-id')
     expect(createData.status).toBe('solicitado')
+    expect(createData.columnChangedAt).toBeInstanceOf(Date) // motor do aging desde a criação
   })
 
   it('grava client vindo do AuthorizedClient verificado (não do body)', async () => {
@@ -238,7 +239,7 @@ describe('POST /api/public/tickets — sad path (anti-enumeracao, 422 generica)'
   })
 
   it('tempo desde render < 2000ms (_t muito recente) → 422 generica', async () => {
-    const bodyTooFast = { ...VALID_BODY, _t: Date.now() - 500 } // apenas 500ms atrás
+    const bodyTooFast = { ...VALID_BODY, _t: 500 } // apenas 500ms de preenchimento — bot
 
     const res = await POST(createRequest('POST', { body: bodyTooFast }))
     const json = await res.json()
