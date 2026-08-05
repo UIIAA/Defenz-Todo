@@ -80,11 +80,20 @@ Uma página única — **Portal Defenz** — onde a equipe encontra **como se fa
 
 **D5 · Conteúdo inicial** — ✅ **começar com os mais usados** (3–5 procedimentos reais). Sem migração em massa.
 
-**D6 · Domínio do conteúdo** — ✅ **DECIDIDO (Marcos, 2026-08-05): Bitdefender.**
-> "Aqui estamos falando de cloud.bitdefender, a console do cliente sempre vai ser da Bitdefender — é tudo relativo a Bitdefender. Não vai haver habilitação de Tráfego e AdOps."
-- Os POPs do Portal são **operação Bitdefender**: console do cliente, agente/endpoint, políticas, licenças, suporte do fabricante. O cliente sempre tem console Bitdefender.
-- **Não** entram procedimentos de tráfego pago / AdOps / Business Manager — aquilo é de outras frentes (PSI, Marketing), não do Portal.
-- Consequência prática: os exemplos da spec, do mockup e os placeholders da UI usam vocabulário Bitdefender. A escolha dos 3–5 POPs da F2 sai desse domínio.
+**D6 · Domínio do conteúdo** — ✅ **DECIDIDO (Marcos, 2026-08-05), em duas correções sucessivas:**
+
+1. > "A console do cliente sempre vai ser da Bitdefender — é tudo relativo a Bitdefender. **Não vai haver habilitação de Tráfego e AdOps.**"
+2. > "Não, essas POP vão ser sobre o **nosso processo interno**. Os problemas Bitdefender podem ficar pra depois."
+
+**Leitura final — o Portal nasce documentando COMO A DEFENZ TRABALHA, não como se opera o produto:**
+
+| | |
+|---|---|
+| ✅ **Entra agora** | **Processo interno da Defenz**: como se faz onboarding de cliente novo, como a proposta comercial é montada e enviada, como funciona o faturamento, a rotina da reunião semanal, apontamento de horas, triagem de e-mail, quem aprova o quê |
+| ⏳ **Entra depois** | Procedimentos **técnicos de Bitdefender** (console do cliente, agente, políticas, licenças, suporte do fabricante) |
+| ❌ **Não entra** | Tráfego pago / AdOps / Business Manager — é de outras frentes (PSI, Marketing), não do Portal |
+
+Consequência: os exemplos, o mockup e os placeholders da UI falam de **processo interno**. Os 3–5 POPs da F2 saem daí. O documento de KPIs carregado no teste (`KPIs_GESTAO_VISTA_V1.docx`) é exatamente desse tipo — material de como a empresa se organiza — e por isso serve bem como semente.
 
 ---
 

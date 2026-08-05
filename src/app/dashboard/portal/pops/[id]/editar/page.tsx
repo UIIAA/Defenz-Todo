@@ -108,7 +108,7 @@ export default function EditarPopPage({ params }: { params: Promise<{ id: string
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Criar o cliente no console Bitdefender"
+          placeholder="Onboarding de cliente novo"
         />
       </div>
 
@@ -121,10 +121,10 @@ export default function EditarPopPage({ params }: { params: Promise<{ id: string
             onChange={(e) => setBody(e.target.value)}
             rows={18}
             className="font-mono text-xs"
-            placeholder={'1. Entre no console Bitdefender com o usuário da Defenz.\n\n![print do console](https://drive.google.com/...)'}
+            placeholder={'1. Quem faz, quando faz e o que precisa ter em mãos antes de começar.\n\n![print da tela](https://…)'}
           />
           <p className="text-xs text-slate-500">
-            Para imagem, cole o link do Drive no formato{' '}
+            Para imagem, cole o link do OneDrive no formato{' '}
             <code className="rounded bg-slate-100 px-1">![descrição](https://…)</code>. Só links https
             são aceitos.
           </p>
