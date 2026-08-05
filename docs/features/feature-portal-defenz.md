@@ -58,6 +58,20 @@ Uma página única — **Portal Defenz** — onde a equipe encontra **como se fa
   4. **Nenhuma credencial Microsoft entra na Vercel** — o app só conhece a URL do webhook e um segredo de header. Mesmo desenho do D1b.
 - ⚠️ **A construir na implementação:** o webhook do Portal precisa de **autenticação de header** (o teste rodou sem, por ser efêmero) e de **allowlist de caminho** — o app não pode pedir um caminho arbitrário do OneDrive da empresa.
 
+**D2c · Raiz do Portal no OneDrive** — ✅ **DECIDIDO (Marcos, 2026-08-05).**
+
+| | |
+|---|---|
+| **Local (sync)** | `~/Library/CloudStorage/OneDrive-10Xd…/Defenz - ADMINISTRATIVO/BIBLIOTECA PORTAL DEFENZ` |
+| **Graph** | `drives/{driveId}/root:/ADMINISTRATIVO/BIBLIOTECA PORTAL DEFENZ` |
+| **driveId** | `b!U_mU5dfLRUaHL-AHPbqvGbvYNDjS5ThMkED0qj3lv1l8SgPtsIgySIbDpNp5crG2` |
+| **Estado** | pasta **vazia** (criada para isto) |
+| **Verificado** | `GET …:/children` → **200**, `value: []`, sem erro (05/08) |
+
+🔑 **Mapeamento que engana:** o que o sync local mostra como **`Defenz - ADMINISTRATIVO`** é **`ADMINISTRATIVO`** no Graph — o prefixo `Defenz - ` é o nome da biblioteca, não um diretório. Confirmado em dois testes independentes. Espaços no caminho vão como `%20`.
+
+**Esta é a allowlist (R7):** o webhook só aceita caminhos **sob essa raiz**. Qualquer requisição fora dela é rejeitada no n8n, não no app — o app não é a fronteira de segurança. Caminho arbitrário do OneDrive da empresa nunca é montável a partir do Portal.
+
 **D3 · Público** — ✅ **INTERNO**, atrás do login.
 > "Em sua maioria pessoal interno. Mas vamos ter uma página de suporte conectada (já temos algo assim), mas essa página de suporte entra por outro caminho mesmo."
 - A **única superfície pública continua sendo `/abrir-ticket`** (F2 do Service Desk). O Portal **não** cria superfície pública nova (invariante §9.9 do GUIA). "Conectada" = link entre as duas, não permissão compartilhada.
@@ -258,11 +272,13 @@ model Playbook {
 ### 7.3 Env vars novas
 
 ```
-N8N_PORTAL_WEBHOOK_URL     # webhook do fluxo de pesquisa externa (n8n Contabo)
-N8N_PORTAL_WEBHOOK_SECRET  # header compartilhado; o webhook rejeita sem ele
-PORTAL_GEMINI_MODEL        # default 'gemini-3-flash-preview' (mesmo do relatório executivo)
+N8N_PORTAL_WEBHOOK_URL       # webhook da pesquisa externa/web (F5)
+N8N_PORTAL_WEBHOOK_SECRET    # header compartilhado; o webhook rejeita sem ele
+N8N_ONEDRIVE_WEBHOOK_URL     # webhook de leitura do OneDrive via Graph (F3) — listar/baixar
+N8N_ONEDRIVE_WEBHOOK_SECRET  # header compartilhado
+PORTAL_GEMINI_MODEL          # default 'gemini-3-flash-preview' (mesmo do relatório executivo)
 ```
-`GEMINI_API_KEY` já existe. Sem as duas do n8n → `webEnabled: false`, modo Interno intacto.
+`GEMINI_API_KEY` já existe. Sem as do n8n → a capacidade correspondente aparece **desabilitada com explicação** (`webEnabled: false` / Biblioteca sem sync), e o resto do Portal segue funcionando. **Nenhuma credencial Microsoft entra na Vercel** — ela fica no n8n (`Marcos@Defenz`, `tuFzJdPvNnOt3TD3`).
 
 ---
 
@@ -272,7 +288,7 @@ PORTAL_GEMINI_MODEL        # default 'gemini-3-flash-preview' (mesmo do relatór
 |---|---|---|
 | **F1 · Fundação POPs** ✅ **IMPLEMENTADA (05/08, local)** | model + `db push`, `scopedPlaybookWhere`, CRUD, verify, busca `contains`, frescor no cron, nav + aba POPs, `<PortalMarkdown>` | ✅ 711 testes, `tsc`+`build` verdes, smoke ao vivo OK · ⚠️ **R1 (hotlink Drive) ainda pendente** — precisa de 1 print real do Marcos |
 | **F2 · Conteúdo** | migrar **3–5 POPs reais de operação Bitdefender** (D6) + fallback de imagem quebrada | um POP com print renderiza pra um segundo usuário |
-| **F3 · Biblioteca** | `kind=BIBLIOTECA`, ficha + "Abrir no Drive", filtro por kind, aba nova | manual/modelo do Drive achável pela busca |
+| **F3 · Biblioteca + OneDrive** | webhook n8n de leitura (auth de header + **allowlist na raiz D2c**), sync da pasta → fichas `kind=BIBLIOTECA`, botão "Abrir no OneDrive", `/api/portal/image-proxy` via `downloadUrl`, aba nova | arquivo posto na pasta aparece no Portal e é achado pela busca; caminho fora da raiz é **rejeitado no n8n** |
 | **F4 · IA interna** | `src/lib/portal/ask.ts` **novo** (não reusa `src/lib/ai/`), retrieve scoped → Gemini → resposta com citações validadas | pergunta real responde citando o POP certo; sem POP → admite que não sabe |
 | **F5 · IA web (n8n)** | webhook + secret + Zod estrito + `maxDuration` + timeout + fallback | n8n fora do ar não quebra o Portal |
 
@@ -337,6 +353,10 @@ Vale integralmente a checklist **§9 do `service-desk-GUIA.md`** — tenant isol
 
 ## 14. Próximos passos
 
-1. ✅ D1–D5 fechadas (05/08) · ✅ spec v1 · ✅ revisão adversarial · ✅ **spec v2**
-2. ⏳ Mockup para validação visual do Marcos
-3. ⏳ Implementar **F1** com TDD
+1. ✅ D1–D6 + D2b/D2c fechadas (05/08) · ✅ spec v1 · ✅ revisão adversarial · ✅ spec v2 · ✅ mockup aprovado
+2. ✅ **F1 implementada** (commit `ef97882`, local) — 711 testes, smoke ao vivo OK
+3. ✅ **OneDrive validado ponta a ponta** — leitura via Graph com a credencial do n8n; raiz do Portal confirmada
+4. ⏳ **F2 · Conteúdo** — 3–5 POPs reais de operação Bitdefender (D6). Depende do Marcos indicar quais.
+5. ⏳ **F3 · Biblioteca + OneDrive** — webhook de leitura + sync da raiz D2c + image-proxy.
+
+> 🧪 **Item de teste vivo no banco:** `[TESTE ONEDRIVE] KPIs de gestão à vista — Defenz` (global, `companyId=null`), carregado a partir de `KPIs_GESTAO_VISTA_V1.docx`. **Marcos pediu para manter por enquanto** — não apagar sem confirmar com ele.
