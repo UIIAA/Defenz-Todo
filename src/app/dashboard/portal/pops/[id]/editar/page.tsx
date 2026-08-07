@@ -83,20 +83,20 @@ export default function EditarPopPage({ params }: { params: Promise<{ id: string
     }
   }
 
-  if (loading) return <p className="text-sm text-slate-500">Carregando…</p>
+  if (loading) return <p className="text-sm text-slate-500 dark:text-slate-400">Carregando…</p>
 
   return (
-    <div className="max-w-4xl space-y-5">
-      <Link href="/dashboard/portal" className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900">
+    <div className="p-6 max-w-4xl mx-auto space-y-5">
+      <Link href="/dashboard/portal" className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         <ArrowLeft className="h-4 w-4" /> Voltar ao Portal
       </Link>
 
-      <h1 className="text-2xl font-semibold text-slate-900">
+      <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
         {criando ? 'Novo POP' : 'Editar POP'}
       </h1>
 
       {erro && (
-        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{erro}</span>
         </div>
@@ -123,20 +123,20 @@ export default function EditarPopPage({ params }: { params: Promise<{ id: string
             className="font-mono text-xs"
             placeholder={'1. Quem faz, quando faz e o que precisa ter em mãos antes de começar.\n\n![print da tela](https://…)'}
           />
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Para imagem, cole o link do OneDrive no formato{' '}
-            <code className="rounded bg-slate-100 px-1">![descrição](https://…)</code>. Só links https
+            <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">![descrição](https://…)</code>. Só links https
             são aceitos.
           </p>
         </div>
 
         <div className="space-y-2">
           <Label>Prévia</Label>
-          <div className="min-h-[18rem] rounded-lg border border-slate-200 bg-white p-4">
+          <div className="min-h-[18rem] rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700/50 dark:bg-slate-800/40">
             {body ? (
               <PortalMarkdown body={body} />
             ) : (
-              <p className="text-sm text-slate-400">A prévia aparece aqui conforme você escreve.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">A prévia aparece aqui conforme você escreve.</p>
             )}
           </div>
         </div>
@@ -165,7 +165,7 @@ export default function EditarPopPage({ params }: { params: Promise<{ id: string
               disabled={evergreen}
               className="w-28"
             />
-            <label className="flex items-center gap-2 text-sm text-slate-600">
+            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               <input
                 type="checkbox"
                 checked={evergreen}

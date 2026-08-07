@@ -30,7 +30,7 @@ function ImagemDoDrive({ src, alt }: { src?: string; alt?: string }) {
 
   if (!src || quebrou) {
     return (
-      <span className="my-3 block rounded-md border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+      <span className="my-3 block rounded-md border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
         Imagem indisponível — verifique o link do Drive
         {alt ? ` (${alt})` : ''}
       </span>
@@ -42,7 +42,7 @@ function ImagemDoDrive({ src, alt }: { src?: string; alt?: string }) {
     <img
       src={src}
       alt={alt ?? ''}
-      className="my-3 max-w-full rounded-md border border-slate-200"
+      className="my-3 max-w-full rounded-md border border-slate-200 dark:border-slate-700"
       onError={() => setQuebrou(true)}
     />
   )
@@ -51,7 +51,7 @@ function ImagemDoDrive({ src, alt }: { src?: string; alt?: string }) {
 /** Render de markdown do Portal — POP e ficha de Biblioteca usam o mesmo. */
 export function PortalMarkdown({ body }: { body: string }) {
   return (
-    <div className="prose prose-slate prose-sm max-w-none">
+    <div className="prose prose-slate prose-sm max-w-none dark:prose-invert">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         urlTransform={safeUrl}

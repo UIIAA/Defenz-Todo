@@ -3,15 +3,15 @@ import { freshnessOf } from '@/lib/playbook-freshness'
 const ESTILOS = {
   verificado: {
     label: 'Verificado',
-    cls: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    cls: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/60',
   },
   precisa_revisao: {
     label: 'Precisa revisão',
-    cls: 'bg-amber-50 text-amber-700 border-amber-200',
+    cls: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60',
   },
   nunca_verificado: {
     label: 'Nunca verificado',
-    cls: 'bg-slate-50 text-slate-600 border-slate-200',
+    cls: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700',
   },
 } as const
 

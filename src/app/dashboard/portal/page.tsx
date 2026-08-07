@@ -62,29 +62,29 @@ export default function PortalPage() {
   }, [busca, carregar])
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6 max-w-full overflow-x-hidden">
       <div className="flex items-center gap-3">
-        <BookOpen className="h-6 w-6 text-blue-600" />
-        <h1 className="text-2xl font-semibold text-slate-900">Portal Defenz</h1>
+        <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Portal Defenz</h1>
       </div>
 
       {/* Abas: só POPs está viva na F1. Aba morta é promessa quebrada — as outras
           aparecem com a fase em que entram. */}
-      <div className="flex gap-6 border-b border-slate-200">
-        <span className="-mb-px border-b-2 border-blue-600 pb-2 text-sm font-medium text-slate-900">
+      <div className="flex gap-6 border-b border-slate-200 dark:border-slate-700/50">
+        <span className="-mb-px border-b-2 border-blue-600 pb-2 text-sm font-medium text-slate-900 dark:border-blue-400 dark:text-white">
           POPs
         </span>
-        <span className="pb-2 text-sm text-slate-400">
-          Biblioteca <span className="ml-1 rounded border border-slate-200 px-1.5 py-0.5 text-[11px]">em breve</span>
+        <span className="pb-2 text-sm text-slate-400 dark:text-slate-500">
+          Biblioteca <span className="ml-1 rounded border border-slate-200 px-1.5 py-0.5 text-[11px] dark:border-slate-700">em breve</span>
         </span>
-        <span className="pb-2 text-sm text-slate-400">
-          IA Defenz <span className="ml-1 rounded border border-slate-200 px-1.5 py-0.5 text-[11px]">em breve</span>
+        <span className="pb-2 text-sm text-slate-400 dark:text-slate-500">
+          IA Defenz <span className="ml-1 rounded border border-slate-200 px-1.5 py-0.5 text-[11px] dark:border-slate-700">em breve</span>
         </span>
       </div>
 
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <Input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -102,36 +102,36 @@ export default function PortalPage() {
       </div>
 
       {erro && (
-        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{erro}</span>
         </div>
       )}
 
       {loading ? (
-        <p className="text-sm text-slate-500">Carregando…</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Carregando…</p>
       ) : playbooks.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 p-10 text-center">
-          <p className="text-sm font-medium text-slate-700">
+        <div className="rounded-lg border border-dashed border-slate-300 p-10 text-center dark:border-slate-700">
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {busca ? 'Nenhum POP encontrado para essa busca.' : 'Nenhum POP ainda.'}
           </p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {busca
               ? 'Tente outra palavra — a busca olha o título e o conteúdo.'
               : 'Comece escrevendo o primeiro procedimento da equipe.'}
           </p>
         </div>
       ) : (
-        <div className="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 bg-white dark:divide-slate-700/40 dark:border-slate-700/50 dark:bg-slate-800/40">
           {playbooks.map((p) => (
             <Link
               key={p.id}
               href={`/dashboard/portal/pops/${p.id}`}
-              className="flex items-start justify-between gap-3 p-4 transition-colors hover:bg-slate-50"
+              className="flex items-start justify-between gap-3 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/70"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-slate-900">{p.title}</p>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{p.title}</p>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                   {p.owner?.name || p.owner?.email || 'sem dono'}
                   {p.verifiedAt
                     ? ` · verificado em ${formatDate(p.verifiedAt)}`
