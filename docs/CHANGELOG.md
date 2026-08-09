@@ -3,6 +3,17 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Changed (2026-08-09 — a Ana passa a rodar no Gemini e volta a responder certo; LOCAL)
+> **750 testes verdes** (era 737), `tsc` + `build` limpos. Ana respondendo em localhost com fonte clicável, verificado clicando na interface.
+- **Provider trocado para `gemini-3.6-flash`** (decisão do Marcos, contraria a emenda D7 da spec). O argumento da D7 — "admitir que não sabe é instruction-following, onde errar é caro" — não foi refutado, foi **medido**: nas 2 perguntas sem resposta na base o Gemini admitiu não saber mesmo recebendo 4–5 fontes irrelevantes; nas de dentro citou o POP certo, sinalizou sozinho que é `[RASCUNHO]` e listou o que falta no procedimento; pergunta técnica de cibersegurança não foi bloqueada. Latência 4–9s.
+- **Safety settings em `BLOCK_ONLY_HIGH`** nas 4 categorias, porque os POPs da Defenz falam de EDR, política de bloqueio e exclusão de arquivo — falso-positivo clássico em `DANGEROUS_CONTENT`. Bloqueio e `MAX_TOKENS` viram avisos visíveis, não resposta vazia. `finishReason` é comparado por **string**: o enum do `@google/generative-ai@0.21` não conhece `BLOCKLIST`/`PROHIBITED_CONTENT`, que a API já devolve.
+
+### Fixed (2026-08-09 — o bug que fazia a Ana negar um POP que existe)
+- **`cortarContexto` descartava 75% do contexto e 5 das 6 fontes.** Ele concatenava tudo e fatiava a string no fim, então bastava um documento de 19k chars (`[TESTE ONEDRIVE] KPIs`) no topo do ranking para comer o orçamento de 8k inteiro. Medido: na pergunta "o que precisa estar preenchido no Zoho antes de mandar proposta?", o POP "Preenchimento do Zoho CRM" **nunca chegava ao modelo** e a Ana respondia *"essa informação não está presente em nenhum documento fornecido"*. O pior modo de falha possível — parece a feature funcionando, porque ela "admitiu que não sabe". Substituído por repartição **max-min fair share** (percorre da menor para a maior; quem cabe na cota entra inteiro e devolve a sobra), cap subido para 24k chars, e **fonte truncada é marcada como parcial** para o modelo não afirmar que o POP não cobre o que foi cortado.
+- **Resposta "não sei" já não lista fontes.** Quando o modelo não cita ninguém e a evidência é fraca, a UI mostra zero fontes — listar 5 POPs embaixo de um "isso não está em nenhum POP nosso" contradiz a própria resposta.
+- **Citação com colchete aninhado** (`[[RASCUNHO] Setup...]`) — a persona passou a pedir aspas em vez de colchetes, já que vários títulos começam com colchete.
+- **Markdown cru na tela.** A regra §7.2 (texto puro, para POP injetado não virar link clicável) estava sendo cumprida literalmente e devolvia `* **CNPJ:**` na cara do usuário. Novo `<AnaAnswer>`: renderiza markdown mas **remove `a` e `img` do resultado** — o texto do link sobrevive, o elemento clicável não existe. Estritamente mais restrito que o `<PortalMarkdown>` dos POPs.
+
 ### Added (2026-08-09 — Portal navegável: Biblioteca + Ana A1/A2/A3; LOCAL, não deployado)
 > **737 testes verdes** (era 711 → 26 novos), `tsc` + `build` limpos. Navegação entre os 3 pilares funcionando em localhost. **Falta a `ANTHROPIC_API_KEY` para a Ana responder de verdade.**
 - **`<PortalTabs>`** — as 3 abas (POPs · Biblioteca · IA Defenz) viraram navegação real. Nenhuma aba morta: as três levam a tela viva, como a spec-mãe exige.

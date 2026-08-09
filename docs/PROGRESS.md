@@ -4,14 +4,14 @@
 **Version:** 0.3.0
 **Branch:** main
 
-## 🔑 BLOQUEIO ÚNICO — falta a `ANTHROPIC_API_KEY` do Marcos
-O Portal está **navegável nas 3 abas** e a Ana está implementada de ponta a ponta (A1+A2+A3). O que falta para ela responder de verdade é uma linha no `.env`:
-```
-ANTHROPIC_API_KEY="sk-ant-..."
-```
-⚠️ **Gerar em workspace da Anthropic com teto de gasto mensal.** O `checkRateLimit` do app roda em memória do lambda e **não** segura custo (R5 da spec). Sem a chave, a aba IA mostra o aviso explícito e as abas POPs/Biblioteca seguem funcionando.
+## ✅ A ANA ESTÁ RESPONDENDO (localhost, Gemini 3.6 Flash)
+O Portal está **navegável nas 3 abas** e a Ana responde de verdade, com fonte clicável. Testado clicando na interface.
 
-Verificado em localhost sem a chave: navegação POPs ↔ Biblioteca ↔ IA ✓ · 14 fichas com "Abrir no OneDrive" ✓ · retrieve contra o Neon real acerta o POP certo em 1º lugar nas 5 perguntas naturais testadas ✓ · pipeline até o SDK exercitado com chave inválida (401 tratado, citações e avisos corretos) ✓.
+**Provider = Gemini** (`gemini-3.6-flash`, env `GEMINI_API_KEY` + `ANA_MODEL`) — decisão do Marcos em 09/08, contrariando a emenda D7 da spec (que pedia Claude). O argumento da D7 não foi refutado, foi **testado**: nas 2 perguntas sem resposta na base, o Gemini admitiu que não sabia mesmo recebendo 4–5 fontes irrelevantes; nas de dentro, citou o POP certo, sinalizou sozinho que é `[RASCUNHO]` e listou o que falta no procedimento. Pergunta técnica de cyber não foi bloqueada. Latência 4–9s.
+
+⚠️ **A chave foi colada no chat** — rotacionar no Google Cloud Console. E ela precisa de **teto de gasto**: o `checkRateLimit` roda em memória do lambda e não segura custo (R5).
+
+⚠️ **`[TESTE ONEDRIVE] KPIs de gestão à vista` (19k chars) polui o ranking** — é o maior documento da base e aparece em quase toda busca por palavra genérica. Decidir se arquiva.
 
 ## 🎯 PRÓXIMO ITEM DO ROADMAP — validar e fechar os POPs
 **Os 6 rascunhos de POP estão publicados no Portal com o prefixo `[RASCUNHO]`, esperando o Marcos.** Cada um tem uma seção "⚠️ a confirmar" no fim com as perguntas que as atas deixaram em aberto. Fluxo: Marcos responde → eu corrijo → tiro o prefixo → ele clica em Verificar (selo verde, relógio de 90 dias começa).

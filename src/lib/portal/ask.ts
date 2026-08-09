@@ -1,4 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk'
+import {
+  GoogleGenerativeAI,
+  HarmBlockThreshold,
+  HarmCategory,
+} from '@google/generative-ai'
 import type { ScopeUser } from '@/lib/auth'
 import {
   retrieve,
@@ -7,7 +11,7 @@ import {
   SCORE_FRACO,
   type FonteRankeada,
 } from './retrieve'
-import { ANA_SYSTEM_PROMPT, montarContexto, cortarContexto } from './ana-persona'
+import { ANA_SYSTEM_PROMPT, montarContexto } from './ana-persona'
 
 /**
  * Pipeline da Ana — modo interno. Spec `feature-portal-ana.md` §5–§7.
@@ -16,16 +20,21 @@ import { ANA_SYSTEM_PROMPT, montarContexto, cortarContexto } from './ana-persona
  * específico de `ActivityInput → ActivityAnalysis` e travado em `gemini-1.5-*` (aposentados).
  * Ver spec-mãe C1.
  *
- * Emenda D7: a Ana usa Claude, não Gemini. O requisito central é *admitir quando não sabe*
- * e *citar a fonte* — instruction-following, onde errar é caro. O Gemini segue no relatório
- * executivo, intocado.
+ * ⚠️ PROVIDER: **Gemini**, por decisão do Marcos (09/08) — a emenda D7 da spec pedia Claude.
+ * O argumento da D7 continua de pé e NÃO foi refutado: o requisito nº1 da Ana é *admitir
+ * quando não sabe*, que é instruction-following. A decisão foi tomada com a chave em mãos e
+ * com o combinado explícito de MEDIR ("vamos ver se ele dá conta, se não tentamos outros").
+ * O teste que decide isso é a pergunta fora da base — se a Ana inventar processo ali, o
+ * modelo não serve, independente de custo. Trocar de modelo é só a env var `ANA_MODEL`;
+ * trocar de provider é editar este arquivo.
  */
 
 export type Aviso =
   | 'fonte_fraca'
   | 'fonte_vencida'
   | 'multi_empresa'
-  | 'fallback_usado'
+  | 'bloqueio_seguranca'
+  | 'resposta_cortada'
   | 'sem_chave'
 
 export interface Citacao {
@@ -46,18 +55,28 @@ export interface RespostaAna {
 /** Cap duro da spec-mãe §5. Validado também no Zod da rota. */
 export const PERGUNTA_MAX_CHARS = 500
 
-const MODELO = process.env.ANA_MODEL || 'claude-opus-5'
-const EFFORT = (process.env.ANA_EFFORT || 'high') as 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+const MODELO = process.env.ANA_MODEL || 'gemini-3.6-flash'
 
-/**
- * `max_tokens` limita PENSAMENTO + RESPOSTA juntos no claude-opus-5 (thinking é ligado por
- * padrão). Apertar isto trunca a resposta no meio de uma frase.
- */
-const MAX_TOKENS = 8000
+/** Cap de saída. O 3.6-flash pensa por padrão, e o thinking NÃO conta aqui. */
+const MAX_TOKENS = 2048
 
 export function anaConfigurada(): boolean {
-  return !!process.env.ANTHROPIC_API_KEY
+  return !!process.env.GEMINI_API_KEY
 }
+
+/**
+ * A Defenz é uma MSSP: os POPs falam de EDR, política de bloqueio, exclusão de arquivo,
+ * console de antivírus. Trabalho BENIGNO de segurança é o falso-positivo clássico de
+ * classificador — no Gemini ele cai em `DANGEROUS_CONTENT`. Afrouxamos para `BLOCK_ONLY_HIGH`
+ * (o mínimo que a API concede sem allowlist) e, quando ainda assim bloquear, a UI DIZ que
+ * bloqueou em vez de mostrar resposta vazia (GUIA §9.3).
+ */
+const SAFETY = [
+  HarmCategory.HARM_CATEGORY_HARASSMENT,
+  HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+  HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+  HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+].map((category) => ({ category, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH }))
 
 /** Modo web só existe quando o webhook do n8n estiver configurado (F5). */
 export function webHabilitado(): boolean {
@@ -125,7 +144,7 @@ export function validarCitacoes(fontes: FonteRankeada[], resposta: string): Cita
 }
 
 /**
- * Pergunta → retrieve scoped → Claude → citações validadas.
+ * Pergunta → retrieve scoped → Gemini → citações validadas.
  *
  * Nunca lança por erro do provedor: devolve `answer` explicando. Erro silencioso na UI é
  * proibido pela §9.3 do GUIA, e um 500 sem corpo é exatamente isso.
@@ -147,7 +166,7 @@ export async function perguntarAna(
       ...base,
       avisos: ['sem_chave'],
       answer:
-        'A IA Defenz ainda não está ligada: falta a chave da Anthropic (`ANTHROPIC_API_KEY`) no ambiente. Os POPs e a Biblioteca continuam funcionando normalmente pela busca.',
+        'A IA Defenz ainda não está ligada: falta a `GEMINI_API_KEY` no ambiente. Os POPs e a Biblioteca continuam funcionando normalmente pela busca.',
     }
   }
 
@@ -165,67 +184,61 @@ export async function perguntarAna(
   const avisos = calcularAvisos(fontes)
   const playbookIds = fontes.map((f) => f.id)
 
-  const contexto = cortarContexto(
-    montarContexto(
-      fontes.map((f) => ({
-        id: f.id,
-        title: f.title,
-        body: f.body,
-        companyLabel: empresaDaFonte(f),
-        freshness: frescorDaFonte(f),
-      }))
-    )
+  const contexto = montarContexto(
+    fontes.map((f) => ({
+      id: f.id,
+      title: f.title,
+      body: f.body,
+      companyLabel: empresaDaFonte(f),
+      freshness: frescorDaFonte(f),
+    }))
   )
 
-  const client = new Anthropic()
+  const prompt = [
+    contexto,
+    // O retrieve sabe quando a evidência é fraca; contar isso ao modelo é o que
+    // transforma "admita o que não sabe" de instrução genérica em decisão informada.
+    avisos.includes('fonte_fraca')
+      ? '\n[Nota do sistema: a busca interna teve BAIXA confiança nestas fontes — nenhuma casou a pergunta pelo título. É provável que a resposta simplesmente não exista na base. Confira antes de responder; se não responderem, diga que não sabe.]'
+      : '',
+    `\n\nPergunta do funcionário: ${pergunta}`,
+  ].join('')
 
   try {
-    // Streaming interno + `maxDuration` na rota: sem isso, um modelo que pensa por padrão
-    // com effort alto estoura o timeout HTTP e devolve 504 sem corpo (R6).
-    const stream = client.beta.messages.stream({
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+    const model = genAI.getGenerativeModel({
       model: MODELO,
-      max_tokens: MAX_TOKENS,
-      output_config: { effort: EFFORT },
-      system: ANA_SYSTEM_PROMPT,
-      // A Defenz é uma empresa de cibersegurança e o claude-opus-5 tem salvaguardas de
-      // cyber elevadas: trabalho BENIGNO de segurança é o falso-positivo documentado (R2).
-      // `fallbacks: "default"` reencaminha recusa de categoria cyber server-side.
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            contexto,
-            // O retrieve sabe quando a evidência é fraca; contar isso ao modelo é o que
-            // transforma "admita o que não sabe" de instrução genérica em decisão informada.
-            avisos.includes('fonte_fraca')
-              ? '\n[Nota do sistema: a busca interna teve BAIXA confiança nestas fontes — nenhuma casou a pergunta pelo título. É provável que a resposta simplesmente não exista na base. Confira antes de responder; se não responderem, diga que não sabe.]'
-              : '',
-            `\n\nPergunta do funcionário: ${pergunta}`,
-          ].join(''),
-        },
-      ],
+      systemInstruction: ANA_SYSTEM_PROMPT,
+      safetySettings: SAFETY,
+      generationConfig: { maxOutputTokens: MAX_TOKENS },
     })
 
-    const msg = await stream.finalMessage()
+    const { response } = await model.generateContent(prompt)
 
-    // Checar `stop_reason` ANTES de ler `content` — numa recusa o content vem vazio.
-    if (msg.stop_reason === 'refusal') {
+    // Checar o bloqueio ANTES de ler o texto: `response.text()` LANÇA quando o candidato
+    // não tem parte de texto, e um throw aqui viraria erro genérico na tela.
+    const blockReason = response.promptFeedback?.blockReason
+    const candidato = response.candidates?.[0]
+    const finish = candidato?.finishReason
+
+    // Comparação por string, não pelo enum: o `@google/generative-ai@0.21` é antigo e o
+    // enum `FinishReason` dele não conhece valores que a API já devolve hoje
+    // (BLOCKLIST, PROHIBITED_CONTENT). Casar pelo enum perderia justamente os bloqueios novos.
+    const BLOQUEIOS = ['SAFETY', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII', 'RECITATION']
+    if (blockReason || BLOQUEIOS.includes(String(finish))) {
       return {
         ...base,
-        avisos: [...avisos, 'fallback_usado'],
+        avisos: [...avisos, 'bloqueio_seguranca'],
         playbookIds,
         citations: fontes.map(citacaoDe),
         answer:
-          'O modelo recusou responder a esta pergunta (classificador de segurança). Isso costuma acontecer com temas técnicos de cibersegurança mesmo quando o uso é legítimo. Tente reformular focando no processo interno, ou abra o POP diretamente nas fontes abaixo.',
+          'O modelo bloqueou esta pergunta pelo filtro de segurança. Isso acontece com tema técnico de cibersegurança mesmo quando o uso é legítimo — é a Defenz falando do próprio produto. Reformule focando no processo interno, ou abra o POP direto nas fontes abaixo.',
       }
     }
 
-    const texto = msg.content
-      .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
-      .map((b) => b.text)
-      .join('\n')
+    const texto = (candidato?.content?.parts ?? [])
+      .map((p) => ('text' in p ? p.text : ''))
+      .join('')
       .trim()
 
     if (!texto) {
@@ -234,23 +247,29 @@ export async function perguntarAna(
         avisos,
         playbookIds,
         citations: fontes.map(citacaoDe),
-        answer: 'O modelo respondeu vazio. Tente de novo ou abra os POPs abaixo direto.',
+        answer: `O modelo respondeu vazio (motivo: ${finish ?? 'desconhecido'}). Tente de novo ou abra os POPs abaixo direto.`,
       }
     }
 
-    const usouFallback = (msg.usage?.iterations ?? []).some(
-      (it: { type?: string }) => it.type === 'fallback_message'
-    )
+    const citadas = validarCitacoes(fontes, texto)
 
     return {
       ...base,
       answer: texto,
-      // Citações validadas contra o conjunto recuperado; se o modelo não citou ninguém
-      // explicitamente, devolvemos as fontes usadas para o funcionário conferir.
-      citations: validarCitacoes(fontes, texto).length
-        ? validarCitacoes(fontes, texto)
-        : fontes.map(citacaoDe),
-      avisos: usouFallback ? [...avisos, 'fallback_usado'] : avisos,
+      /**
+       * Citações validadas contra o conjunto recuperado. Quando o modelo não citou ninguém:
+       * - evidência boa → mostramos as fontes usadas, para o funcionário conferir;
+       * - evidência FRACA → mostramos NADA. Listar 5 POPs embaixo de um "isso não está em
+       *   nenhum POP nosso" (medido no teste do Gemini) contradiz a própria resposta e
+       *   sugere relevância que não existe.
+       */
+      citations: citadas.length
+        ? citadas
+        : avisos.includes('fonte_fraca')
+          ? []
+          : fontes.map(citacaoDe),
+      // MAX_TOKENS corta a resposta no meio — a tela precisa dizer isso, não fingir que acabou.
+      avisos: finish === 'MAX_TOKENS' ? [...avisos, 'resposta_cortada'] : avisos,
       playbookIds,
     }
   } catch (e) {
@@ -259,15 +278,18 @@ export async function perguntarAna(
     const detalhe = e instanceof Error ? e.message : 'erro desconhecido'
     console.error('[ana] falha ao chamar o provedor:', detalhe)
 
+    // O SDK do Gemini expõe `status` no erro de fetch (GoogleGenerativeAIFetchError).
     const status = (e as { status?: number })?.status
     const causa =
-      status === 401
-        ? 'a chave da Anthropic foi recusada'
-        : status === 429
-          ? 'o limite de uso da chave foi atingido'
-          : status && status >= 500
-            ? 'o provedor está fora do ar'
-            : 'houve uma falha na chamada'
+      status === 400 || status === 401 || status === 403
+        ? 'a chave do Gemini foi recusada ou não tem acesso a este modelo'
+        : status === 404
+          ? `o modelo "${MODELO}" não existe para esta chave`
+          : status === 429
+            ? 'o limite de uso da chave foi atingido'
+            : status && status >= 500
+              ? 'o provedor está fora do ar'
+              : 'houve uma falha na chamada'
 
     return {
       ...base,

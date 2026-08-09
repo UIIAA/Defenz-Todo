@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { PortalTabs } from '@/components/portal/portal-tabs'
+import { AnaAnswer } from '@/components/portal/ana-answer'
 import { Button } from '@/components/ui/button'
 import { BookOpen, Sparkles, AlertCircle, Send, Globe, Database } from 'lucide-react'
 
@@ -10,7 +11,8 @@ const AVISO_TEXTO: Record<string, string> = {
   fonte_fraca: 'A base tem pouca coisa sobre isso — trate a resposta com desconfiança.',
   fonte_vencida: 'Pelo menos um dos POPs citados está vencido (precisa de revisão).',
   multi_empresa: 'As fontes vêm de empresas diferentes. Confira se o processo é o da empresa certa.',
-  fallback_usado: 'A resposta veio de um modelo alternativo.',
+  bloqueio_seguranca: 'O filtro de segurança do modelo bloqueou esta pergunta.',
+  resposta_cortada: 'A resposta bateu no limite de tamanho e foi cortada — abra o POP para o resto.',
   sem_chave: 'A IA ainda não está ligada neste ambiente.',
 }
 
@@ -113,8 +115,8 @@ export default function IaPage() {
           <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              A IA ainda não está ligada neste ambiente: falta a chave da Anthropic
-              (<code className="font-mono text-xs">ANTHROPIC_API_KEY</code>). As abas POPs e
+              A IA ainda não está ligada neste ambiente: falta a
+              {' '}<code className="font-mono text-xs">GEMINI_API_KEY</code>. As abas POPs e
               Biblioteca funcionam normalmente.
             </span>
           </div>
@@ -221,10 +223,10 @@ export default function IaPage() {
               </div>
             )}
 
-            {/* Texto PURO, sem markdown: um POP com texto injetado não vira link clicável
-                na resposta da Ana (regra dura §7.2). */}
-            <div className="whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-4 text-sm leading-relaxed text-slate-800 dark:border-slate-700/50 dark:bg-slate-800/40 dark:text-slate-100">
-              {resposta.answer}
+            {/* Markdown SEM link e SEM imagem: um POP com texto injetado não vira link
+                clicável na resposta da Ana (regra dura §7.2). Ver <AnaAnswer>. */}
+            <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-800 dark:border-slate-700/50 dark:bg-slate-800/40 dark:text-slate-100">
+              <AnaAnswer text={resposta.answer} />
             </div>
 
             {resposta.citations.length > 0 && (
