@@ -4,6 +4,18 @@
 **Version:** 0.3.0
 **Branch:** main
 
+## 🎯 RETOMAR AQUI — implementar `feature-portal-proposta`
+**A spec está escrita, revisada e commitada** (`430047b`): [`docs/features/feature-portal-proposta.md`](features/feature-portal-proposta.md). Marcos vai revisar e a próxima sessão começa por ela — **não re-planejar, não re-descobrir**. Toda a investigação que a produziu está registrada lá (§2 "O que foi medido").
+
+Ordem: F1 preço (funções puras + teste do ÷36) → F2 template A4 + PDF → F3 formulário → F4 log → F5 OneDrive → F6 deploy.
+
+**Duas pendências do Marcos, ambas na spec:**
+1. **R3 — qual tabela de preço vale.** O arquivo se chama "Dez.2026", a capa diz 2024, o corpo diz 29/11/2024. Assumido `2024-11-29`.
+2. Aprovação da spec.
+
+**Insumos, todos no OneDrive** `Defenz - ADMINISTRATIVO/BIBLIOTECA PORTAL DEFENZ`:
+`Defenz - HTMLs/` (33 arquivos, com `CLAUDE.md` do brandbook, `Defenz Proposta A4.dc.html` = molde, e as duas propostas de cliente que geraram o diff) · `Tabela Bundle Pública BRL - Dez.2026.pdf` (transcrita no Anexo A da spec) · o PPTX e o PDF do João Buffo.
+
 ## ✅ A ANA ESTÁ RESPONDENDO (localhost, Gemini 3.6 Flash)
 O Portal está **navegável nas 3 abas** e a Ana responde de verdade, com fonte clicável. Testado clicando na interface.
 
