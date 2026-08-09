@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { FreshnessBadge } from '@/components/portal/freshness-badge'
+import { PortalTabs } from '@/components/portal/portal-tabs'
 import { BookOpen, Plus, Search, AlertCircle } from 'lucide-react'
 import { formatDate } from '@/lib/date'
 
@@ -68,19 +69,7 @@ export default function PortalPage() {
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Portal Defenz</h1>
       </div>
 
-      {/* Abas: só POPs está viva na F1. Aba morta é promessa quebrada — as outras
-          aparecem com a fase em que entram. */}
-      <div className="flex gap-6 border-b border-slate-200 dark:border-slate-700/50">
-        <span className="-mb-px border-b-2 border-blue-600 pb-2 text-sm font-medium text-slate-900 dark:border-blue-400 dark:text-white">
-          POPs
-        </span>
-        <span className="pb-2 text-sm text-slate-400 dark:text-slate-500">
-          Biblioteca <span className="ml-1 rounded border border-slate-200 px-1.5 py-0.5 text-[11px] dark:border-slate-700">em breve</span>
-        </span>
-        <span className="pb-2 text-sm text-slate-400 dark:text-slate-500">
-          IA Defenz <span className="ml-1 rounded border border-slate-200 px-1.5 py-0.5 text-[11px] dark:border-slate-700">em breve</span>
-        </span>
-      </div>
+      <PortalTabs />
 
       <div className="flex gap-2">
         <div className="relative flex-1">

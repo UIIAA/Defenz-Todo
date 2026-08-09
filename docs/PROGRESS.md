@@ -4,6 +4,15 @@
 **Version:** 0.3.0
 **Branch:** main
 
+## 🔑 BLOQUEIO ÚNICO — falta a `ANTHROPIC_API_KEY` do Marcos
+O Portal está **navegável nas 3 abas** e a Ana está implementada de ponta a ponta (A1+A2+A3). O que falta para ela responder de verdade é uma linha no `.env`:
+```
+ANTHROPIC_API_KEY="sk-ant-..."
+```
+⚠️ **Gerar em workspace da Anthropic com teto de gasto mensal.** O `checkRateLimit` do app roda em memória do lambda e **não** segura custo (R5 da spec). Sem a chave, a aba IA mostra o aviso explícito e as abas POPs/Biblioteca seguem funcionando.
+
+Verificado em localhost sem a chave: navegação POPs ↔ Biblioteca ↔ IA ✓ · 14 fichas com "Abrir no OneDrive" ✓ · retrieve contra o Neon real acerta o POP certo em 1º lugar nas 5 perguntas naturais testadas ✓ · pipeline até o SDK exercitado com chave inválida (401 tratado, citações e avisos corretos) ✓.
+
 ## 🎯 PRÓXIMO ITEM DO ROADMAP — validar e fechar os POPs
 **Os 6 rascunhos de POP estão publicados no Portal com o prefixo `[RASCUNHO]`, esperando o Marcos.** Cada um tem uma seção "⚠️ a confirmar" no fim com as perguntas que as atas deixaram em aberto. Fluxo: Marcos responde → eu corrijo → tiro o prefixo → ele clica em Verificar (selo verde, relógio de 90 dias começa).
 
@@ -20,10 +29,14 @@ Também vivos no Portal: **Apontamento de horas** (3 suposições minhas a confi
 **Lacuna que os 4 lotes apontaram juntos:** não existe registro do handoff de vendas → operação. Provavelmente o POP mais valioso que ainda não dá pra escrever.
 
 ## Depois dos POPs, na ordem
-1. **Ana A1** — `ana-persona.ts` + `retrieve.ts` (extração de termos + ranking em JS) + `npm i @anthropic-ai/sdk`. Nenhuma aba nova. Ver `feature-portal-ana.md` §4 e §8.
-2. **Ana A2** — `POST /api/portal/ask` interno. Depende da `ANTHROPIC_API_KEY` do Marcos, **em workspace com teto de gasto**.
-3. **F3 Biblioteca + OneDrive** — webhook de leitura no n8n (auth de header + allowlist na raiz D2c) + sync + image-proxy.
-4. **Deploy pro Vercel** (Portal F1 + Service Desk, ambos parados em local).
+1. ✅ **Ana A1** — `src/lib/portal/ana-persona.ts` + `retrieve.ts` + `@anthropic-ai/sdk`. **FEITO.**
+2. ✅ **Ana A2** — `POST /api/portal/ask` (+ `GET` de capacidades). **FEITO**, aguardando só a chave.
+3. ✅ **Ana A3** — aba IA viva + `<PortalTabs>` + `CACHE_NAME` → `defenz-v5`. **FEITO.**
+4. ✅ **Biblioteca (lado app)** — aba `/dashboard/portal/biblioteca` com as 14 fichas. **FEITO.**
+5. **Ana A4 — modo web via n8n** (`N8N_PORTAL_WEB_WEBHOOK_URL`): hoje o seletor Web aparece desabilitado com explicação. Falta o webhook, o Zod estrito e o `https:` only.
+6. **F3 sync do OneDrive** — webhook de leitura no n8n (auth de header + allowlist na raiz D2c) + sync + image-proxy. Hoje as fichas foram criadas à mão; nada re-sincroniza sozinho.
+7. **R1 — smoke do hotlink do Drive** (segue pendente, precisa do Marcos subir 1 print).
+8. **Deploy pro Vercel** (Portal + Service Desk, ambos parados em local).
 
 ## ▶️ EM CURSO — Portal Defenz (D1–D8 · spec v2 · **F1 implementada local**)
 **Página que centraliza 3 pilares: (1) IA Defenz, (2) POPs com imagens, (3) Biblioteca de manuais/modelos.** Menu próprio em `/dashboard/portal`.
