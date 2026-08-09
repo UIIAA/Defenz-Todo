@@ -30,6 +30,7 @@ model Company {
   tickets           Ticket[]          // service desk
   authorizedClients AuthorizedClient[] // portal: clientes autorizados
   playbooks         Playbook[]        // portal defenz: POPs e biblioteca
+  propostas         Proposta[]        // portal defenz: propostas comerciais
 }
 
 model Team {
@@ -124,6 +125,7 @@ model User {
   playbooksOwned          Playbook[]               @relation("PlaybookOwner")
   playbooksVerified       Playbook[]               @relation("PlaybookVerifier")
   playbooksCreated        Playbook[]               @relation("PlaybookCreator")
+  propostasCriadas        Proposta[]               @relation("PropostaCriador")
 
   @@index([email])
   @@index([companyId])
@@ -1099,4 +1101,63 @@ model Playbook {
   @@index([ownerId])
   @@index([reviewDueAt, reviewReminderSent])
   @@map("playbooks")
+}
+
+// ---------------------------------------------------------------------------
+// PROPOSTA COMERCIAL (feature-portal-proposta.md)
+// O vendedor preenche o formulario, confirma, e sai o PDF A4 com o preco certo.
+// O registro e o que torna a escolha auditavel e o log buscavel.
+// ---------------------------------------------------------------------------
+
+enum PropostaTipo {
+  ENDPOINTS // Bitdefender / protecao de endpoints (unico tipo desta fase)
+}
+
+model Proposta {
+  id     String       @id @default(cuid())
+  codigo String       @unique // DFZ-2026-01986
+  tipo   PropostaTipo @default(ENDPOINTS)
+
+  clienteNome String
+  empresaNome String
+  cnpj        String?
+  oQueFaz     String? // capturado agora, usado pela Ana depois (spec §12)
+
+  quantidade    Int
+  planos        String[] // BUSINESS_SECURITY | PREMIUM | ENTERPRISE
+  ajustePercent Decimal  @db.Decimal(6, 3) // negativo = desconto
+
+  // Investimento inteiro, como aplicado. SEM isto, "quanto cobrei do Joao em
+  // agosto" vira adivinhacao assim que a tabela mudar — e o re-download
+  // reimprimiria o documento com preco de hoje. Ver spec §9.
+  precoSnapshot  Json
+  tabelaVigencia String // '2024-11-29'
+
+  arquivoNome    String
+  oneDriveItemId String? // null = ainda nao arquivado (F5)
+  arquivadoEm    DateTime?
+
+  // tenant: sempre setado (proposta nunca e global, diferente de Playbook)
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  // SetNull + nullable: deletar o vendedor nao pode travar (cf. FK do AuditLog)
+  criadoPorId String?
+  criadoPor   User?    @relation("PropostaCriador", fields: [criadoPorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([companyId, createdAt])
+  @@index([empresaNome])
+  @@index([cnpj])
+  @@map("propostas")
+}
+
+// Numeracao propria e CONTINUA, no padrao atomico do TicketSequence.
+// Uma unica linha (id=1): o contador NAO zera na virada do ano (spec §8) —
+// o ano no codigo e rotulo, o numero e unico e monotonico para sempre.
+model PropostaSequence {
+  id      Int @id @default(1)
+  lastSeq Int @default(1985) // proxima emissao = 01986
+
+  @@map("proposta_sequences")
 }

@@ -1,6 +1,6 @@
 # Feature: Proposta — o Portal gera a proposta comercial
 
-**Status:** 🟡 **SPEC v1 — aguardando aprovação do Marcos**
+**Status:** 🟢 **F1–F5 IMPLEMENTADAS (local, não deployado)** — 09/08/2026. 816 testes, `tsc`+`build` limpos, `db push` no Neon. F6 (deploy) aguarda o Marcos. Desvios medidos e decisões pendentes no fim do arquivo (§15).
 **Priority:** P0 — é o motivo declarado da IA Defenz existir
 **Date:** 2026-08-09
 **Pai:** `feature-portal-defenz.md`. Irmã de `feature-portal-ana.md` (a Ana **não entra** nesta fase).
@@ -303,3 +303,65 @@ Fonte: `Tabela Bundle Pública BRL - Dez.2026.pdf` · SecuriSoft, distribuidora 
 Produtos, nome cheio: `GRAVITYZONE BUSINESS SECURITY BRAZILIAN EDITION` · `GRAVITYZONE PREMIUM BRAZILIAN EDITION` · `GRAVITYZONE ENTERPRISE BRAZILIAN EDITION`.
 
 ⚠️ **Discrepância de data a resolver com o Marcos:** o nome do arquivo diz "Dez.2026", a capa diz "2024" e o corpo diz 29/11/2024. A implementação carimba `vigenteDesde: '2024-11-29'` (o que está escrito no documento) até o Marcos confirmar qual é a tabela válida. Ver R3.
+
+
+---
+
+## 15. Estado da implementação (09/08/2026)
+
+**F1–F5 implementadas e verificadas em localhost. F6 (deploy) NÃO foi feita** — a
+convenção do projeto é o Marcos validar local antes, e neste repo "subir" significa
+`npm run dev`.
+
+### Onde mora
+`src/lib/proposta/` — `tabela-precos.ts` · `calculo.ts` · `numeracao.ts` ·
+`proposta-server.ts` · `pdf.ts` · `arquivamento.ts` · `templates/endpoints-a4.ts` ·
+`assets/` (fonte + logo embutidos, gerados por `scripts/build-proposta-assets.ts`).
+Rotas em `src/app/api/portal/propostas/`. Telas em `src/app/dashboard/portal/proposta`
+(formulário) e `/propostas` (log). Smoke sem banco: `npx tsx scripts/smoke-proposta-pdf.ts`.
+
+### Critérios de aceite (§14) — conferidos
+| Critério | Resultado |
+|---|---|
+| `171,97 / 36 = 4,78`, não `3,58` | ✅ teste nomeado, nos 4 casos reais medidos |
+| Quantidade 4 e 1000 recusadas, sem gerar arquivo | ✅ testado na UI e no schema |
+| 210×297 mm; 1 página de investimento por plano; `Página X de N` real | ✅ 12 páginas com 3 planos; `N` contado (ver desvio B) |
+| Sem "João Buffo", "Liquos", "Gustavo Figueira", "PBI-25-01642" | ✅ teste dedicado |
+| 0% não mostra linha de desconto; positivo diz "Acréscimo" | ✅ |
+| `DFZ-2026-01986` é o primeiro; cliques simultâneos não colidem | ✅ 3 concorrentes → 01987/01988/01989 |
+| `precoSnapshot` gravado; log acha por empresa, CNPJ e período | ✅ verificado ao vivo |
+| Usuário de outra empresa não vê a proposta | ✅ gerência de outra empresa → 0 registros |
+| Falha do OneDrive não impede o download | ✅ 6 testes de modo de falha |
+
+### Desvios da spec, com o porquê
+- **A — o ÷36 correto inverte o argumento dos 36 meses.** Unitário/mês de 36 meses
+  fica **maior** que o de 24 (R$ 4,78 × R$ 4,59 em BS 25–49); vale nas 8 faixas. É
+  propriedade da tabela pública, e provavelmente **a razão de o ÷48 ter sobrevivido**.
+  O template mantém o destaque crimson na coluna de 36 meses, como no documento de
+  referência. **Decisão comercial do Marcos**, não de código.
+- **B — §14 estava errada sobre as páginas fixas.** Os dois clientes reais têm 9
+  páginas fixas. Buffo tem 11 porque empacotaram 2 planos numa página. Implementado
+  conforme §7.1 (uma por plano): 3 planos → 12 páginas.
+- **C — painel do console sem números fabricados.** "98% · 342 endpoints · 28
+  servidores" é fixo e idêntico nos dois clientes reais; numa proposta de 30 licenças
+  contradiz a página de investimento. Painel mantido, números fora. Reverter é 1 linha.
+- **D — `@sparticuz/chromium` completo, não o `-min`** (§7.3). O `-min` baixa o
+  Chromium em runtime; com o teto de 5 GB por função da Vercel, o completo cabe e
+  elimina esse modo de falha. **A validar no primeiro deploy (R1).**
+- **E — A4 medido.** O Chromium quantiza a MediaBox: 594,96 × 841,92 pt
+  (209,90 × 297,00 mm). É a mais próxima do A4 real entre as opções e a mesma
+  geometria do PDF que a Defenz já entrega. Todo leitor classifica como A4.
+- **F — quarta aba "Propostas"** (pedido do Marcos durante a implementação). O log
+  só era alcançável pelo botão pós-geração. Aba é lugar, botão é ação.
+- **G — re-download regenera a partir do `precoSnapshot`**, em vez de guardar bytes.
+  Some uma dependência de storage e garante que o mesmo número de proposta sempre
+  saia com o mesmo preço.
+
+### O que falta
+1. **R3 — qual tabela de preço vale.** Carimbado `2024-11-29` (o que está escrito no
+   corpo), mas o arquivo se chama "Dez.2026" e a capa diz 2024. **Bloqueia usar em
+   cliente de verdade.**
+2. **F5 — o workflow do n8n não existe.** O app já manda o PDF (binário + metadado em
+   header, auth por `X-Defenz-Token`) e espera `{ itemId }` de volta; sem
+   `N8N_PROPOSTA_ARQUIVO_WEBHOOK_URL` fica inerte e o log mostra "não arquivado".
+3. **F6 — deploy**, quando o Marcos validar. Schema já está no Neon (dev=prod).

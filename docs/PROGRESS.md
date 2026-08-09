@@ -4,17 +4,32 @@
 **Version:** 0.3.0
 **Branch:** main
 
-## 🎯 RETOMAR AQUI — implementar `feature-portal-proposta`
-**A spec está escrita, revisada e commitada** (`430047b`): [`docs/features/feature-portal-proposta.md`](features/feature-portal-proposta.md). Marcos vai revisar e a próxima sessão começa por ela — **não re-planejar, não re-descobrir**. Toda a investigação que a produziu está registrada lá (§2 "O que foi medido").
+## 🎯 RETOMAR AQUI — Proposta F1–F5 prontas em local; 2 coisas dependem do Marcos
 
-Ordem: F1 preço (funções puras + teste do ÷36) → F2 template A4 + PDF → F3 formulário → F4 log → F5 OneDrive → F6 deploy.
+**A feature Proposta está implementada e verificada em localhost** (spec
+[`feature-portal-proposta.md`](features/feature-portal-proposta.md), estado detalhado
+na §15 dela). 816 testes, `tsc`+`build` limpos, `db push` aplicado no Neon (aditivo).
+Testado clicando: formulário → confirmação com o preço → PDF de 12 páginas baixado.
 
-**Duas pendências do Marcos, ambas na spec:**
-1. **R3 — qual tabela de preço vale.** O arquivo se chama "Dez.2026", a capa diz 2024, o corpo diz 29/11/2024. Assumido `2024-11-29`.
-2. Aprovação da spec.
+**Duas decisões do Marcos, nesta ordem:**
+1. ⚠️ **R3 — qual tabela de preço vale.** O arquivo se chama "Dez.2026", a capa diz
+   2024, o corpo diz 29/11/2024. Está carimbado `2024-11-29`. **Isto bloqueia mandar
+   proposta para cliente de verdade.**
+2. ⚠️ **Corrigir o ÷48 inverte o argumento dos 36 meses.** Com a conta certa, o
+   unitário/mês de 36 meses fica **mais caro** que o de 24 (R$ 4,78 × R$ 4,59 em
+   Business Security 25–49) — propriedade da tabela pública, vale nas 8 faixas.
+   Provavelmente **é por isso que o ÷48 sobreviveu**. O template ainda destaca a
+   coluna de 36 meses em crimson. Manter o destaque é decisão comercial.
 
-**Insumos, todos no OneDrive** `Defenz - ADMINISTRATIVO/BIBLIOTECA PORTAL DEFENZ`:
-`Defenz - HTMLs/` (33 arquivos, com `CLAUDE.md` do brandbook, `Defenz Proposta A4.dc.html` = molde, e as duas propostas de cliente que geraram o diff) · `Tabela Bundle Pública BRL - Dez.2026.pdf` (transcrita no Anexo A da spec) · o PPTX e o PDF do João Buffo.
+**Depois:** F5 precisa do **workflow no n8n** (o app-side está pronto e inerte sem
+`N8N_PROPOSTA_ARQUIVO_WEBHOOK_URL`) · F6 = deploy, quando o Marcos validar.
+
+**Como testar:** `npm run dev` → `/dashboard/portal` → botão **Nova proposta** (agora
+há também a 4ª aba **Propostas**, o log buscável). PDF sem banco:
+`npx tsx scripts/smoke-proposta-pdf.ts saida.pdf`.
+
+⚠️ O contador foi devolvido a 1985 depois dos testes: **a primeira proposta real será
+a `DFZ-2026-01986`**, como a spec exige.
 
 ## ✅ A ANA ESTÁ RESPONDENDO (localhost, Gemini 3.6 Flash)
 O Portal está **navegável nas 3 abas** e a Ana responde de verdade, com fonte clicável. Testado clicando na interface.
