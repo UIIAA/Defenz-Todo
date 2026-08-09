@@ -34,6 +34,10 @@ Uma página única — **Portal Defenz** — onde a equipe encontra **como se fa
 - **Web = no n8n** (instância Contabo), via webhook. Itera-se o fluxo de pesquisa sem redeploy do To-Do.
 - Descartados: n8n orquestrando tudo (latência + ponto único de falha + isolation via token); tudo in-app (cada ajuste de prompt vira deploy).
 
+**D7 · Provider da IA** — ✅ **DECIDIDO (2026-08-09): Claude, não Gemini.** A IA vira **Ana** (`feature-portal-ana.md`). Motivo: o requisito central é *admitir quando não sabe* e *citar fonte* — instruction-following, onde errar é caro. `ANTHROPIC_API_KEY` + `ANA_MODEL` (default `claude-opus-5`). ⚠️ Precisa de `fallbacks: "default"`: o classificador de cyber do modelo recusa conteúdo de segurança benigno, e a Defenz é MSSP. O Gemini segue no relatório executivo, intocado. `PORTAL_GEMINI_MODEL` **não** será usado pelo Portal.
+
+**D8 · Contrato da rota da IA** — ✅ **DECIDIDO (2026-08-09).** Rota única `POST /api/portal/ask` (a spec da Ana chegou a propor `/api/portal/ana` própria; descartado — duas rotas para a mesma capacidade). Resposta ganha `avisos[]` (enum fechado) e `citations[].companyLabel`. **Só sessão, não aceita Bearer** — token de serviço permanente + LLM que lê a base = exfiltração sem rastro. Retrieve com extração de termos e ranking em JS (o `contains` da pergunta crua teria recall zero) — ver `feature-portal-ana.md` §4.
+
 **D2 · Onde ficam os arquivos (imagens dos POPs e artefatos da Biblioteca)** — 🔄 **REVISADO em 2026-08-05: OneDrive, não Google Drive.**
 > Primeira versão (manhã): "Podemos usar links dos Drives para que possamos criar a POP com imagens e manter no Drive."
 > Revisão (tarde): **"Vamos usar o OneDrive."** — Marcos
