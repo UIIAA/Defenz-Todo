@@ -3,6 +3,22 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Added (2026-08-09 — Portal: conteúdo real, Biblioteca e a spec da Ana; LOCAL)
+- **6 POPs de processo interno publicados** (`[RASCUNHO]`), extraídos de **41 atas** de Daily/Pipeline Review (25/03→03/06) por 4 subagentes Haiku em paralelo, com o texto pré-extraído por script (sem custo de modelo). Convergência entre lotes independentes usada como medida de confiança: cadência de follow-up, preenchimento do CRM, apresentação/proposta e daily apareceram nos 4 lotes. Fonte em `docs/pops/`.
+- **POP "Apontamento de horas"** — documenta a armadilha real do campo decimal (`1.15` registra 1h09, não 1h15), com tabela de conversão. Encontrada lendo `parseHoursToMinutes`; provavelmente explica os outliers de 36h do relatório do Leonardo.
+- **14 fichas `kind=BIBLIOTECA`** com link real do OneDrive obtido via Microsoft Graph: 9 battlecards (Sophos, SentinelOne, Microsoft, Kaspersky, ESET, Trend Micro, Palo Alto, WithSecure, plataforma), comparativo GravityZone, novos recursos 2026, deck técnico, proposta MDR, deck de parceiro V9. **Não existe battlecard de CrowdStrike** no OneDrive.
+- **`feature-portal-ana.md` (spec v2)** — a IA do Portal vira **Ana**, mesmo nome do robô de ligação. Emendas **D7** (provider = Claude, não Gemini) e **D8** (rota única `/api/portal/ask`, `avisos[]` fechado, sessão sem Bearer) registradas na spec-mãe.
+
+### Fixed (2026-08-09)
+- **Portal só renderizava em tema claro.** O app estava em dark e as 5 telas/componentes do Portal tinham **zero** variantes `dark:`, enquanto todas as páginas existentes têm. Cards brancos com texto escuro sobre fundo escuro.
+- **Conteúdo colado nas bordas, botão "Novo POP" cortado.** O `<main>` do dashboard layout não tem padding — cada página põe o seu `p-6`, e as três telas do Portal não punham.
+
+### Changed (2026-08-09 — o que as revisões adversariais mudaram)
+- **Retrieve da Ana tinha recall zero.** `contains` da pergunta crua não casa com nada, e o `orderBy [{reviewDueAt:'asc'}]` devolveria os POPs **mais vencidos**. O bug passaria despercebido: a Ana cairia sempre em "não achei nos nossos POPs", que é o comportamento que a spec celebra — o teste passaria com a feature quebrada. Substituído por extração de termos + ranking em JS.
+- **`fallbacks: "default"` virou requisito**: a Defenz é MSSP e o classificador de cyber do `claude-opus-5` recusa conteúdo de segurança benigno — exatamente os POPs de Bitdefender previstos para a fase seguinte.
+- **Persona da Ana colapsada num arquivo.** A v1 partia em núcleo no repo + "voz" editável como POP; o `Playbook` não tem campo de visibilidade, `tag` não é permissão, gerência editaria e o cron cobraria revisão da persona.
+- **Cortados da Ana:** `ANA_PROVIDER`, multi-turno, unificação com o robô de ligação, aba desabilitada na primeira fase.
+
 ### Added (2026-08-05 — Portal Defenz: decisões D1–D5, spec v2 e **F1 implementada**; LOCAL, não deployado)
 > Fluxo completo numa sessão: brainstorming das 5 decisões pendentes → spec v1 → **revisão adversarial** (agente crítico Opus lendo o código) → spec v2 → plano → implementação com TDD. **711 testes verdes** (era 668 → 43 novos), `tsc` + `build` limpos, `db push` no Neon, smoke ao vivo via Bearer.
 - **Decisões fechadas com o Marcos:** **D1** = a IA pesquisa a base interna **e** a web; **D1b** = arquitetura **híbrida** (busca interna no app, pesquisa web no n8n via webhook); **D2** = imagens dos POPs por **link do Drive**; **D3** = Portal **interno** (a única superfície pública segue sendo `/abrir-ticket`); **D4** = **menu próprio** "Portal Defenz" em `/dashboard/portal`, absorvendo o menu "Playbooks" que a spec antiga previa; **D5** = começar com **3–5 POPs** realmente usados.

@@ -1,10 +1,31 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-08-05
+**Last updated:** 2026-08-09
 **Version:** 0.3.0
 **Branch:** main
 
-## ▶️ EM CURSO — Portal Defenz (D1–D5 fechadas · spec v2 · **F1 implementada local**)
+## 🎯 PRÓXIMO ITEM DO ROADMAP — validar e fechar os POPs
+**Os 6 rascunhos de POP estão publicados no Portal com o prefixo `[RASCUNHO]`, esperando o Marcos.** Cada um tem uma seção "⚠️ a confirmar" no fim com as perguntas que as atas deixaram em aberto. Fluxo: Marcos responde → eu corrijo → tiro o prefixo → ele clica em Verificar (selo verde, relógio de 90 dias começa).
+
+| POP | Convergência nas atas | O que falta |
+|---|---|---|
+| Cadência de follow-up (régua de 10 toques) | 4 de 4 lotes | espaçamento entre tentativas 3ª+; critério de "sem retorno"; sexta ou segunda na revisão |
+| Preenchimento do Zoho CRM | 4 de 4 | tabela de % por coluna; prazo do CNPJ/telefone; quem audita |
+| Envio de apresentação e proposta | 4 de 4 | Fernando em toda proposta?; o que é "Marcos assume"; qual Add-on p/ qual perfil |
+| Encerramento de oportunidade perdida | 2 de 4 | vale só p/ perda p/ concorrência?; quem consolida |
+| Daily Meet e Pipeline Review | 4 de 4 | frequência real (diária vs semanal); horário |
+| Setup do cliente | 3 de 4 | **o mais fraco** — passo a passo técnico não existe em ata nenhuma, está na cabeça do Leonardo |
+
+Também vivos no Portal: **Apontamento de horas** (3 suposições minhas a confirmar) e `[TESTE ONEDRIVE] KPIs` (Marcos pediu p/ manter).
+**Lacuna que os 4 lotes apontaram juntos:** não existe registro do handoff de vendas → operação. Provavelmente o POP mais valioso que ainda não dá pra escrever.
+
+## Depois dos POPs, na ordem
+1. **Ana A1** — `ana-persona.ts` + `retrieve.ts` (extração de termos + ranking em JS) + `npm i @anthropic-ai/sdk`. Nenhuma aba nova. Ver `feature-portal-ana.md` §4 e §8.
+2. **Ana A2** — `POST /api/portal/ask` interno. Depende da `ANTHROPIC_API_KEY` do Marcos, **em workspace com teto de gasto**.
+3. **F3 Biblioteca + OneDrive** — webhook de leitura no n8n (auth de header + allowlist na raiz D2c) + sync + image-proxy.
+4. **Deploy pro Vercel** (Portal F1 + Service Desk, ambos parados em local).
+
+## ▶️ EM CURSO — Portal Defenz (D1–D8 · spec v2 · **F1 implementada local**)
 **Página que centraliza 3 pilares: (1) IA Defenz, (2) POPs com imagens, (3) Biblioteca de manuais/modelos.** Menu próprio em `/dashboard/portal`.
 - **Decisões (05/08):** D1 = IA pesquisa **base interna E web** · D1b = **híbrido** (interna no app, web no n8n via webhook) · D2 = imagens por **link do Drive** · D3 = Portal **interno** (`/abrir-ticket` segue a única superfície pública) · D4 = **menu próprio**, absorve o "Playbooks" da spec antiga · D5 = começar com **3–5 POPs** reais.
 - **Documentos:** spec [`feature-portal-defenz.md`](features/feature-portal-defenz.md) **v2** · crítica adversarial [`feature-portal-defenz-review.md`](features/feature-portal-defenz-review.md) (4 críticos + 8 médios, com disposição) · plano [`2026-08-05-portal-defenz-f1.md`](superpowers/plans/2026-08-05-portal-defenz-f1.md).
