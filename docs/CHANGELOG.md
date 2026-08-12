@@ -3,6 +3,14 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Fixed (2026-08-12 — dívida técnica das invariantes I5 e I6)
+> **829 testes verdes** (era 820), `tsc` + `build` limpos. Verificado ao vivo contra o Neon, com limpeza dos registros de teste depois.
+- **O bug do AuditLog em PUT parcial morreu** (aberto desde junho). `diffChanges` tratava campo ausente do payload como `→ null` e registrava mudanças que nunca aconteceram: um PUT só de `status` logava troca de responsável, de cliente, de título e de horas. Sujava a trilha exatamente onde ela serve para responder "quem mudou isso?", e afetava todo uso do MCP e de curl parcial. A correção distingue **presença da chave** de valor: campo ausente é "não mexa", `{assignee: null}` explícito continua sendo mudança real e registrada. **Medido antes e depois na mesma demanda descartável:** antes, 7 campos no log; depois, só `status`.
+- **O contorno em `PUT /api/tickets/[id]` FICA** — deixou de ser contorno. Diffar as entidades completas captura campos derivados no servidor (`resolvedAt`, `columnChangedAt`) que o diff do payload nunca veria. Só o comentário mudou, para não mentir sobre o motivo.
+- **`demandas/import` passou a auditar** (violava o ADR-003 desde sempre): `createManyAndReturn` no lugar de `createMany`, para existirem ids, e um log por demanda com `action: 'IMPORT'` num único insert. Falha da auditoria não derruba o import.
+- **Teto de 1000 itens por lote no import** — sem limite, um CSV grande virava timeout obscuro; agora é recusa explicada.
+- **Caps de listagem (I5)** em `demandas` (2000), `users`/`teams`/`companies`/`invites` (500). Verificado que nada truncou: 323 demandas, 11 usuários, 5 equipes, 4 empresas, 7 convites — todos abaixo do teto. O cap do board vem com **tripwire**: truncar um kanban em silêncio faz card sumir da tela, então quando o teto encostar o log avisa que chegou a hora de paginar de verdade.
+
 ### Changed (2026-08-12 — a terceira coluna vira **36+12**, e o "erro do ÷48" muda de natureza)
 > **819 testes verdes**, `tsc` + `build` limpos. PDF conferido página a página.
 - **O ÷48 não era erro de conta, era a oferta 36+12 com o rótulo errado** (esclarecido pelo Marcos). O cliente paga o preço de 3 anos e recebe **48 meses** de cobertura; dividir por 48 sempre esteve certo. O que mentia era o cabeçalho, que dizia "36 meses" — documento que promete 36 e precifica 48 se contradiz sozinho, e o cliente não via o bônus que estava ganhando.

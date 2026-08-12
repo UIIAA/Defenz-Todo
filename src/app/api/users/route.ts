@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth, companyScopeWhere } from '@/lib/auth'
 
+/** Teto de listagem (invariante I5). Folgado: hoje o sistema tem poucas dezenas de usuários. */
+const MAX_USERS = 500
+
 export async function GET() {
   try {
     const user = await requireAuth()
@@ -11,6 +14,7 @@ export async function GET() {
     const where = companyScopeWhere(user)
 
     const users = await db.user.findMany({
+      take: MAX_USERS,
       where,
       select: {
         id: true,

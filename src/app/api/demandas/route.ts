@@ -14,6 +14,13 @@ import { parseLocalDate } from '@/lib/date'
 import { detectCycle } from '@/lib/dependency-graph'
 import { logTimeDelta } from '@/lib/time-entries-server'
 
+/**
+ * Teto do board. Invariante I5 da SPEC-MAE: nenhuma listagem sem `take`.
+ * Folgado de propósito (hoje há ~323 demandas) — é rede de segurança contra
+ * consulta descontrolada, não paginação. Ver o tripwire abaixo.
+ */
+const MAX_DEMANDAS = 2000
+
 const TRACKED_FIELDS = ['title', 'description', 'origin', 'status', 'priority', 'classification', 'client', 'assignee', 'deadline', 'dateDone', 'dateStarted', 'reminderDate', 'estimatedMinutes', 'spentMinutes']
 
 export async function GET(request: NextRequest) {
@@ -88,7 +95,19 @@ export async function GET(request: NextRequest) {
         subtasks: { orderBy: { position: 'asc' } },
         links: { orderBy: { position: 'asc' } },
       },
+      take: MAX_DEMANDAS,
     })
+
+    // ⚠️ Tripwire, não paginação. O board é um kanban: truncar em silêncio faria
+    // card sumir da tela sem ninguém perceber, que é pior que a query sem teto.
+    // O cap existe só para uma consulta descontrolada não derrubar a função; se
+    // ele algum dia encostar, o board precisa de paginação de verdade — e este
+    // log é o aviso de que essa hora chegou. Hoje são ~323 demandas no total.
+    if (demandas.length === MAX_DEMANDAS) {
+      console.warn(
+        `[demandas] teto de ${MAX_DEMANDAS} atingido — o board está truncando. Implementar paginação.`
+      )
+    }
 
     const result = demandas.map(d => ({
       ...d,

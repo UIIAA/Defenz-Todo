@@ -3,6 +3,9 @@ import { db } from '@/lib/db'
 import { getCurrentUser, accessibleCompanyIds, assertCompanyAccess } from '@/lib/auth'
 import { handleApiError, successResponse, createdResponse, ApiError } from '@/lib/api-helpers'
 
+/** Teto de listagem (invariante I5). Folgado: hoje o sistema tem poucas dezenas de empresas. */
+const MAX_COMPANIES = 500
+
 const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/
 
 export async function GET() {
@@ -21,6 +24,7 @@ export async function GET() {
       ids === null ? {} : ids.length === 1 ? { id: ids[0] } : { id: { in: ids } }
 
     const companies = await db.company.findMany({
+      take: MAX_COMPANIES,
       where,
       orderBy: { name: 'asc' },
       select: {

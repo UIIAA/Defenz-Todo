@@ -31,11 +31,12 @@ describe('GET /api/demandas', () => {
     const body = await res.json()
     expect(body.success).toBe(true)
     expect(body.data).toHaveLength(demandaList.length)
-    // Admin sem filtro = ve tudo (where vazio)
+    // Admin sem filtro = ve tudo (where vazio), com o teto de segurança (I5)
     expect(mockDb.demanda.findMany).toHaveBeenCalledWith({
       where: {},
       orderBy: { createdAt: 'desc' },
       include: { user: { select: { name: true, email: true } }, subtasks: { orderBy: { position: 'asc' } }, links: { orderBy: { position: 'asc' } } },
+      take: 2000,
     })
   })
 

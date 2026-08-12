@@ -18,7 +18,10 @@ export async function POST(request: NextRequest) {
     // activeTeamId from body or user's single team
     const activeTeamId = body.teamId || (user.teamIds && user.teamIds.length === 1 ? user.teamIds[0] : null)
 
-    const created = await db.demanda.createMany({
+    // `createManyAndReturn` em vez de `createMany`: sem os ids não dá para
+    // auditar, e o ADR-003 exige AuditLog em toda mutação de Demanda. Antes
+    // disto, demanda importada abria sem resposta para "quem criou isto?".
+    const criadas = await db.demanda.createManyAndReturn({
       data: items.map((item) => ({
         title: item.title,
         description: item.description || null,
@@ -33,11 +36,30 @@ export async function POST(request: NextRequest) {
         companyId: activeCompanyId,
         teamId: activeTeamId || null,
       })),
+      select: { id: true, title: true },
     })
 
+    // Um log por demanda (entityId real), em um único insert. `action: 'IMPORT'`
+    // preserva a origem: o histórico distingue criada à mão de veio da planilha.
+    // Falha aqui NÃO derruba o import — mesmo contrato do `createAuditLog`.
+    try {
+      await db.auditLog.createMany({
+        data: criadas.map((d) => ({
+          action: 'IMPORT',
+          entityType: 'Demanda',
+          entityId: d.id,
+          userId: user.id!,
+          userEmail: user.email || '',
+          changes: JSON.stringify({ title: { from: null, to: d.title } }),
+        })),
+      })
+    } catch (err) {
+      console.error('Audit log do import falhou:', err)
+    }
+
     return successResponse(
-      { count: created.count },
-      `${created.count} demandas importadas com sucesso`
+      { count: criadas.length },
+      `${criadas.length} demandas importadas com sucesso`
     )
   } catch (error) {
     return handleApiError(error)

@@ -9,6 +9,9 @@ import {
 } from '@/lib/auth'
 import { handleApiError, successResponse, createdResponse, ApiError } from '@/lib/api-helpers'
 
+/** Teto de listagem (invariante I5). Folgado: hoje o sistema tem poucas dezenas de equipes. */
+const MAX_TEAMS = 500
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -37,6 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     const teams = await db.team.findMany({
+      take: MAX_TEAMS,
       where,
       orderBy: { name: 'asc' },
       select: {

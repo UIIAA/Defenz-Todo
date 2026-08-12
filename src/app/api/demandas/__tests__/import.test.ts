@@ -12,7 +12,10 @@ describe('POST /api/demandas/import', () => {
 
   it('imports array of items', async () => {
     mockAuthenticated()
-    mockDb.demanda.createMany.mockResolvedValue({ count: 2 })
+    mockDb.demanda.createManyAndReturn.mockResolvedValue([
+      { id: 'd1', title: 'Item 1' },
+      { id: 'd2', title: 'Item 2' },
+    ])
     const req = createRequest('POST', {
       body: {
         items: [
@@ -51,25 +54,25 @@ describe('POST /api/demandas/import', () => {
 
   it('sets status=solicitada on all items', async () => {
     mockAuthenticated()
-    mockDb.demanda.createMany.mockResolvedValue({ count: 1 })
+    mockDb.demanda.createManyAndReturn.mockResolvedValue([{ id: 'd1', title: 'X' }])
     const req = createRequest('POST', {
       body: { items: [{ title: 'Test' }] },
       url: 'http://localhost:3000/api/demandas/import',
     })
     await POST(req)
-    const data = mockDb.demanda.createMany.mock.calls[0][0].data
+    const data = mockDb.demanda.createManyAndReturn.mock.calls[0][0].data
     expect(data[0].status).toBe('solicitada')
   })
 
   it('applies defaults for origin and priority', async () => {
     mockAuthenticated()
-    mockDb.demanda.createMany.mockResolvedValue({ count: 1 })
+    mockDb.demanda.createManyAndReturn.mockResolvedValue([{ id: 'd1', title: 'X' }])
     const req = createRequest('POST', {
       body: { items: [{ title: 'Test' }] },
       url: 'http://localhost:3000/api/demandas/import',
     })
     await POST(req)
-    const data = mockDb.demanda.createMany.mock.calls[0][0].data
+    const data = mockDb.demanda.createManyAndReturn.mock.calls[0][0].data
     expect(data[0].origin).toBe('outra')
     expect(data[0].priority).toBe('media')
   })
@@ -78,6 +81,65 @@ describe('POST /api/demandas/import', () => {
     mockAuthenticated()
     const req = createRequest('POST', {
       body: { items: [{ title: '' }] },
+      url: 'http://localhost:3000/api/demandas/import',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('POST /api/demandas/import — auditoria (ADR-003)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('grava um AuditLog por demanda importada, com o id real', async () => {
+    // O import criava em lote com `createMany` e NÃO logava nada — violando o
+    // ADR-003 ("toda mutação de Demanda → AuditLog"). Demanda importada abria
+    // sem resposta para "quem criou isto?".
+    mockAuthenticated()
+    mockDb.demanda.createManyAndReturn.mockResolvedValue([
+      { id: 'd1', title: 'Item 1' },
+      { id: 'd2', title: 'Item 2' },
+    ])
+
+    const req = createRequest('POST', {
+      body: { items: [{ title: 'Item 1' }, { title: 'Item 2' }] },
+      url: 'http://localhost:3000/api/demandas/import',
+    })
+    const res = await POST(req)
+
+    expect(res.status).toBe(200)
+    expect((await res.json()).data.count).toBe(2)
+
+    expect(mockDb.auditLog.createMany).toHaveBeenCalledTimes(1)
+    const linhas = mockDb.auditLog.createMany.mock.calls[0][0].data
+    expect(linhas).toHaveLength(2)
+    expect(linhas[0]).toMatchObject({
+      action: 'IMPORT',
+      entityType: 'Demanda',
+      entityId: 'd1',
+    })
+    expect(linhas.map((l: { entityId: string }) => l.entityId)).toEqual(['d1', 'd2'])
+  })
+
+  it('falha da auditoria NÃO derruba o import', async () => {
+    mockAuthenticated()
+    mockDb.demanda.createManyAndReturn.mockResolvedValue([{ id: 'd1', title: 'X' }])
+    mockDb.auditLog.createMany.mockRejectedValue(new Error('audit fora do ar'))
+
+    const req = createRequest('POST', {
+      body: { items: [{ title: 'X' }] },
+      url: 'http://localhost:3000/api/demandas/import',
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+  })
+
+  it('recusa lote acima do teto em vez de tentar importar sem limite', async () => {
+    mockAuthenticated()
+    const req = createRequest('POST', {
+      body: { items: Array.from({ length: 1001 }, (_, i) => ({ title: `Item ${i}` })) },
       url: 'http://localhost:3000/api/demandas/import',
     })
     const res = await POST(req)

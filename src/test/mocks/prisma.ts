@@ -7,6 +7,7 @@ export const mockDb = {
     findUnique: vi.fn(),
     create: vi.fn(),
     createMany: vi.fn(),
+    createManyAndReturn: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
     delete: vi.fn(),
@@ -26,6 +27,7 @@ export const mockDb = {
   },
   auditLog: {
     create: vi.fn(),
+    createMany: vi.fn(),
     findMany: vi.fn(),
     count: vi.fn(),
   },

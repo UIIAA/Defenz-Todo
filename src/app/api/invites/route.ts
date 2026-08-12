@@ -4,6 +4,9 @@ import { requireAuth, isAdmin, accessibleCompanyIds, companyScopeWhere } from '@
 import { createAuditLog } from '@/lib/audit'
 import crypto from 'crypto'
 
+/** Teto de listagem (invariante I5). Folgado: hoje o sistema tem poucas dezenas de convites. */
+const MAX_INVITES = 500
+
 export async function GET() {
   try {
     const user = await requireAuth()
@@ -20,6 +23,7 @@ export async function GET() {
     const where = companyScopeWhere(user)
 
     const invites = await db.inviteToken.findMany({
+      take: MAX_INVITES,
       where,
       orderBy: { createdAt: 'desc' },
       include: {

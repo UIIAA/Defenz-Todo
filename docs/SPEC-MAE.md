@@ -220,8 +220,8 @@ Marcadas com 🎯 as que o código **cumpre**; com ⚠️ as que são **meta, ai
 | I2 | **Escopo por `AND`, nunca spread** | 🎯 |
 | I3 | **Fuso é São Paulo, não UTC** | 🎯 data aparecia um dia antes |
 | I4 | **Sem erro silencioso na UI** — a tela diz por que o backend recusou | 🎯 |
-| I5 | **`take`/cap em toda listagem** | ⚠️ **só nas rotas novas** (Portal, cap 200). `demandas`, `users`, `teams`, `companies`, `invites` — todas em produção — não têm `take`. Dívida em §6 |
-| I6 | **AuditLog em toda mutação** | ⚠️ **aspiracional.** O ADR-003 só exige para Demanda, e nem isso é cumprido: `POST /api/demandas/import` cria em lote via `createMany` **sem audit**. `teams`, `companies` e `user/profile` também não logam |
+| I5 | **`take`/cap em toda listagem** | 🎯 fechada em 12/08. Portal 200; `users`/`teams`/`companies`/`invites` 500; board de demandas 2000 **com tripwire** — cap que trunca kanban em silêncio some com card, então o log avisa quando encostar (é o sinal de que chegou a hora de paginar) |
+| I6 | **AuditLog em toda mutação de Demanda** (ADR-003) | 🎯 fechada em 12/08 para Demanda: o `import` passou a usar `createManyAndReturn` e gravar um log por linha (`action: 'IMPORT'`). ⚠️ Fora de Demanda ainda falta: `teams`, `companies`, `user/profile` não logam |
 | I7 | **PWA/SW:** `CACHE_NAME` sobe a cada release **e** o SW não é registrado na superfície pública | 🎯 manual, sem teste que force. Hoje `defenz-v5` em `public/sw.js` |
 | I8 | **Superfície pública é uma só** (`/abrir-ticket`) e é burra: 422 uniforme anti-enumeração, honeypot, rate-limit | 🎯 |
 | I9 | **Nenhum número que vai para cliente sai de LLM** | 🎯 o ÷48 |
@@ -245,11 +245,15 @@ Marcadas com 🎯 as que o código **cumpre**; com ⚠️ as que são **meta, ai
 4. **Deploy:** o que sobe primeiro, e quando.
 
 ### Dívida técnica
-- **AuditLog em PUT parcial** — `diffChanges` (`src/lib/audit.ts`) loga campo ausente
-  como `→ null`. Já existe **contorno inline** em `PUT /api/tickets/[id]`, que diffa
-  objetos completos: quem corrigir no lugar certo precisa desduplicar esse contorno.
-- **`demandas/import` não grava AuditLog** (`createMany` em lote). Viola o ADR-003.
-- **6 listagens de produção sem `take`** (I5).
+- ✅ **AuditLog em PUT parcial — CORRIGIDO em 12/08.** `diffChanges` agora ignora campo
+  ausente do payload (checa a **presença da chave**, então `{assignee: null}` explícito
+  continua sendo registrado). Verificado ao vivo: um PUT só de `status` grava só
+  `status`, e não as seis mudanças fantasma de antes. O diff de objetos completos em
+  `PUT /api/tickets/[id]` **fica**: não é mais contorno, é o que captura campos
+  derivados no servidor (`resolvedAt`) que o payload não traz.
+- ✅ **`demandas/import` grava AuditLog** (12/08) — `createManyAndReturn` + um log por
+  linha com `action: 'IMPORT'`. Ganhou também teto de 1000 itens por lote.
+- ⚠️ **Fora de Demanda ainda não há audit:** `teams`, `companies`, `user/profile`.
 - **`prisma/migrations/` existe mas o projeto usa `db push`.** As 5 migrations estão
   arbitrariamente atrás do banco. **Não rode `migrate deploy`** sem reconciliar antes
   — e a Fase 2 do `assignee-fk`, escrita em cima de `migrate`, precisa ser reescrita

@@ -58,7 +58,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const ticket = await db.ticket.update({ where: { id }, data: { ...data, ...ts } })
 
-    // Diff sobre objetos COMPLETOS (existing vs atualizado) — evita o bug do PUT parcial.
+    // Diff sobre objetos COMPLETOS (existing vs atualizado), de propósito.
+    //
+    // Nasceu como contorno do bug do PUT parcial do `diffChanges` — bug já
+    // corrigido na fonte (`src/lib/audit.ts`). Fica assim mesmo porque resolve
+    // outra coisa que o diff do payload não resolve: `computeTicketTimestamps`
+    // deriva campos no servidor (`resolvedAt`, `columnChangedAt`) que o payload
+    // não contém, e que precisam aparecer na auditoria.
     const changes = diffChanges(
       existing as unknown as Record<string, unknown>,
       ticket as unknown as Record<string, unknown>,
