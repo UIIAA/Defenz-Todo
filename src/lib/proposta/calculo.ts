@@ -3,8 +3,17 @@
 //
 // Princípio da casa: LLM interpreta, JS calcula. O bloco de investimento é
 // função pura de quatro entradas (quantidade, planos, ajuste, tabela) e NUNCA
-// é copiado do modelo nem escrito por LLM. É o que mata, por construção, o erro
-// do ÷48 que está em toda proposta que a Defenz já enviou (spec §2.1).
+// é copiado do modelo nem escrito por LLM.
+//
+// ⚠️ O "÷48" da spec §2.1 foi REINTERPRETADO (Marcos, 12/08): não era erro de
+// conta, era a oferta 36+12 — paga 36 meses, cobre 48 — com o rótulo errado. O
+// documento antigo dizia "36 meses" e dividia por 48, e era o RÓTULO que mentia.
+// Agora a coluna se chama "36+12 meses" e `mesesCobertura` é explícito, então
+// rótulo e conta contam a mesma história.
+//
+// A proteção que sobra, e que vale mais que o teste do ÷36: o unitário mensal
+// SEMPRE fecha com `preço ÷ meses de cobertura`, nas três colunas. Qualquer
+// divisor que não seja o tempo de cobertura quebra o teste.
 //
 // Arredondamento acontece só na FORMATAÇÃO. Arredondar no meio da conta produz
 // deriva de centavos entre o unitário exibido e o total cobrado.
@@ -20,19 +29,30 @@ import {
   QUANTIDADE_MIN,
   TABELA,
   VIGENCIAS,
+  type AnosTabela,
   type Faixa,
   type PlanoId,
-  type Vigencia,
 } from './tabela-precos'
 
 export interface LinhaVigencia {
-  anos: Vigencia
+  /** Coluna da tabela de preço usada (1, 2 ou 3 anos). NÃO é o tempo de cobertura. */
+  anos: AnosTabela
+  /** Meses que o cliente fica protegido. Na coluna 36+12 são 48, não 36. */
   meses: number
+  /** Meses de bônus embutidos no preço (12 na coluna 36+12, 0 nas outras). */
+  bonusMeses: number
+  /** "12 meses" | "24 meses" | "36+12 meses" — o que sai impresso. */
+  rotulo: string
   /** Preço por licença pelo período inteiro, direto da tabela pública. */
   precoLicenca: number
   /** Preço por licença já com o ajuste comercial aplicado. */
   precoLicencaFinal: number
-  /** precoLicenca ÷ (12 × anos). Aqui morre o ÷48. */
+  /**
+   * `precoLicenca ÷ mesesCobertura`.
+   *
+   * Divide pelo tempo que o cliente fica PROTEGIDO, não pelo que ele paga — é o
+   * que faz a coluna 36+12 dividir por 48 e o rótulo dizer a verdade.
+   */
   valorUnitarioMes: number
   /** O mesmo, sobre o preço final — é o que o cliente de fato paga por mês. */
   valorUnitarioMesFinal: number
@@ -118,12 +138,16 @@ export function calcularInvestimento(input: CalculoInput): Investimento {
     plano,
     label: PLANO_LABEL[plano],
     nomeProduto: PLANO_NOME_PRODUTO[plano],
-    vigencias: VIGENCIAS.map((anos): LinhaVigencia => {
-      const precoLicenca = TABELA.precos[plano][faixa][anos - 1]
-      const meses = 12 * anos
+    vigencias: VIGENCIAS.map((v): LinhaVigencia => {
+      // `anos` escolhe a coluna da TABELA (o que se paga);
+      // `mesesCobertura` divide o preço (o tempo protegido). Na 36+12 diferem.
+      const precoLicenca = TABELA.precos[plano][faixa][v.anos - 1]
+      const meses = v.mesesCobertura
       return {
-        anos,
+        anos: v.anos,
         meses,
+        bonusMeses: v.bonusMeses,
+        rotulo: v.rotulo,
         precoLicenca,
         precoLicencaFinal: precoLicenca * fator,
         valorUnitarioMes: precoLicenca / meses,

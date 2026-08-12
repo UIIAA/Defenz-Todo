@@ -22,7 +22,31 @@ Um vendedor da Defenz preenche meia dúzia de campos, confirma, e recebe a propo
 
 Esta spec não parte de suposição. Três medições contra os arquivos reais mudaram o desenho:
 
-### 2.1 ⚠️ O erro do ÷48 está em TODA proposta que a Defenz já enviou
+### 2.1 ⚠️ O ÷48 — REINTERPRETADO em 12/08: era a oferta 36+12, com o rótulo errado
+
+> **Emenda do Marcos (12/08/2026).** O que esta seção chamava de "erro de conta" é,
+> na verdade, a oferta comercial **36+12**: o cliente paga o preço de 3 anos e recebe
+> **48 meses** de cobertura. Dividir por 48 estava CERTO. O defeito era o **rótulo**:
+> a coluna dizia "36 meses" e cobrava por 48 meses de proteção, então o documento se
+> contradizia sozinho e o cliente não via o bônus que estava recebendo.
+>
+> **Decisão:** a terceira coluna passa a se chamar **"36+12 meses"** e o documento
+> explica o bônus em texto. O divisor continua 48. A implementação separa `anos`
+> (coluna da tabela, o que se paga) de `mesesCobertura` (o que divide), então rótulo
+> e conta contam a mesma história.
+>
+> **Consequência comercial:** com o bônus explícito, a coluna longa volta a ser a mais
+> barata por mês em **todas** as faixas — R$ 3,58 contra R$ 4,59 dos 24 meses em
+> Business Security 25–49 — e o destaque em crimson volta a apontar para a melhor
+> oferta. Sem o bônus, 24 meses ganhava em 24 de 24 combinações.
+>
+> ⚠️ **O que isso obriga:** o 36+12 vira promessa contratual em toda proposta. Os 12
+> meses extras precisam existir de fato no contrato com a SecuriSoft ou ser custo
+> absorvido pela Defenz. Isso é decisão do Marcos, tomada; fica registrada aqui porque
+> o documento passou a prometer por escrito.
+
+<details><summary>Registro original da medição (antes da emenda)</summary>
+
 
 O preço unitário por mês da coluna de **36 meses** é calculado dividindo o preço de 3 anos por **48 meses**, não por 36. Verificado em dois clientes, dois formatos, quatro planos:
 
@@ -36,6 +60,8 @@ O preço unitário por mês da coluna de **36 meses** é calculado dividindo o p
 Os **totais** estão corretos em todos os casos (vêm direto da tabela pública). O erro é só na coluna do unitário mensal, e é sistemático: é a fórmula da origem, não deslize de digitação.
 
 **Consequência de desenho:** o bloco de investimento é função pura de quatro entradas e **é calculado em código, nunca copiado do modelo nem escrito por LLM**. É o princípio da casa: LLM interpreta, JS calcula.
+
+</details>
 
 ### 2.2 O template sai por diff, não por adivinhação
 
@@ -140,7 +166,7 @@ Faixas: `5-14 · 15-24 · 25-49 · 50-99 · 100-149 · 150-249 · 250-499 · 500
 faixa            = faixaPorQuantidade(qtd)               // erro explícito fora de 5..999
 precoLicenca     = TABELA[plano][faixa][anos-1]
 valorTotal       = precoLicenca × qtd
-valorUnitarioMes = precoLicenca / (12 × anos)            // ← aqui morre o ÷48
+valorUnitarioMes = precoLicenca / mesesCobertura          // 12 · 24 · 48 (36+12)
 precoLicencaFinal= precoLicenca × (1 + ajuste)
 valorTotalFinal  = valorTotal   × (1 + ajuste)
 ```
@@ -271,7 +297,7 @@ Escopo por empresa como todo o resto (`assertCompanyAccess`). Criação grava `A
 
 ## 14. Critérios de aceite
 
-- [ ] `171.97 / 36 = 4.78` e **não** `3.58` — teste de regressão nomeado.
+- [x] A terceira coluna se chama **36+12 meses**, divide por **48** e o rodapé explica o bônus. O teste que protege é estrutural: `unitário × meses de cobertura === preço da licença`, nas três colunas.
 - [ ] Quantidade 4 e 1000 → recusadas com mensagem, sem gerar arquivo.
 - [ ] PDF gerado mede 210×297mm; há **uma página de investimento por plano marcado**, e o rodapé `Página X de N` traz o total real do documento gerado (Buffo tem 11 páginas com 3 planos, Liquos 10 com 1 — as duas bases não têm o mesmo número de páginas fixas, então `N` é contado, nunca constante).
 - [ ] O PDF não contém "João Buffo", "Liquos", "Gustavo Figueira" nem "PBI-25-01642".

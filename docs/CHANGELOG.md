@@ -3,6 +3,15 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Changed (2026-08-12 — a terceira coluna vira **36+12**, e o "erro do ÷48" muda de natureza)
+> **819 testes verdes**, `tsc` + `build` limpos. PDF conferido página a página.
+- **O ÷48 não era erro de conta, era a oferta 36+12 com o rótulo errado** (esclarecido pelo Marcos). O cliente paga o preço de 3 anos e recebe **48 meses** de cobertura; dividir por 48 sempre esteve certo. O que mentia era o cabeçalho, que dizia "36 meses" — documento que promete 36 e precifica 48 se contradiz sozinho, e o cliente não via o bônus que estava ganhando.
+- **`VIGENCIAS` deixou de ser `[1,2,3]`** e virou descritor: `anos` (coluna da tabela, o que se paga) separado de `mesesCobertura` (o que divide o preço) e `bonusMeses`. É a distinção que faltava para rótulo e conta contarem a mesma história.
+- **O teste de regressão mudou de alvo, e ficou mais forte.** Era "171,97/36 = 4,78, não 3,58" — um número. Agora é a propriedade `unitário × meses de cobertura === preço da licença`, verificada nas três colunas: pega qualquer divisor errado, inclusive o ÷36 numa coluna que cobre 48 meses. Somado a um teste que confirma que a coluna longa é a mais barata por mês em todas as 24 combinações.
+- **O documento explica o bônus em texto** ("contrate 36 meses e receba mais 12 de proteção, 48 meses no total pelo preço de 36"), derivado dos dados: se a coluna perder o bônus, a frase some sozinha em vez de virar promessa que o preço não sustenta.
+- **Re-download de proposta antiga protegido:** snapshot anterior a esta mudança não tem `rotulo`, e sem fallback o PDF sairia com "undefined" no cabeçalho da coluna.
+- ⚠️ **Consequência comercial registrada:** o 36+12 passa a ser promessa contratual em toda proposta emitida. Os 12 meses extras precisam existir no contrato com a SecuriSoft ou ser custo absorvido pela Defenz.
+
 ### Added (2026-08-09 — Proposta: o Portal gera a proposta comercial em PDF; F1–F5 LOCAL, não deployado)
 > **816 testes verdes** (era 750 → 66 novos), `tsc` + `build` limpos. Proposta gerada de ponta a ponta em localhost, clicando na interface. `db push` aplicado no Neon (aditivo: 2 tabelas novas, nenhum `DROP`/`ALTER COLUMN`). Registros de teste removidos e o contador devolvido a 1985, para a **primeira proposta real do Marcos ser a `DFZ-2026-01986`**.
 

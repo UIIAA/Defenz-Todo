@@ -142,10 +142,19 @@ describe('renderPropostaHtml — dados do formulário', () => {
 })
 
 describe('renderPropostaHtml — bloco de investimento', () => {
-  it('escreve o unitário/mês correto (÷36), não o do documento antigo (÷48)', () => {
+  it('a coluna 36+12 é rotulada como tal e o unitário/mês divide por 48', () => {
+    // O documento antigo escrevia "36 meses" e dividia por 48 — a conta estava
+    // certa (é a oferta 36+12), o rótulo é que mentia. Aqui os dois batem.
     const html = renderPropostaHtml(doc({}, ['BUSINESS_SECURITY']))
-    expect(html).toContain('R$ 4,78') // 171,97 / 36
-    expect(html).not.toContain('R$ 3,58') // 171,97 / 48
+    expect(html).toContain('36+12 meses')
+    expect(html).toContain('R$ 3,58') // 171,97 / 48 meses de cobertura
+    expect(html).not.toContain('>36 meses<') // nunca o rótulo enganoso sozinho
+  })
+
+  it('explica o bônus em texto, para o cliente não ter que deduzir', () => {
+    const html = renderPropostaHtml(doc({}, ['BUSINESS_SECURITY']))
+    expect(html).toContain('contrate 36 meses e receba mais 12')
+    expect(html).toContain('48 meses no total pelo preço de 36')
   })
 
   it('sem ajuste: não existe linha de desconto, e o total final é o de tabela', () => {
@@ -195,3 +204,19 @@ describe('helpers', () => {
 function contar(texto: string, agulha: string): number {
   return texto.split(agulha).length - 1
 }
+
+describe('re-download de proposta antiga (snapshot anterior à coluna 36+12)', () => {
+  it('não imprime "undefined" quando o snapshot não tem rótulo', () => {
+    // Snapshot no formato velho: sem `rotulo`, sem `bonusMeses`, cobertura 36.
+    const antigo = doc({}, ['BUSINESS_SECURITY'])
+    for (const v of antigo.investimento.planos[0].vigencias) {
+      delete (v as Partial<typeof v>).rotulo
+      delete (v as Partial<typeof v>).bonusMeses
+    }
+    antigo.investimento.planos[0].vigencias[2].meses = 36
+
+    const html = renderPropostaHtml(antigo)
+    expect(html).not.toContain('undefined')
+    expect(html).toContain('36 meses') // cai no rótulo derivado dos meses
+  })
+})

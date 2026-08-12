@@ -186,10 +186,14 @@ Botão sempre à mostra → formulário curto → **confirmação que mostra o p
 documento existir** → PDF A4 impresso por Chromium headless a partir de HTML
 versionado → registro numerado, buscável e reimprimível.
 
-**O achado que a justificou:** o unitário mensal da coluna de 36 meses estava errado em
-**toda proposta que a Defenz já enviou** (dividiam o preço de 3 anos por 48 meses).
-Os totais sempre estiveram certos. Hoje o investimento é função pura da tabela
-versionada, com teste de regressão nomeando os quatro casos reais medidos.
+**O achado que a justificou, e sua reviravolta:** o unitário mensal da terceira coluna
+dividia o preço de 3 anos por **48** meses em toda proposta já enviada. Parecia erro de
+conta — e a spec-filha o tratou assim até 12/08, quando o Marcos esclareceu que é a
+oferta **36+12**: paga 36 meses, cobre 48. A conta estava certa; **o rótulo é que
+mentia**, dizendo "36 meses". Hoje a coluna se chama "36+12 meses", o documento explica
+o bônus, e o código separa `anos` (o que se paga) de `mesesCobertura` (o que divide).
+A lição que fica: *um número que parece errado pode ser um rótulo errado — confirme a
+intenção comercial antes de "corrigir" a aritmética.*
 
 > ⚠️ **É estruturalmente MONOPRODUTO.** Existe um `enum PropostaTipo`, mas o
 > acoplamento é profundo: `quantidade` é validada em 5–999 *porque é o alcance da
@@ -231,10 +235,12 @@ Marcadas com 🎯 as que o código **cumpre**; com ⚠️ as que são **meta, ai
 ### Decisões que só o Marcos pode tomar
 1. ⚠️ **R3 — qual tabela de preço vale.** Arquivo "Dez.2026", capa 2024, corpo
    29/11/2024. Carimbado `2024-11-29`. **Bloqueia mandar proposta para cliente real.**
-2. ⚠️ **O ÷36 correto inverte o argumento dos 36 meses.** Com a conta certa, o
-   unitário/mês de 3 anos é **mais caro** que o de 2 anos — verificado em **24 de 24**
-   combinações (8 faixas × 3 planos), zero exceções. Provavelmente **é por isso que o
-   ÷48 sobreviveu**. O template ainda destaca a coluna de 36 meses em crimson.
+2. ✅ **RESOLVIDO em 12/08 — a coluna virou 36+12.** Era a pergunta "por que o
+   destaque em crimson aponta para a opção mais cara por mês?". Resposta: porque não
+   é. Com os 12 meses de bônus explícitos, a coluna longa é a mais barata por mês em
+   **todas** as faixas, e o destaque volta a fazer sentido. ⚠️ **O que passou a valer:**
+   o 36+12 é promessa contratual em toda proposta emitida — os 12 meses extras
+   precisam existir no contrato com a SecuriSoft ou ser custo absorvido.
 3. **Validar os 6 POPs `[RASCUNHO]`** — cada um tem uma seção "⚠️ a confirmar".
 4. **Deploy:** o que sobe primeiro, e quando.
 

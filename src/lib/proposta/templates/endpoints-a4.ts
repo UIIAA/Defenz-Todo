@@ -201,7 +201,10 @@ function tabelaPlano(bloco: BlocoPlano, inv: Investimento): string {
             ${vs
               .map(
                 (v, i) =>
-                  `<div style="padding:8px 6px; text-align:center; font-weight:800;${i === vs.length - 1 ? ` color:${C.accent};` : ''}">${v.meses} meses</div>`
+                  // `?? meses` protege o re-download de uma proposta emitida
+                  // ANTES da coluna 36+12 existir: snapshot velho não tem
+                  // `rotulo`, e sem isto o PDF sairia com "undefined".
+                  `<div style="padding:8px 6px; text-align:center; font-weight:800;${i === vs.length - 1 ? ` color:${C.accent};` : ''}">${escapeHtml(v.rotulo ?? `${v.meses} meses`)}</div>`
               )
               .join('\n            ')}
 
@@ -225,6 +228,19 @@ ${linhasAjuste}
             ${totais}
           </div>
         </div>`
+}
+
+/**
+ * Explica o bônus para o cliente, em vez de deixar "36+12" solto no cabeçalho.
+ *
+ * Sai dos dados, não de texto fixo: se um dia a coluna deixar de ter bônus, a
+ * frase some sozinha em vez de virar promessa que o preço não sustenta.
+ */
+function notaBonus(bloco: BlocoPlano): string {
+  const comBonus = bloco.vigencias.find((v) => v.bonusMeses > 0)
+  if (!comBonus) return ''
+  const pagos = comBonus.meses - comBonus.bonusMeses
+  return `<strong>${escapeHtml(comBonus.rotulo)}</strong>: contrate ${pagos} meses e receba mais ${comBonus.bonusMeses} de proteção, ${comBonus.meses} meses no total pelo preço de ${pagos}. &middot; `
 }
 
 function paginaInvestimento(
@@ -254,7 +270,7 @@ function paginaInvestimento(
       <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">${tabelaPlano(bloco, inv)}
       </div>
 
-      <div style="font-size:12.5px; color:${C.faint}; font-weight:600; text-align:center;">Valores em reais. Dimensionamento para ${inv.quantidade} licenças · faixa ${inv.faixa} da tabela vigente.</div>
+      <div style="font-size:12.5px; color:${C.faint}; font-weight:600; text-align:center;">${notaBonus(bloco)}Valores em reais. Dimensionamento para ${inv.quantidade} licenças · faixa ${inv.faixa} da tabela vigente.</div>
 ${rodape(numeroPagina, total, doc.ano, '24px')}`)
 }
 

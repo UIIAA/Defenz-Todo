@@ -356,7 +356,14 @@ export default function NovaPropostaPage() {
                   <tbody className="text-slate-700 dark:text-slate-200">
                     {bloco.vigencias.map((v) => (
                       <tr key={v.anos} className="border-t border-slate-100 dark:border-slate-800">
-                        <td className="py-1.5">{v.meses} meses</td>
+                        <td className="py-1.5">
+                          {v.rotulo}
+                          {v.bonusMeses > 0 && (
+                            <span className="ml-1 text-xs text-emerald-600 dark:text-emerald-400">
+                              ({v.meses} meses de cobertura)
+                            </span>
+                          )}
+                        </td>
                         <td className="py-1.5 text-right">{formatarBRL(v.valorUnitarioMesFinal)}</td>
                         <td className="py-1.5 text-right">{formatarBRL(v.precoLicencaFinal)}</td>
                         <td className="py-1.5 text-right font-semibold">

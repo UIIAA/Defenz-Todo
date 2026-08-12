@@ -44,9 +44,29 @@ export const FAIXAS = [
 ] as const
 export type Faixa = (typeof FAIXAS)[number]
 
-/** Vigências ofertadas, em anos. O documento mostra as três lado a lado. */
-export const VIGENCIAS = [1, 2, 3] as const
+/**
+ * As três colunas da página de investimento.
+ *
+ * ⚠️ `anos` e `mesesCobertura` NÃO são a mesma coisa, e é aí que mora tudo.
+ * `anos` é a coluna da TABELA DE PREÇO (quanto se paga). `mesesCobertura` é
+ * quanto tempo o cliente fica protegido — o que divide o preço para achar o
+ * unitário mensal.
+ *
+ * Na terceira coluna a Defenz vende **36+12**: o cliente paga o preço de 3 anos
+ * e recebe 48 meses de cobertura. Por isso o unitário/mês dela divide por 48.
+ *
+ * Isto reinterpreta o "erro do ÷48" da spec §2.1: os documentos antigos
+ * dividiam por 48 e **estavam certos na conta** — o defeito era o RÓTULO, que
+ * dizia "36 meses" enquanto o preço embutia os 12 meses de bônus. Documento que
+ * promete 36 e cobra por 48 se contradiz sozinho. Aqui o rótulo diz 36+12.
+ */
+export const VIGENCIAS = [
+  { anos: 1, mesesCobertura: 12, bonusMeses: 0, rotulo: '12 meses' },
+  { anos: 2, mesesCobertura: 24, bonusMeses: 0, rotulo: '24 meses' },
+  { anos: 3, mesesCobertura: 48, bonusMeses: 12, rotulo: '36+12 meses' },
+] as const
 export type Vigencia = (typeof VIGENCIAS)[number]
+export type AnosTabela = Vigencia['anos']
 
 export const QUANTIDADE_MIN = 5
 export const QUANTIDADE_MAX = 999
