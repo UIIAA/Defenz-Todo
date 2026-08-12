@@ -4,6 +4,13 @@ import { db } from '@/lib/db'
 import { getCurrentUser, companyScopeWhere } from '@/lib/auth'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 
+/**
+ * Teto do relatório (invariante I5). Estas demandas viram prompt do Gemini —
+ * sem limite, um período longo custa tokens de forma ilimitada e estoura o
+ * contexto do modelo antes de estourar o banco.
+ */
+const MAX_DEMANDAS_RELATORIO = 500
+
 const VALID_PERIODS = ['7d', '14d', '30d', '60d', '90d', 'custom'] as const
 
 function getPeriodDates(period: string, startDate?: string, endDate?: string) {
@@ -116,6 +123,7 @@ export async function POST(request: NextRequest) {
         subtasks: { select: { title: true, completed: true } },
         links: { select: { label: true, url: true } },
       },
+      take: MAX_DEMANDAS_RELATORIO,
     })
 
     const periodLabel = period === 'custom'

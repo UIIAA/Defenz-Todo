@@ -62,3 +62,21 @@ describe('diffChanges — PUT parcial não pode inventar mudança', () => {
     })
   })
 })
+
+describe('diffChanges — o que o servidor deriva sozinho também precisa de rastro', () => {
+  // Regressão possível ao corrigir o PUT parcial: se a rota diffar o PAYLOAD, a
+  // limpeza de `dateDone` ao reabrir uma demanda concluída (feita pelo servidor,
+  // não pelo usuário) some da auditoria — some justamente a mudança mais
+  // relevante. Por isso as rotas passam a LINHA ATUALIZADA como `after`.
+  it('diffando objetos completos, captura campo limpo pelo servidor', () => {
+    const antes = { status: 'concluida', dateDone: new Date('2026-08-01'), description: 'x' }
+    const depois = { status: 'em_andamento', dateDone: null, description: 'x\n\n* Reaberta em 12/08/2026' }
+
+    const changes = diffChanges(antes, depois, ['status', 'dateDone', 'description'])
+
+    expect(changes).toHaveProperty('dateDone')
+    expect(changes!.dateDone.to).toBeNull()
+    expect(changes).toHaveProperty('status')
+    expect(changes).toHaveProperty('description')
+  })
+})

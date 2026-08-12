@@ -98,12 +98,15 @@ export async function GET(request: NextRequest) {
       take: MAX_DEMANDAS,
     })
 
-    // ⚠️ Tripwire, não paginação. O board é um kanban: truncar em silêncio faria
-    // card sumir da tela sem ninguém perceber, que é pior que a query sem teto.
-    // O cap existe só para uma consulta descontrolada não derrubar a função; se
-    // ele algum dia encostar, o board precisa de paginação de verdade — e este
-    // log é o aviso de que essa hora chegou. Hoje são ~323 demandas no total.
-    if (demandas.length === MAX_DEMANDAS) {
+    // ⚠️ Tripwire, não paginação. O cap existe para uma consulta descontrolada
+    // não derrubar a função; hoje são ~323 demandas, folga de 6x.
+    //
+    // Truncar um kanban em silêncio faz card sumir da tela — seria violar I4. Por
+    // isso, se o teto encostar, além do log o cliente recebe o header
+    // `X-Demandas-Truncated`, para a UI poder avisar em vez de mentir. Se este
+    // header algum dia aparecer, o board precisa de paginação de verdade.
+    const truncado = demandas.length === MAX_DEMANDAS
+    if (truncado) {
       console.warn(
         `[demandas] teto de ${MAX_DEMANDAS} atingido — o board está truncando. Implementar paginação.`
       )
@@ -114,7 +117,9 @@ export async function GET(request: NextRequest) {
       dependsOn: JSON.parse(d.dependsOn || '[]') as string[],
     }))
 
-    return successResponse(result)
+    const resposta = successResponse(result)
+    if (truncado) resposta.headers.set('X-Demandas-Truncated', String(MAX_DEMANDAS))
+    return resposta
   } catch (error) {
     return handleApiError(error)
   }
@@ -367,9 +372,14 @@ export async function PUT(request: NextRequest) {
       },
     })
 
+    // Diff sobre objetos COMPLETOS (current vs a linha já atualizada), como em
+    // tickets. Diffar o PAYLOAD perderia tudo que o servidor deriva sozinho:
+    // ao reabrir uma demanda concluída, `dateDone` é limpo e a descrição ganha
+    // "Reaberta em …" sem que nada disso venha no body — e a auditoria ficaria
+    // muda justamente na mudança mais relevante.
     let changes = diffChanges(
       current as unknown as Record<string, unknown>,
-      data as unknown as Record<string, unknown>,
+      demanda as unknown as Record<string, unknown>,
       TRACKED_FIELDS
     )
 

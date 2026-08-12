@@ -126,7 +126,9 @@ describe('POST /api/demandas/import — auditoria (ADR-003)', () => {
   it('falha da auditoria NÃO derruba o import', async () => {
     mockAuthenticated()
     mockDb.demanda.createManyAndReturn.mockResolvedValue([{ id: 'd1', title: 'X' }])
-    mockDb.auditLog.createMany.mockRejectedValue(new Error('audit fora do ar'))
+    // `Once`: `clearAllMocks` não remove implementação, e um reject persistente
+    // faria qualquer teste acrescentado depois rodar contra auditoria quebrada.
+    mockDb.auditLog.createMany.mockRejectedValueOnce(new Error('audit fora do ar'))
 
     const req = createRequest('POST', {
       body: { items: [{ title: 'X' }] },

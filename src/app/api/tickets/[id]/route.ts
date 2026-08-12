@@ -6,7 +6,10 @@ import { updateTicketSchema } from '@/lib/validations/ticket'
 import { createAuditLog, diffChanges } from '@/lib/audit'
 import { computeTicketTimestamps } from '@/lib/tickets-server'
 
-const TRACKED = ['subject', 'description', 'status', 'priority', 'channel', 'requester', 'client', 'assignedToId']
+// Inclui os campos DERIVADOS no servidor (`resolvedAt`, `columnChangedAt`): é o
+// que o diff de objetos completos abaixo existe para capturar. Sem eles na lista,
+// concluir um ticket não deixaria rastro do instante em que foi concluído.
+const TRACKED = ['subject', 'description', 'status', 'priority', 'channel', 'requester', 'client', 'assignedToId', 'resolvedAt', 'columnChangedAt']
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

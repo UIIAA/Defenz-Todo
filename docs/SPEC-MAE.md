@@ -220,7 +220,7 @@ Marcadas com 🎯 as que o código **cumpre**; com ⚠️ as que são **meta, ai
 | I2 | **Escopo por `AND`, nunca spread** | 🎯 |
 | I3 | **Fuso é São Paulo, não UTC** | 🎯 data aparecia um dia antes |
 | I4 | **Sem erro silencioso na UI** — a tela diz por que o backend recusou | 🎯 |
-| I5 | **`take`/cap em toda listagem** | 🎯 fechada em 12/08. Portal 200; `users`/`teams`/`companies`/`invites` 500; board de demandas 2000 **com tripwire** — cap que trunca kanban em silêncio some com card, então o log avisa quando encostar (é o sinal de que chegou a hora de paginar) |
+| I5 | **`take`/cap em toda listagem** | 🎯 fechada em 12/08. Portal 200; `users`/`teams`/`companies`/`invites` 500; relatório executivo 500 (vira prompt do Gemini); board 2000 **com tripwire** — truncar kanban em silêncio some com card, então além do log o cliente recebe `X-Demandas-Truncated` e a UI pode avisar |
 | I6 | **AuditLog em toda mutação de Demanda** (ADR-003) | 🎯 fechada em 12/08 para Demanda: o `import` passou a usar `createManyAndReturn` e gravar um log por linha (`action: 'IMPORT'`). ⚠️ Fora de Demanda ainda falta: `teams`, `companies`, `user/profile` não logam |
 | I7 | **PWA/SW:** `CACHE_NAME` sobe a cada release **e** o SW não é registrado na superfície pública | 🎯 manual, sem teste que force. Hoje `defenz-v5` em `public/sw.js` |
 | I8 | **Superfície pública é uma só** (`/abrir-ticket`) e é burra: 422 uniforme anti-enumeração, honeypot, rate-limit | 🎯 |
@@ -249,8 +249,11 @@ Marcadas com 🎯 as que o código **cumpre**; com ⚠️ as que são **meta, ai
   ausente do payload (checa a **presença da chave**, então `{assignee: null}` explícito
   continua sendo registrado). Verificado ao vivo: um PUT só de `status` grava só
   `status`, e não as seis mudanças fantasma de antes. O diff de objetos completos em
-  `PUT /api/tickets/[id]` **fica**: não é mais contorno, é o que captura campos
-  derivados no servidor (`resolvedAt`) que o payload não traz.
+  `PUT /api/tickets/[id]` **fica**, e virou o padrão: `PUT /api/demandas` adotou o
+  mesmo. É o que captura o que o servidor deriva sozinho — ao reabrir uma demanda
+  concluída, `dateDone` é limpo, `dateStarted` é setado e a descrição ganha "Reaberta
+  em …" sem nada disso vir no body. Diffar só o payload deixaria a auditoria muda
+  exatamente na mudança mais relevante (pego na revisão do próprio fix).
 - ✅ **`demandas/import` grava AuditLog** (12/08) — `createManyAndReturn` + um log por
   linha com `action: 'IMPORT'`. Ganhou também teto de 1000 itens por lote.
 - ⚠️ **Fora de Demanda ainda não há audit:** `teams`, `companies`, `user/profile`.
