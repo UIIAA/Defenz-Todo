@@ -128,7 +128,13 @@ Coorte **por data de criação** do ticket (`createdAt`), com **fuso SP** (§9).
 
 ## 9. Invariantes & Definition of Done (HERDADAS por TODA feature)
 
-> Estas são as classes de bug que **já pagamos** em outras features (ver `docs/PROGRESS.md` e revisões adversariais). Toda spec-filha e todo PR do Service Desk **deve** passar por esta checklist.
+> ⚠️ **As invariantes DO PROJETO vivem em [`../SPEC-MAE.md`](../SPEC-MAE.md) §5** — lá
+> está a lista canônica (I1–I11), com a marcação de quais o código já cumpre e quais
+> ainda são meta. Esta seção é a leitura **específica de Service Desk** dessas mesmas
+> regras: o que cada uma significa em `Ticket`, `AuthorizedClient` e na superfície
+> pública. Em caso de divergência, a SPEC-MAE manda.
+>
+> Estas são as classes de bug que **já pagamos** em outras features. Toda spec-filha e todo PR do Service Desk **deve** passar por esta checklist.
 
 1. **Tenant isolation:** todo `Ticket`/`AuthorizedClient` tem `companyId` NOT NULL e é filtrado por `companyScopeWhere`. Ao gravar `assignedToId`, **sempre** `db.user.findUnique` + `assertCompanyAccess(assignee.companyId, user)` (POST **e** PUT). Ao linkar Demanda, `assertCompanyAccess(demanda.companyId, user)`.
 2. **Fuso SP em filtros de período:** usar `dayStart/dayEnd` com `SP_OFFSET='-03:00'`. Hoje o offset vive em `src/lib/date.ts` e a metrics route duplica os helpers inline → **extrair `dayStart/dayEnd` p/ `src/lib/date.ts`** (fonte única) e importar nas rotas. Nunca `new Date(s+'T00:00:00')` cru.

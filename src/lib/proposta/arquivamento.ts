@@ -15,11 +15,6 @@ import { db } from '@/lib/db'
 /** Teto do arquivamento. Passou disso, desiste e deixa marcado como não arquivado. */
 const TIMEOUT_MS = 8000
 
-/** Sem webhook configurado a feature fica inerte, sem erro e sem promessa falsa. */
-export function arquivamentoConfigurado(): boolean {
-  return Boolean(process.env.N8N_PROPOSTA_ARQUIVO_WEBHOOK_URL)
-}
-
 export interface ArquivarInput {
   propostaId: string
   codigo: string

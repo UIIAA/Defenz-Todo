@@ -68,3 +68,29 @@ Formato: ADR curto (Date / Context / Decision / Consequences). Ordem cronológic
 - Um `prisma db push` (ou `migrate`) executado localmente **já altera a produção** — não há banco de staging separado. Cuidado: mudanças destrutivas afetam prod imediatamente. Preferir mudanças aditivas (colunas nullable/default).
 - Não há ambiente de staging isolado. Validar em localhost (que usa o mesmo banco) antes de push.
 - Se um dia houver banco de produção separado, este ADR deve ser atualizado e o fluxo de migration revisto (aplicar em prod via `DIRECT_URL` de produção antes do deploy do código).
+
+---
+
+## ADR-009: A Ana roda no Gemini, não no Claude
+**Date:** 2026-08-09
+**Context:** A emenda D7 da spec do Portal pedia Claude, com um argumento forte: "admitir que não sabe" é seguir instrução, e num assistente interno errar isso é caro — a IA que inventa procedimento é pior que a IA que não responde. O Marcos pediu Gemini.
+**Decision:** `gemini-3.6-flash`, via `GEMINI_API_KEY` + `ANA_MODEL`. O argumento da D7 **não foi refutado, foi testado**: nas perguntas sem resposta na base, o Gemini admitiu que não sabia mesmo recebendo 4–5 fontes irrelevantes de propósito; nas de dentro, citou o POP certo e sinalizou sozinho que era `[RASCUNHO]`. Latência 4–9s.
+**Consequences:** Custo menor e latência aceitável. `safety settings` em `BLOCK_ONLY_HIGH` nas 4 categorias, porque POPs de cibersegurança falam de EDR e bloqueio de arquivo — falso-positivo clássico. `finishReason` é comparado por **string**: o enum do SDK 0.21 não conhece valores que a API já devolve. Se a qualidade do "não sei" regredir, este ADR é o primeiro a revisitar.
+
+## ADR-010: A proposta é HTML impresso pelo Chromium, não PPTX
+**Date:** 2026-08-09
+**Context:** Presumia-se que o A4 entregue ao cliente fosse o PowerPoint exportado. Os metadados do PDF real dizem `Producer: Skia/PDF` + `Creator: Mozilla/5.0`, e o PPTX mede 508×286mm (16:9, 11 slides) contra 210×297mm (16 páginas) do PDF.
+**Decision:** Template HTML versionado no repo → Chromium headless (`puppeteer-core` + `@sparticuz/chromium`) → PDF. É o caminho que a Defenz já usava sem saber que usava, e o brandbook normatiza ("Documentos A4 = 794×1123px com CSS `@media print`").
+**Consequences:** Some do plano a manipulação de XML de PowerPoint e a necessidade de LibreOffice no servidor. Entra uma dependência de binário nativo: `next.config.ts` precisa de `serverExternalPackages`, e a rota é a mais provável de falhar só em produção (memória/cold start do Lambda). O Chromium quantiza a MediaBox — o A4 sai 594,96 × 841,92 pt, a mesma geometria do PDF que a Defenz já entrega.
+
+## ADR-011: A proposta é arquivada no OneDrive via n8n, não em Vercel Blob
+**Date:** 2026-08-09
+**Context:** O arquivo gerado precisa ir para algum lugar durável. Vercel Blob seria o caminho de menor atrito técnico.
+**Decision:** OneDrive, via Microsoft Graph chamado pelo n8n. Preferência do Marcos: some uma dependência nova e o arquivo nasce onde o time já vive.
+**Consequences:** O arquivamento é uma chamada de rede que **nunca pode derrubar a geração**: é `try/catch` com timeout de 8s e o registro fica `oneDriveItemId: null`, exibido como "não arquivado". Sem `N8N_PROPOSTA_ARQUIVO_WEBHOOK_URL` a feature fica inerte, não quebrada. O workflow do n8n é uma dependência externa que precisa existir.
+
+## ADR-012: Re-download de proposta reimprime do snapshot, não guarda bytes
+**Date:** 2026-08-09
+**Context:** O log precisa permitir baixar de novo uma proposta emitida. O caminho óbvio é guardar o PDF.
+**Decision:** Não guardar bytes. O registro grava `precoSnapshot` (o objeto de investimento inteiro, como aplicado) e o re-download **reimprime a partir dele**, nunca da tabela vigente.
+**Consequences:** Some a dependência de storage. Garante que o mesmo número de proposta sempre saia com o mesmo preço, mesmo depois de a tabela mudar — sem isso, "quanto cobrei do João em agosto" vira adivinhação. Custo: cada re-download roda o Chromium de novo (~2s). Se o template mudar, propostas antigas reimprimem com o layout novo e o preço velho — aceitável, e é por isso que regerar emite número novo.

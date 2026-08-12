@@ -118,7 +118,7 @@ Também vivos no Portal: **Apontamento de horas** (3 suposições minhas a confi
 **Ler primeiro `docs/features/service-desk-GUIA.md` (§9 Invariantes são obrigatórias).** Service Desk F1+F2 estão prontos em local, schema no Neon, mas NÃO no Vercel. Opções (Marcos escolhe):
 1. **Subdomínio do portal** (F2 polish): `suporte.defenz.com.br` = mesma app Vercel via **host-rewrite** (middleware/`vercel.ts`) → `/abrir-ticket`, mesmo origin (sem CORS); **bloquear `/dashboard` no host `suporte.`**; DNS hoje na **YCORN** → migrar p/ Cloudflare/Vercel p/ gerir via prompt. (Spec já tem a seção "Domínio / hospedagem".)
 2. **F4 — Sync do Zoho** p/ popular `AuthorizedClient` de verdade (hoje só o seed `scripts/seed-portal.ts` com "Cliente Teste"). Criar a spec `feature-service-desk-zoho-sync.md` sob o GUIA.
-3. **Deploy pro Vercel** quando Marcos validar (schema já está no Neon dev=prod, então só `git push`). Lembrar: SW `CACHE_NAME` já está em `defenz-v3`.
+3. **Deploy pro Vercel** quando Marcos validar (schema já está no Neon dev=prod, então só `git push`). Lembrar: subir o `CACHE_NAME` do SW (`public/sw.js`, hoje `defenz-v5`) — invariante I7.
 4. **`feature-playbooks-manuais`** (aprovada, não implementada) — KB markdown. Outra feature de produto.
 5. **Bug do AuditLog em PUT parcial** (chip, ainda aberto): `diffChanges` loga campos ausentes como `→ null` (afeta MCP `move/update_demanda` + curl). Fix: ignorar campos ausentes do payload. TDD em `src/lib/audit.ts`. (GUIA §9.6 lembra: o fix do ticket vive na rota, não centralizado.)
 6. Deploy ordenado da Phase 2 do assignee-fk (independente; ver abaixo).

@@ -1,5 +1,10 @@
 # SPEC — Defenz To-Do
 
+> ⚠️ **SUPERSEDIDO por [`SPEC-MAE.md`](SPEC-MAE.md)** (agosto/2026), que cobre o produto
+> inteiro — Demandas, Service Desk e Portal Defenz. Este arquivo é o escopo de abril,
+> quando o produto era só Demandas. Mantido como histórico; **não use para decidir nada.**
+
+
 **Version:** 0.2.0
 **Last updated:** 2026-04-11
 

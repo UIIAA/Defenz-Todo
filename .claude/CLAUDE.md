@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # Defenz — Gestao Estrategica de Atividades
 
+> **Comece toda sessão lendo [`docs/SPEC-MAE.md`](../docs/SPEC-MAE.md) (o produto ponta a ponta, as invariantes §5 e o runbook §8) e depois `docs/PROGRESS.md`** (onde parei).
+
 > **Start every session by reading `docs/PROGRESS.md`** para recuperar estado. Antes de tocar código de uma feature, ler `docs/features/feature-<slug>.md` correspondente. README.md está desatualizado (Next.js 15 / SQLite / modelo "Activity") — fonte de verdade é este arquivo + `docs/`.
 
 > **Service Desk:** o guia mestre é [`docs/features/service-desk-GUIA.md`](docs/features/service-desk-GUIA.md). Antes de tocar QUALQUER feature do Service Desk (`feature-service-desk*.md`), ler o guia — especialmente as **Invariantes §9** (classes de bug já pagas: tenant isolation, fuso SP, sem erro silencioso na UI, take/cap, AuditLog, PWA/SW, superfície pública). Toda spec-filha herda essa checklist.
@@ -15,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 3. Implementar com TDD proporcional (um happy + um sad path, não matriz exaustiva).
 4. Antes de "done": `npm run build && npx tsc --noEmit && npm test`.
 5. Ao completar: status do feature → Done, append `docs/CHANGELOG.md`, update `docs/PROGRESS.md`, commit.
-6. Referências de arquitetura: `docs/SPEC.md` (escopo), `docs/ARCHITECTURE.md` (ADRs).
+6. Referências: `docs/SPEC-MAE.md` (produto ponta a ponta — fonte de verdade), `docs/ARCHITECTURE.md` (ADRs). `docs/SPEC.md` está SUPERSEDIDO.
 
 ## Stack
 

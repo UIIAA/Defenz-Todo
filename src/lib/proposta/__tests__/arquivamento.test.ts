@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 vi.mock('@/lib/db', () => ({ db: { proposta: { update: vi.fn() } } }))
 
 import { db } from '@/lib/db'
-import { arquivarNoOneDrive, arquivamentoConfigurado } from '../arquivamento'
+import { arquivarNoOneDrive } from '../arquivamento'
 
 const mockDb = db as unknown as { proposta: { update: ReturnType<typeof vi.fn> } }
 
@@ -27,7 +27,6 @@ describe('arquivamento no OneDrive — falha NUNCA derruba a geração (R5)', ()
   })
 
   it('sem webhook configurado fica inerte, sem erro', async () => {
-    expect(arquivamentoConfigurado()).toBe(false)
     await expect(arquivarNoOneDrive(entrada)).resolves.toBe(false)
     expect(mockDb.proposta.update).not.toHaveBeenCalled()
   })

@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // O gerador de PDF da Proposta usa binário nativo do Chromium e `require`
+  // dinâmico. Empacotar isso quebra em runtime — e quebraria só EM PRODUÇÃO,
+  // porque em dev o Next não faz o bundle do lado servidor da mesma forma.
+  serverExternalPackages: ['puppeteer-core', '@sparticuz/chromium'],
   async headers() {
     return [
       {

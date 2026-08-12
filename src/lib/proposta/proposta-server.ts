@@ -5,7 +5,7 @@
 
 import { formatDate } from '@/lib/date'
 import { ApiError } from '@/lib/api-helpers'
-import { calcularInvestimento, type Investimento } from './calculo'
+import type { Investimento } from './calculo'
 import { nextPropostaCodigo } from './numeracao'
 import {
   renderPropostaHtml,
@@ -53,24 +53,6 @@ export function montarDocumento(input: MontarDocumentoInput): PropostaDocumento 
     vendedor: input.vendedor,
     investimento: input.investimento,
   }
-}
-
-/**
- * Prévia da confirmação: o preço calculado ANTES de o documento existir.
- *
- * É onde o vendedor pega um erro de quantidade sem já ter queimado um número
- * de proposta (spec §4). Não reserva código, não grava nada.
- */
-export function previewInvestimento(input: {
-  quantidade: number
-  planos: readonly string[]
-  ajustePercent: number
-}): Investimento {
-  return calcularInvestimento({
-    quantidade: input.quantidade,
-    planos: input.planos as never,
-    ajustePercent: input.ajustePercent,
-  })
 }
 
 /**
