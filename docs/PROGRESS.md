@@ -12,7 +12,7 @@ na §15 dela). 816 testes, `tsc`+`build` limpos, `db push` aplicado no Neon (adi
 Testado clicando: formulário → confirmação com o preço → PDF de 12 páginas baixado.
 
 **Duas decisões do Marcos, nesta ordem:**
-1. ⚠️ **R3 — qual tabela de preço vale.** O arquivo se chama "Dez.2026", a capa diz
+1. ⚠️ **VALIDADE-DA-TABELA — qual tabela de preço vale.** O arquivo se chama "Dez.2026", a capa diz
    2024, o corpo diz 29/11/2024. Está carimbado `2024-11-29`. **Isto bloqueia mandar
    proposta para cliente de verdade.**
 2. ⚠️ **Corrigir o ÷48 inverte o argumento dos 36 meses.** Com a conta certa, o

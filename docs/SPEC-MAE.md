@@ -233,7 +233,7 @@ Marcadas com 🎯 as que o código **cumpre**; com ⚠️ as que são **meta, ai
 ## 6. Riscos, pendências e dívida
 
 ### Decisões que só o Marcos pode tomar
-1. ⚠️ **R3 — qual tabela de preço vale.** Arquivo "Dez.2026", capa 2024, corpo
+1. ⚠️ **VALIDADE-DA-TABELA — qual tabela de preço vale.** Arquivo "Dez.2026", capa 2024, corpo
    29/11/2024. Carimbado `2024-11-29`. **Bloqueia mandar proposta para cliente real.**
 2. ✅ **RESOLVIDO em 12/08 — a coluna virou 36+12.** Era a pergunta "por que o
    destaque em crimson aponta para a opção mais cara por mês?". Resposta: porque não
@@ -280,7 +280,7 @@ OneDrive · **sync da Biblioteca** · **Ana modo web** · **sync do Zoho** para
 
 ## 7. Roadmap
 
-**Marco 1 — fechar a Proposta.** R3 respondida → decisão do destaque dos 36 meses → deploy.
+**Marco 1 — fechar a Proposta.** VALIDADE-DA-TABELA respondida → decisão do destaque dos 36 meses → deploy.
 **Marco 2 — colocar em produção o que já existe.** Ver o runbook (§8.2).
 **Marco 3 — o que depende do n8n.** Os quatro webhooks rendem mais feitos juntos.
 **Marco 4 — fechar pontas.** POPs validados · subdomínio `suporte.` · AuditLog

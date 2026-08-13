@@ -158,7 +158,7 @@ export const TABELA = {
 
 Faixas: `5-14 · 15-24 · 25-49 · 50-99 · 100-149 · 150-249 · 250-499 · 500-999`. Vigências: 1, 2 e 3 anos.
 
-⚠️ **A tabela precisa de dono e prazo, como um POP.** O PDF diz "29/11/2024" no corpo e "Dez.2026" no nome do arquivo. Preço vencido em proposta é erro caro. Ver R3.
+⚠️ **A tabela precisa de dono e prazo, como um POP.** O PDF diz "29/11/2024" no corpo e "Dez.2026" no nome do arquivo. Preço vencido em proposta é erro caro. Ver **VALIDADE-DA-TABELA** (§13).
 
 ### 6.2 As contas
 
@@ -288,7 +288,7 @@ Escopo por empresa como todo o resto (`assertCompanyAccess`). Criação grava `A
 |---|---|---|
 | R1 | **Chromium na Vercel** — cold start, tamanho, memória | `@sparticuz/chromium-min`; se doer, o render migra para o n8n sem mudar o contrato da rota |
 | R2 | **Fonte não carrega e o PDF sai errado em silêncio** | Manrope embutida no bundle (§7.2) + teste que confere a fonte no PDF |
-| R3 | **Tabela de preço vencida** | Carimbo de vigência no arquivo e no `precoSnapshot`; avaliar dar à tabela o mesmo motor de frescor dos POPs |
+| **VALIDADE-DA-TABELA** (era R3) | **A tabela em uso pode estar vencida** | Carimbo de vigência no arquivo e no `precoSnapshot`; avaliar dar à tabela o mesmo motor de frescor dos POPs |
 | R4 | **Preço errado em documento assinado** | Cálculo em código com teste de regressão; confirmação mostra o preço antes de gerar |
 | R5 | **Graph/n8n fora do ar** | Geração e download não dependem dele; registro fica `oneDriveItemId: null` e a UI mostra "não arquivado" |
 | R6 | **Quantidade fora da tabela** | Recusa explícita, nunca extrapolação |
@@ -328,7 +328,7 @@ Fonte: `Tabela Bundle Pública BRL - Dez.2026.pdf` · SecuriSoft, distribuidora 
 
 Produtos, nome cheio: `GRAVITYZONE BUSINESS SECURITY BRAZILIAN EDITION` · `GRAVITYZONE PREMIUM BRAZILIAN EDITION` · `GRAVITYZONE ENTERPRISE BRAZILIAN EDITION`.
 
-⚠️ **Discrepância de data a resolver com o Marcos:** o nome do arquivo diz "Dez.2026", a capa diz "2024" e o corpo diz 29/11/2024. A implementação carimba `vigenteDesde: '2024-11-29'` (o que está escrito no documento) até o Marcos confirmar qual é a tabela válida. Ver R3.
+⚠️ **Discrepância de data a resolver com o Marcos:** o nome do arquivo diz "Dez.2026", a capa diz "2024" e o corpo diz 29/11/2024. A implementação carimba `vigenteDesde: '2024-11-29'` (o que está escrito no documento) até o Marcos confirmar qual é a tabela válida. Ver **VALIDADE-DA-TABELA** (§13).
 
 
 ---
@@ -384,7 +384,7 @@ Rotas em `src/app/api/portal/propostas/`. Telas em `src/app/dashboard/portal/pro
   saia com o mesmo preço.
 
 ### O que falta
-1. **R3 — qual tabela de preço vale.** Carimbado `2024-11-29` (o que está escrito no
+1. **VALIDADE-DA-TABELA — qual tabela de preço vale.** Carimbado `2024-11-29` (o que está escrito no
    corpo), mas o arquivo se chama "Dez.2026" e a capa diz 2024. **Bloqueia usar em
    cliente de verdade.**
 2. **F5 — o workflow do n8n não existe.** O app já manda o PDF (binário + metadado em

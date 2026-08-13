@@ -5,14 +5,14 @@
 // (SecuriSoft, distribuidora exclusiva Bitdefender), corpo do documento datado
 // 29/11/2024, "cliente final até 999 licenças", "substitui as tabelas vigentes".
 //
-// ⚠️ DISCREPÂNCIA DE DATA EM ABERTO (spec R3 / Anexo A): o NOME do arquivo diz
+// ⚠️ VALIDADE-DA-TABELA — DISCREPÂNCIA DE DATA EM ABERTO (spec §13 / Anexo A): o NOME do arquivo diz
 // "Dez.2026", a capa diz 2024 e o corpo diz 29/11/2024. Carimbamos o que está
 // ESCRITO no documento até o Marcos confirmar qual tabela vale. Preço vencido em
 // proposta é erro caro — esta tabela precisa de dono e prazo, como um POP.
 //
 // ⚠️ Os números são PREÇO POR LICENÇA PELO PERÍODO INTEIRO (não por mês).
-// A coluna "unitário/mês" do documento é DERIVADA (ver calculo.ts) — é
-// exatamente onde nasceu o erro do ÷48 (spec §2.1).
+// A coluna "unitário/mês" do documento é DERIVADA (ver `calculo.ts`), e o
+// divisor dela é o tempo de COBERTURA, não o de pagamento — ver `VIGENCIAS`.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const PLANOS = ['BUSINESS_SECURITY', 'PREMIUM', 'ENTERPRISE'] as const

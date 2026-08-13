@@ -36,7 +36,7 @@ Formato: semver. Entradas mais recentes primeiro.
 - **Correção da spec §14:** os dois documentos reais têm o **mesmo** número de páginas fixas (9). Buffo tem 11 porque empacotaram 2 planos numa página; Liquos tem 10 com 1 plano. A regra implementada é a da §7.1 (uma página por plano), então 3 planos → 12 páginas.
 - **A4 na prática:** o Chromium quantiza a MediaBox em pixels CSS e nunca emite os 595,28 pt teóricos. Das 4 combinações possíveis, a adotada dá **594,96 × 841,92 pt** (209,90 × 297,00 mm), a mais próxima do A4 real e a mesma geometria do PDF que a Defenz já entrega hoje (também Skia/PDF). Todo leitor classifica como A4.
 - **`@sparticuz/chromium` completo em vez do `-min`** (a spec §7.3 pedia o `-min`): o `-min` baixa o pacote do Chromium em runtime, uma dependência de rede a mais para falhar no meio de uma geração. Com o limite de 5 GB por função da Vercel, o pacote completo cabe e remove esse modo de falha. **A validar no primeiro deploy** (R1).
-- **R3 segue aberta:** a tabela está carimbada `vigenteDesde: '2024-11-29'` (o que está escrito no corpo do PDF), mas o arquivo se chama "Dez.2026" e a capa diz 2024. **Preço vencido em proposta é erro caro.**
+- **VALIDADE-DA-TABELA segue aberta:** a tabela está carimbada `vigenteDesde: '2024-11-29'` (o que está escrito no corpo do PDF), mas o arquivo se chama "Dez.2026" e a capa diz 2024. **Preço vencido em proposta é erro caro.**
 
 ### Changed (2026-08-09 — a Ana passa a rodar no Gemini e volta a responder certo; LOCAL)
 > **750 testes verdes** (era 737), `tsc` + `build` limpos. Ana respondendo em localhost com fonte clicável, verificado clicando na interface.
