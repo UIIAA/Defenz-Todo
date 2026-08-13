@@ -86,7 +86,7 @@ Contagens envelhecem; comandos não. Para números atuais: `npm test`,
 | Horas (`TimeEntry`, delta-on-save) | ✅ | ✅ | `/dashboard/demandas/horas` |
 | API Bearer + MCP `defenz` | ✅ | ✅ | 8 tools local, **4 em `origin/main`**; as 4 novas já funcionam contra a API de prod |
 | Relatório executivo (Gemini) | ✅ | ✅ | |
-| Reminders por e-mail (cron) | ✅ | ✅ | 11:00 UTC |
+| Reminders por e-mail (cron) | ✅ | ⚠️ **morto** | `CRON_SECRET` não existe na Vercel; o guard falha fechado, então o cron toma 401 todo dia às 11:00 UTC e **nenhum lembrete jamais saiu**. Desligado de propósito por ora (Marcos, 12/08) |
 | **Service Desk F1** (Kanban v2) | ✅ | ❌ | |
 | **Service Desk F2** (portal `/abrir-ticket`) | ✅ | ❌ | falta subdomínio `suporte.` + DNS |
 | **Service Desk F3** (notificações) | ❌ | ❌ | "Futuro" no GUIA |
@@ -270,6 +270,15 @@ Marcadas com 🎯 as que o código **cumpre**; com ⚠️ as que são **meta, ai
 - **README.md stale** (fala Next.js 15 / SQLite / "Activity"). Os 7 `.md` obsoletos da
   raiz foram para `docs/archive/`; `LEARNINGS.md` é válido.
 - **`prisma/dev.db*`** são resquício do SQLite (gitignorados, inofensivos).
+
+### Variáveis de ambiente ausentes em produção (conferido em 12/08)
+- **`CRON_SECRET`** — sem ela o cron de lembretes é 401 diário. **Decisão do Marcos: fica assim
+  por enquanto**, e-mail de lembrete não é prioridade. Quando for, criar a var **antes** de
+  anunciar a feature como viva.
+- **`EMAIL_FROM` / `EMAIL_FROM_NAME`** — o que sai hoje usa o fallback `onboarding@resend.dev`,
+  não um endereço `@defenz.com.br`.
+- **`GEMINI_API_KEY`** — sem ela a Ana sobe respondendo erro. ⚠️ Mudança de env var na Vercel
+  **só vale no próximo deploy**: criar a variável ANTES do push, senão são dois deploys.
 
 ### Dependências externas que não existem
 Quatro webhooks de n8n, todos o mesmo tipo de trabalho: **arquivar proposta** no
