@@ -4,32 +4,43 @@
 **Version:** 0.3.0
 **Branch:** main
 
-## 🎯 RETOMAR AQUI — Proposta F1–F5 prontas em local; 2 coisas dependem do Marcos
+## 🚀 DEPLOYADO EM 13/08 — o lote de 42 commits está em produção
 
-**A feature Proposta está implementada e verificada em localhost** (spec
-[`feature-portal-proposta.md`](features/feature-portal-proposta.md), estado detalhado
-na §15 dela). 816 testes, `tsc`+`build` limpos, `db push` aplicado no Neon (aditivo).
-Testado clicando: formulário → confirmação com o preço → PDF de 12 páginas baixado.
+`defenz-todo.vercel.app` roda hoje o produto inteiro: kanban, **Service Desk**,
+**Portal** (POPs, Biblioteca, Ana) e **Proposta**. Build Ready em 2m, schema aplicado
+pelo `vercel-build` sem incidente (diff conferido antes: aditivo, 2 enums + 7 tabelas,
+nenhum `DROP`).
 
-**Duas decisões do Marcos, nesta ordem:**
-1. ⚠️ **VALIDADE-DA-TABELA — qual tabela de preço vale.** O arquivo se chama "Dez.2026", a capa diz
-   2024, o corpo diz 29/11/2024. Está carimbado `2024-11-29`. **Isto bloqueia mandar
-   proposta para cliente de verdade.**
-2. ⚠️ **Corrigir o ÷48 inverte o argumento dos 36 meses.** Com a conta certa, o
-   unitário/mês de 36 meses fica **mais caro** que o de 24 (R$ 4,78 × R$ 4,59 em
-   Business Security 25–49) — propriedade da tabela pública, vale nas 8 faixas.
-   Provavelmente **é por isso que o ÷48 sobreviveu**. O template ainda destaca a
-   coluna de 36 meses em crimson. Manter o destaque é decisão comercial.
+**Smoke em produção, feito:** páginas públicas 200 · dashboard 307 para login · 4 rotas
+de API 401 sem credencial, **zero 500** · via Bearer: 22 playbooks, 2 tickets, 323
+demandas respondendo.
 
-**Depois:** F5 precisa do **workflow no n8n** (o app-side está pronto e inerte sem
-`N8N_PROPOSTA_ARQUIVO_WEBHOOK_URL`) · F6 = deploy, quando o Marcos validar.
+⚠️ **O único caminho NÃO exercitado em produção: gerar uma proposta.** É a rota que roda
+o Chromium em Lambda, aceita **só sessão** (por desenho), e é a mais provável de falhar
+só em prod. **Precisa de 1 clique do Marcos** — `/dashboard/portal` → "Nova proposta".
+Se falhar, o primeiro botão é memória/duração da função (SPEC-MAE §8.2).
 
-**Como testar:** `npm run dev` → `/dashboard/portal` → botão **Nova proposta** (agora
-há também a 4ª aba **Propostas**, o log buscável). PDF sem banco:
-`npx tsx scripts/smoke-proposta-pdf.ts saida.pdf`.
+**Env vars:** `GEMINI_API_KEY` criada em 13/08 (Sensitive, Production) — a Ana está viva.
+⚠️ A chave passou pelo chat: **rotacionar** e pôr **teto de gasto** no Google Cloud.
+`CRON_SECRET` e `EMAIL_FROM` seguem ausentes de propósito (e-mail não é prioridade agora)
+— o cron de lembretes toma 401 diário, como já tomava antes do deploy.
 
-⚠️ O contador foi devolvido a 1985 depois dos testes: **a primeira proposta real será
-a `DFZ-2026-01986`**, como a spec exige.
+## 🎯 PRÓXIMO — apresentação de soluções Bitdefender (spec em aberto)
+
+Feature nova pedida pelo Marcos: formulário curto → apresentação institucional
+Bitdefender + Defenz, com **comparativo entre as soluções GravityZone**, para cliente
+que **não conhece a marca**.
+
+**Achado que adianta a spec:** os três materiais já estão catalogados na Biblioteca do
+Portal, com caminho no OneDrive —
+`V9_PARCEIRO_EDITAVEL_SEM_PME.pptx` (o modelo), `defenz_gravityzone_comparativo.pdf`
+(+ `.docx` editável, o comparativo) e `TECNICO_Bitdefender_Lideranca_Global_Acao_Brasil.pdf`
+(exatamente o "não conhece a marca"). **Mas as fichas dizem "conteúdo ainda não
+indexado"** — temos o ponteiro, não o conteúdo. Ler os três é pré-requisito: foi assim
+que a Proposta acertou (template por diff de documentos reais, não por adivinhação).
+
+Decisões em aberto: formato de saída (PDF como a Proposta, ou PPTX editável?), o que o
+formulário pergunta, e quanto do comparativo é fixo x variável.
 
 ## ✅ A ANA ESTÁ RESPONDENDO (localhost, Gemini 3.6 Flash)
 O Portal está **navegável nas 3 abas** e a Ana responde de verdade, com fonte clicável. Testado clicando na interface.

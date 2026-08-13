@@ -25,20 +25,19 @@ do commit que você deployar vira o schema de produção. Duas consequências qu
 > Aditivo é seguro. Renomear, remover ou trocar tipo de coluna que o código deployado
 > lê **quebra a produção na hora, sem deploy nenhum**.
 
-**Estado hoje:** a produção está atrás do `main` local, e havia trabalho não
-commitado. Confira sempre, nunca confie em número escrito aqui:
+**Estado hoje (13/08):** produção e `main` estão **em dia** — os 42 commits do lote
+Service Desk + Portal + Ana + Proposta subiram. Confira sempre, nunca confie em número
+escrito aqui:
 
 ```bash
 git log --oneline origin/main..main | wc -l   # commits não deployados
 git status --short                            # trabalho em voo
 ```
 
-O que roda em `defenz-todo.vercel.app` é o kanban de demandas com multi-empresa,
-horas e MCP. Service Desk, Portal Defenz, Ana e Proposta existem **só local** — mas o
-*schema* deles já está em produção, pela regra do banco único. Isso foi verificado e é
-seguro: o diff de schema contra `origin/main` é puramente aditivo (7 modelos novos),
-e a migração de status v1→v2 do Service Desk tocou apenas `Ticket`, modelo que o
-código em produção não conhece. **Nenhum dado que a produção lê foi reescrito.**
+`defenz-todo.vercel.app` roda hoje o produto inteiro: kanban, Service Desk, Portal
+(POPs, Biblioteca, Ana) e Proposta. O deploy de 13/08 foi precedido do diff de schema
+contra `origin/main` — puramente aditivo, 2 enums e 7 tabelas, nenhum `DROP` — e o
+build aplicou tudo sem incidente.
 
 ### 0.1 Quem é fonte de verdade de quê
 
@@ -84,18 +83,18 @@ Contagens envelhecem; comandos não. Para números atuais: `npm test`,
 | Auth invite-only + roles | ✅ | ✅ | NextAuth v4, JWT, sem signup aberto |
 | Audit log | ✅ | ✅ | ⚠️ incompleto e com bug — §5 I6, §6 |
 | Horas (`TimeEntry`, delta-on-save) | ✅ | ✅ | `/dashboard/demandas/horas` |
-| API Bearer + MCP `defenz` | ✅ | ✅ | 8 tools local, **4 em `origin/main`**; as 4 novas já funcionam contra a API de prod |
+| API Bearer + MCP `defenz` | ✅ | ✅ | 8 tools, todas em produção desde 13/08 |
 | Relatório executivo (Gemini) | ✅ | ✅ | |
 | Reminders por e-mail (cron) | ✅ | ⚠️ **morto** | `CRON_SECRET` não existe na Vercel; o guard falha fechado, então o cron toma 401 todo dia às 11:00 UTC e **nenhum lembrete jamais saiu**. Desligado de propósito por ora (Marcos, 12/08) |
-| **Service Desk F1** (Kanban v2) | ✅ | ❌ | |
-| **Service Desk F2** (portal `/abrir-ticket`) | ✅ | ❌ | falta subdomínio `suporte.` + DNS |
+| **Service Desk F1** (Kanban v2) | ✅ | ✅ | deployado 13/08 |
+| **Service Desk F2** (portal `/abrir-ticket`) | ✅ | ✅ | live; falta o subdomínio `suporte.` + DNS |
 | **Service Desk F3** (notificações) | ❌ | ❌ | "Futuro" no GUIA |
 | **Service Desk F4** (sync Zoho) | ❌ | ❌ | só o seed "Cliente Teste" |
 | **Service Desk F5** (SLA, horário comercial, CSAT) | ❌ | ❌ | "Futuro" no GUIA |
-| **Portal F1** (POPs + frescor) | ✅ | ❌ | ⚠️ R1 do hotlink do Drive nunca testado |
-| **Portal — Biblioteca** | ✅ | ❌ | 14 fichas à mão; nada re-sincroniza |
-| **Portal — Ana** (A1/A2/A3) | ✅ | ❌ | Gemini; modo web (A4) pendente |
-| **Portal — Proposta F1–F5** | ✅ | ❌ | F5 inerte sem o webhook do n8n |
+| **Portal F1** (POPs + frescor) | ✅ | ✅ | 22 playbooks respondendo em prod; ⚠️ R1 do hotlink do Drive nunca testado |
+| **Portal — Biblioteca** | ✅ | ✅ | 14 fichas à mão; nada re-sincroniza |
+| **Portal — Ana** (A1/A2/A3) | ✅ | ✅ | `GEMINI_API_KEY` criada 13/08; modo web (A4) pendente |
+| **Portal — Proposta F1–F5** | ✅ | ✅ | ⚠️ geração de PDF (Chromium em Lambda) **ainda não exercitada em prod** — é o único caminho não coberto pelo smoke; F5 inerte sem o webhook do n8n |
 | Playbooks/Manuais (spec antiga) | — | — | **absorvido pelo Portal**; spec morta |
 | CRM, métricas M&A, AI Insights | arquivado | — | schema presente, UI fora — §3.2 |
 
