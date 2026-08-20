@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
+  CLIENTES_BD_PNG,
   LOGO_HORIZONTAL_INK_PNG,
   MANROPE_LATIN_EXT_WOFF2,
   MANROPE_LATIN_WOFF2,
@@ -446,9 +447,15 @@ ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
       </div>
 
       <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-        <div style="position:relative; width:400px; height:400px;">
+        <!-- 520px de largura, nao 400: com 400 o bloco do rotulo (150px) alcancava
+                 o circulo central de 150px e "Analise de risco" saia POR BAIXO do
+                 vermelho. Agora sobram ~35px de folga de cada lado. -->
+            <div style="position:relative; width:520px; height:400px;">
           <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
-            <div style="width:150px; height:150px; border-radius:50%; background:${C.accent}; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; box-shadow:0 16px 40px rgba(193,18,31,0.28);">
+            <!-- SEM box-shadow: o Skia (motor de PDF do Chromium) rasteriza sombra como
+                 RETANGULO solido, e no PDF isso virava um borrao vermelho quadrado
+                 atras do circulo. Na tela ficava bonito; no papel, defeito. -->
+            <div style="width:150px; height:150px; border-radius:50%; background:${C.accent}; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" style="margin-bottom:6px;"><path d="M13 2 L4 13 H11 L11 22 L20 11 H13 Z" fill="#fff"></path></svg>
               <div style="font-size:19px; font-weight:800; line-height:1.05;">XDR</div>
               <div style="font-size:11px; font-weight:600; opacity:0.85;">Inteligência</div>
@@ -473,13 +480,18 @@ ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
         <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">Desenvolvemos negócios com clientes de vários setores da economia, o que nos torna uma empresa multidisciplinar com experiência em diferentes operações de missão crítica.</p>
       </div>
 
-      <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:34px;">
-        ${SETORES.map(
-          (s, i) => `<div>
-          <div style="font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:18px;">${s.titulo}</div>
-          <div style="display:flex; flex-wrap:wrap; gap:${s.miudo ? '12px 26px' : '14px 32px'}; font-size:${s.miudo ? '17px' : '20px'}; font-weight:${s.miudo ? 700 : 800}; letter-spacing:-0.0${s.miudo ? 1 : 2}em; color:${s.miudo ? C.muted : '#3A3833'};">${s.nomes.map((n) => `<span>${n}</span>`).join('')}</div>
-        </div>${i < SETORES.length - 1 ? `\n        <div style="height:1px; background:${C.line};"></div>` : ''}`
-        ).join('\n        ')}
+      <!--
+        Arte de clientes com os LOGOS, no lugar da lista em texto (pedido do
+        Marcos, 20/08). Vem de assets/clientes-bd.png, embutida como data URI
+        igual ao resto: nada neste documento busca recurso na rede (I10).
+        ATENCAO: nada de crase aqui dentro — este HTML mora num template literal.
+        O PNG de origem tem 664px de largura para uma area de ~662px, ou seja,
+        esta no limite para impressao. Trocar por um arquivo maior melhora sem
+        tocar em codigo: substituir o arquivo e rodar
+        npx tsx scripts/build-proposta-assets.ts
+      -->
+      <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+        <img src="${CLIENTES_BD_PNG}" alt="Clientes Defenz" style="width:100%; max-width:662px; height:auto; display:block;">
       </div>
 ${rodape(6, total, doc.ano)}`)}
 
@@ -601,37 +613,7 @@ const VALORES = [
   },
 ] as const
 
-const SETORES = [
-  {
-    titulo: 'Setor Público e Governo',
-    nomes: ['Câmara dos Deputados', 'INFRAERO', 'CFMV', 'IFRS', 'Metrô/DF'],
-    miudo: false,
-  },
-  {
-    titulo: 'Indústria e Varejo',
-    nomes: ['Intelbras', 'Marisa', "Habib's", 'MadeiraMadeira', 'Polimix', 'Ambev'],
-    miudo: false,
-  },
-  {
-    titulo: 'Educação e Saúde',
-    nomes: ['Cruzeiro do Sul', 'São Camilo', 'Unimed', 'MedSenior'],
-    miudo: false,
-  },
-  {
-    titulo: 'Tecnologias &amp; parceiros',
-    nomes: [
-      'Bitdefender',
-      'Acronis',
-      'WatchGuard',
-      'NETGEAR',
-      'GoTo',
-      'SHARP',
-      'GFI Software',
-      'Kerio',
-    ],
-    miudo: true,
-  },
-] as const
+// SETORES removido: a pagina 04 passou a usar a arte com os logos dos clientes.
 
 const CONCEITOS = [
   'Aderência às boas práticas de entrega',
