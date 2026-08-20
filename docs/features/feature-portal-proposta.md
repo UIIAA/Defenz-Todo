@@ -391,3 +391,39 @@ Rotas em `src/app/api/portal/propostas/`. Telas em `src/app/dashboard/portal/pro
    header, auth por `X-Defenz-Token`) e espera `{ itemId }` de volta; sem
    `N8N_PROPOSTA_ARQUIVO_WEBHOOK_URL` fica inerte e o log mostra "não arquivado".
 3. **F6 — deploy**, quando o Marcos validar. Schema já está no Neon (dev=prod).
+
+---
+
+## 16. Troca pendente — a arte com os logos dos clientes (20/08)
+
+A página 04 ainda mostra a **lista em texto**. O Marcos trouxe uma arte com os
+**logos** (`docs/clientes-BD.png`), ela foi implementada e **revertida antes do
+deploy**, por dois motivos:
+
+1. ⚠️ **A arte escreve "Bitdetender"** no lugar de "Bitdefender" — nome do fabricante
+   errado num documento que vai para cliente. (Também "Organizaçoes" sem til.)
+2. ⚠️ **Resolução no limite:** 664px de largura de origem para uma área de ~662px, ou
+   seja **~72 dpi efetivos** na impressão. Os textos menores já saem moles.
+
+Um terceiro ponto, estético: a arte traz o próprio logo Defenz, e a página já tem um no
+cabeçalho e outro no rodapé — **três na mesma folha** — e o título dela repete a função
+do parágrafo de abertura. Dá para recortar o topo por CSS (`overflow:hidden` + offset),
+sem editar o arquivo, se a decisão for usar só a faixa dos logos.
+
+### Como fazer a troca quando a arte corrigida chegar
+
+1. Salvar o arquivo novo como `src/lib/proposta/assets/clientes-bd.png`
+   (idealmente **≥ 2000px** de largura, nome do fabricante corrigido).
+2. Descomentar `CLIENTES_BD_PNG` em `scripts/build-proposta-assets.ts`.
+3. `npx tsx scripts/build-proposta-assets.ts`
+4. Em `templates/endpoints-a4.ts`, na página 04, trocar o bloco do `SETORES.map(...)`
+   pela imagem, e reimportar `CLIENTES_BD_PNG`:
+   ```
+   <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+     <img src="${CLIENTES_BD_PNG}" alt="Clientes Defenz" style="width:100%; max-width:662px; height:auto; display:block;">
+   </div>
+   ```
+5. Remover a constante `SETORES` (vira dead code) e conferir o resultado com
+   `npx tsx scripts/smoke-proposta-pdf.ts saida.pdf`.
+
+O commit `e5e6e90` tem a implementação inteira, se for mais rápido reaproveitar o diff.
