@@ -185,7 +185,7 @@ valorTotalFinal  = valorTotal   × (1 + ajuste)
 
 Segue o `CLAUDE.md` do brandbook: Manrope em tudo, crimson `#C1121F` com parcimônia (~8%), papel `#F6F3EE`, barra vermelha curta + seção numerada abrindo cada seção, **sem travessões em frase corrida** (vírgula ou `·`).
 
-**Páginas fixas** (idênticas entre os dois clientes reais): confidencialidade, conheça-nos, porque nós, nossos serviços, alguns dos nossos clientes, parceria estratégica, encerramento.
+**Páginas fixas** (idênticas entre os dois clientes reais): confidencialidade, conheça-nos, porque nós, nossos serviços, ~~alguns dos nossos clientes~~, parceria estratégica, encerramento. ⚠️ **A página de clientes saiu em 21/08** — ver §17.
 **Páginas variáveis:** capa, uma página de investimento **por plano marcado**, cabeçalho corrido e `Página X de N` — com `N` calculado, já que muda com a quantidade de planos (Buffo 11, Liquos 10).
 
 ### 7.2 Fontes e imagens ficam no repo
@@ -299,7 +299,7 @@ Escopo por empresa como todo o resto (`assertCompanyAccess`). Criação grava `A
 
 - [x] A terceira coluna se chama **36+12 meses**, divide por **48** e o rodapé explica o bônus. O teste que protege é estrutural: `unitário × meses de cobertura === preço da licença`, nas três colunas.
 - [ ] Quantidade 4 e 1000 → recusadas com mensagem, sem gerar arquivo.
-- [ ] PDF gerado mede 210×297mm; há **uma página de investimento por plano marcado**, e o rodapé `Página X de N` traz o total real do documento gerado (Buffo tem 11 páginas com 3 planos, Liquos 10 com 1 — as duas bases não têm o mesmo número de páginas fixas, então `N` é contado, nunca constante).
+- [ ] PDF gerado mede 210×297mm; há **uma página de investimento por plano marcado**, e o rodapé `Página X de N` traz o total real do documento gerado (Buffo tem 11 páginas com 3 planos, Liquos 10 com 1 — as duas bases não têm o mesmo número de páginas fixas, então `N` é contado, nunca constante). ⚠️ **Números de 21/08:** com a página de clientes fora (§16), 3 planos = **11 páginas**, 1 plano = 9.
 - [ ] O PDF não contém "João Buffo", "Liquos", "Gustavo Figueira" nem "PBI-25-01642".
 - [ ] Ajuste 0% → a linha de desconto não aparece. Ajuste positivo → rótulo "Acréscimo".
 - [ ] `DFZ-2026-01986` é o primeiro; dois cliques simultâneos não geram o mesmo código.
@@ -351,7 +351,7 @@ Rotas em `src/app/api/portal/propostas/`. Telas em `src/app/dashboard/portal/pro
 |---|---|
 | `171,97 / 36 = 4,78`, não `3,58` | ✅ teste nomeado, nos 4 casos reais medidos |
 | Quantidade 4 e 1000 recusadas, sem gerar arquivo | ✅ testado na UI e no schema |
-| 210×297 mm; 1 página de investimento por plano; `Página X de N` real | ✅ 12 páginas com 3 planos; `N` contado (ver desvio B) |
+| 210×297 mm; 1 página de investimento por plano; `Página X de N` real | ✅ 12 páginas com 3 planos; `N` contado (ver desvio B). **Hoje são 11** — §16 |
 | Sem "João Buffo", "Liquos", "Gustavo Figueira", "PBI-25-01642" | ✅ teste dedicado |
 | 0% não mostra linha de desconto; positivo diz "Acréscimo" | ✅ |
 | `DFZ-2026-01986` é o primeiro; cliques simultâneos não colidem | ✅ 3 concorrentes → 01987/01988/01989 |
@@ -394,7 +394,47 @@ Rotas em `src/app/api/portal/propostas/`. Telas em `src/app/dashboard/portal/pro
 
 ---
 
-## 16. A página de clientes usa a faixa de logos, recortada por CSS (20/08)
+## 16. ⚠️ A página de clientes foi REMOVIDA (21/08)
+
+**Decisão do Marcos, 21/08:** *"Vamos tirar da proposta (Nossos clientes), não vamos mais
+ter este item, pode tirar da Base."* Vale para **propostas e apresentações**.
+
+O que saiu, de verdade e não só da renderização:
+
+| | |
+|---|---|
+| A página 04 inteira | título "Alguns dos nossos clientes", texto de apoio e a arte |
+| `assets/clientes-bd.png` | apagado do repo |
+| `CLIENTES_BD_PNG` | fora do `embedded.ts` e do `build-proposta-assets.ts` |
+| `arteClientes()` e as constantes de recorte | apagadas do template |
+
+**Consequências que precisaram de conserto junto**, e é por isso que isto não é uma
+remoção de uma linha:
+
+- **`PAGINAS_FIXAS` caiu de 9 para 8**, e `PAGINAS_ANTES_DO_INVESTIMENTO` de 8 para 7.
+  Com 3 planos o documento passou de **12 para 11 páginas** (medido no PDF impresso).
+- **As seções foram renumeradas:** Parceria `05.` → `04.`, Governança `06.` → `05.`. Sem
+  isso o documento pularia de 03 para 05 na cara do cliente.
+- **Os rodapés seguintes andaram uma casa.** Conferido no PDF: `Página 02 de 11` até
+  `Página 10 de 11`, sem buraco.
+- **Os testes de contagem de página deixaram de espelhar os documentos de referência, de
+  propósito** — Buffo e Liquos ainda têm a página; o que a Defenz emite, não. O comentário
+  no teste registra isso, para ninguém "consertar" de volta daqui a três meses.
+
+**Morreu junto a pendência da arte de baixa resolução** (era §16 da v1 e item 3 dos
+próximos passos): não há mais arte a trocar.
+
+### 16.1 O que se perdeu, e vale saber
+
+A página era **prova social** — a única do documento. O que sobrou de prova é a menção à
+Bitdefender na página de parceria (Gartner, Best Protection, Scuderia Ferrari). Se um dia
+a Defenz quiser prova social de volta, o caminho **não** é ressuscitar a arte: é uma
+página de cases com clientes que autorizaram por escrito. Fica anotado porque a decisão de
+hoje é de tirar, não de substituir.
+
+<details><summary>Registro histórico — como a página funcionava até 20/08 (o recorte por CSS e as três coisas que ele resolveu)</summary>
+
+### (histórico) A página de clientes usava a faixa de logos, recortada por CSS
 
 A página 04 mostra os **logos** dos clientes, e não mais a lista em texto. A arte é
 `assets/clientes-bd.png` (o slide que o Marcos trouxe, 664×376), e o documento usa **só
@@ -431,3 +471,24 @@ Para trocar a arte: substituir `src/lib/proposta/assets/clientes-bd.png`, rodar
 menores saem moles. Quando der para exportar em **≥2000px**, é troca de arquivo e nada
 mais — o Marcos não conseguiu exportar maior em 20/08.
 
+
+</details>
+
+---
+
+## 17. iOS e Android saíram da página 05 (21/08)
+
+**Decisão do Marcos, 21/08**, junto com a remoção acima e **também válida para as
+apresentações**.
+
+A linha de "Cobertura total." na página de serviços dizia *"Windows, Linux, Mac, iOS e
+Android protegidos sob uma única arquitetura gerenciada."* Passou a dizer **"Windows,
+Linux e Mac"**.
+
+⚠️ **Não é ajuste de texto, é correção de escopo.** O comparativo GravityZone transcrito
+no Anexo A da spec da apresentação tem **12 funcionalidades e nenhuma é de mobile**: o que
+a Defenz licencia nos três planos é proteção de endpoint Windows/Linux/Mac. O documento
+prometia cobertura de celular que não está no que o cliente compra — e promessa em
+proposta comercial é obrigação.
+
+Protegido por teste: `endpoints-a4.test.ts` recusa `iOS` e `Android` no HTML gerado.

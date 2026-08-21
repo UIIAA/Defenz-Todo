@@ -16,7 +16,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
-  CLIENTES_BD_PNG,
   LOGO_HORIZONTAL_INK_PNG,
   MANROPE_LATIN_EXT_WOFF2,
   MANROPE_LATIN_WOFF2,
@@ -70,14 +69,17 @@ export function escapeHtml(valor: string): string {
 /**
  * Total de páginas do documento.
  *
- * 9 páginas fixas (capa, confidencialidade, conheça-nos, porque nós, serviços,
- * clientes, parceria, governança, encerramento) + UMA de investimento por plano.
- * Conferido nos dois documentos reais: Liquos = 9 + 1 plano = 10 páginas.
+ * 8 páginas fixas (capa, confidencialidade, conheça-nos, porque nós, serviços,
+ * parceria, governança, encerramento) + UMA de investimento por plano.
  * NUNCA é constante — muda com quantos planos o vendedor marcou.
+ *
+ * ⚠️ Era 9 até 21/08, quando a página "Alguns dos nossos clientes" foi REMOVIDA por
+ * decisão do Marcos. Os dois documentos de referência (Buffo e Liquos) ainda a têm;
+ * o documento emitido daqui em diante, não.
  */
-export const PAGINAS_FIXAS = 9
-/** Páginas que vêm ANTES do investimento: capa, confidencialidade, 01…06. */
-export const PAGINAS_ANTES_DO_INVESTIMENTO = 8
+export const PAGINAS_FIXAS = 8
+/** Páginas que vêm ANTES do investimento: capa, confidencialidade, 01…05. */
+export const PAGINAS_ANTES_DO_INVESTIMENTO = 7
 export function totalPaginas(qtdPlanos: number): number {
   return PAGINAS_FIXAS + qtdPlanos
 }
@@ -104,26 +106,6 @@ export function formatarPercent(valor: number): string {
 // logo é redesenhado a cada página e o Skia embute o bitmap em cada uma delas,
 // então um PNG de 2000px viraria centenas de KB no PDF que vai por e-mail.
 const LOGO_RATIO = 480 / 131
-
-// ─── recorte da arte de clientes ─────────────────────────────────────────────
-//
-// A arte que o Marcos trouxe (664x376) e um slide inteiro: logo Defenz, titulo,
-// subtitulo e o Ferrari "Elite Global" ocupam a faixa de cima; os logos dos
-// clientes vem depois. Usamos SO a faixa de baixo, recortada por CSS — o arquivo
-// nao e editado.
-//
-// O recorte resolve tres coisas de uma vez:
-//  1. o subtitulo escrevia "Bitdetender" (nome do fabricante errado);
-//  2. a arte trazia um logo Defenz, e a pagina ja tem um no cabecalho e outro no
-//     rodape — eram tres na mesma folha;
-//  3. o Ferrari saia sob o titulo "Alguns dos NOSSOS clientes", e a Ferrari nao e
-//     cliente da Defenz: e patrocinio da Bitdefender. A pagina afirmava algo falso.
-const CLIENTES_ART_W = 664
-const CLIENTES_ART_H = 376
-/** Onde comeca a faixa dos logos, em px da arte original. */
-const CLIENTES_CORTE_TOPO = 185
-/** Quanto aparar da base: o slide traz uma linha de rodape logo abaixo dos logos. */
-const CLIENTES_CORTE_BASE = 14
 
 function logo(alturaPx: number): string {
   const largura = Math.round(alturaPx * LOGO_RATIO)
@@ -296,27 +278,6 @@ ${rodape(numeroPagina, total, doc.ano, '24px')}`)
 }
 
 // ─── documento ───────────────────────────────────────────────────────────────
-
-/**
- * Faixa dos logos dos clientes, recortada por CSS.
- *
- * `overflow:hidden` no container + deslocamento negativo na imagem: o arquivo
- * original fica intacto, e ajustar o corte e mudar UMA constante
- * (`CLIENTES_CORTE_TOPO`), sem reprocessar imagem nenhuma.
- */
-function arteClientes(larguraPx = 662): string {
-  const escala = larguraPx / CLIENTES_ART_W
-  const alturaVisivel = Math.round(
-    (CLIENTES_ART_H - CLIENTES_CORTE_TOPO - CLIENTES_CORTE_BASE) * escala
-  )
-  const deslocamento = Math.round(CLIENTES_CORTE_TOPO * escala)
-  // `mix-blend-mode: multiply` funde o branco do slide no papel (#F6F3EE). Sem
-  // isso, a arte desenhava um retangulo mais claro no meio da pagina. Multiply
-  // sobre um fundo quase branco praticamente nao altera a cor dos logos.
-  return `<div style="width:${larguraPx}px; height:${alturaVisivel}px; overflow:hidden; position:relative;">
-          <img src="${CLIENTES_BD_PNG}" alt="Clientes atendidos pela Defenz" style="width:${larguraPx}px; display:block; margin-top:-${deslocamento}px; mix-blend-mode:multiply;">
-        </div>`
-}
 
 export function renderPropostaHtml(doc: PropostaDocumento): string {
   const planos = doc.investimento.planos
@@ -511,26 +472,15 @@ ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
 
       <div style="border-left:3px solid ${C.accent}; padding-left:22px; max-width:600px;">
         <div style="font-size:18px; font-weight:800; letter-spacing:-0.01em; margin-bottom:4px;">Cobertura total.</div>
-        <p style="font-size:14.5px; line-height:1.6; color:${C.muted}; margin:0;">Windows, Linux, Mac, iOS e Android protegidos sob uma única arquitetura gerenciada.</p>
+        <p style="font-size:14.5px; line-height:1.6; color:${C.muted}; margin:0;">Windows, Linux e Mac protegidos sob uma única arquitetura gerenciada.</p>
       </div>
 ${rodape(5, total, doc.ano)}`)}
 
-  <!-- ===================== 04 · CLIENTES ===================== -->
-${pagina(`${cabecalhoCorrido(doc.empresaNome)}
-      <div style="margin-top:66px;">${tituloSecao('04.', 'Alguns dos nossos clientes')}
-        <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">Desenvolvemos negócios com clientes de vários setores da economia, o que nos torna uma empresa multidisciplinar com experiência em diferentes operações de missão crítica.</p>
-      </div>
-
-      <div style="flex:1; display:flex; align-items:center; justify-content:center;">
-        ${arteClientes()}
-      </div>
-${rodape(6, total, doc.ano)}`)}
-
-  <!-- ===================== 05 · PARCERIA ESTRATÉGICA ===================== -->
+  <!-- ===================== 04 · PARCERIA ESTRATÉGICA ===================== -->
 ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
       <div style="margin-top:66px;">
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:22px;"></div>
-        <h2 style="font-size:40px; font-weight:800; letter-spacing:-0.02em; margin:0 0 28px;"><span style="color:${C.accent};">05.</span>&nbsp;&nbsp;Parceria estratégica</h2>
+        <h2 style="font-size:40px; font-weight:800; letter-spacing:-0.02em; margin:0 0 28px;"><span style="color:${C.accent};">04.</span>&nbsp;&nbsp;Parceria estratégica</h2>
         <div style="max-width:600px; display:flex; flex-direction:column; gap:20px;">
           <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; text-align:justify;">Para se manter à frente de um mercado competitivo, a <strong>sua operação</strong> estabelece uma referência de qualidade para seus clientes. A Defenz apresenta uma proposta de parceria baseada em experiência já adquirida em serviços de missão crítica, sustentando a alta disponibilidade dos recursos de tecnologia e a segurança da informação.</p>
           <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; text-align:justify;">Somamos a excelência operacional local à <strong>Bitdefender</strong>, uma das maiores potências globais em cibersegurança, reconhecida como Visionária no Magic Quadrant da Gartner, 6× vencedora do Best Protection e parceira oficial da Scuderia Ferrari.</p>
@@ -550,11 +500,11 @@ ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
       <div style="margin-top:auto; padding-top:24px;">
         <div style="border-left:3px solid ${C.accent}; padding-left:22px;"><div style="font-size:22px; font-weight:800; letter-spacing:-0.01em;">A decisão lógica para a sua segurança.</div></div>
       </div>
-${rodape(7, total, doc.ano, '28px')}`)}
+${rodape(6, total, doc.ano, '28px')}`)}
 
-  <!-- ===================== 06 · GOVERNANÇA ===================== -->
+  <!-- ===================== 05 · GOVERNANÇA ===================== -->
 ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
-      <div style="margin-top:66px;">${tituloSecao('06.', 'Governança tecnológica')}
+      <div style="margin-top:66px;">${tituloSecao('05.', 'Governança tecnológica')}
         <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">Adotamos um modelo de entrega baseado no framework ITIL®V4, com padronização, previsibilidade e melhoria contínua. Toda a operação é conduzida em uma única console, visão 360° em <em>single-pane-of-glass</em>.</p>
       </div>
 
@@ -580,7 +530,7 @@ ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
           <div style="font-size:13.5px; color:${C.body}; font-weight:600; padding-left:18px; border-left:1px solid ${C.line};">Incidentes e resposta</div>
         </div>
       </div>
-${rodape(8, total, doc.ano)}`)}
+${rodape(7, total, doc.ano)}`)}
 
   <!-- ===================== INVESTIMENTO (uma página por plano) ===================== -->
 ${paginasInvestimento}
@@ -644,7 +594,6 @@ const VALORES = [
   },
 ] as const
 
-// SETORES: removido — a pagina 04 usa a faixa de logos recortada (arteClientes).
 
 const CONCEITOS = [
   'Aderência às boas práticas de entrega',

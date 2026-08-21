@@ -69,7 +69,7 @@ serve exatamente ao decisor que não conhece a Bitdefender: fundação 2001 (ori
 +170 países, ~2.400 especialistas, sedes em Bucareste e Santa Clara, parceria com o
 European Cybercrime Centre desde 2016, apoio no desmantelamento de mercados da dark web,
 Gartner Magic Quadrant 2025, Peer Insights 4.8/5 com 95% de disposição a recomendar.
-Ver §7.4 sobre a validade desses números.
+Ver §7.5 sobre a validade desses números.
 
 ### 2.2 O molde é o `DEFENZ_APRESENTAÇÃO_ESTRATÉGICA.pptx`
 
@@ -150,6 +150,7 @@ caminho não é converter PDF, é gerar PPTX do mesmo modelo de dados.
 | **A13** | **Número de mercado só do catálogo curado** `mercado-fatos.ts` | Marcos, 20/08. Estatística vira arquivo versionado com valor, fonte e ano, tratado como a tabela de preços. **Nenhum número passa por LLM** — I9 preservada com o deck continuando a ter números |
 | **A14** | **Do técnico entra uma página-resumo dos três níveis** | Marcos, 20/08. O cliente entende que existem três degraus e o que muda entre eles; o aprofundamento é a apresentação técnica, na reunião |
 | **A15** | **O comparativo com concorrentes fica só com eficácia de detecção e impacto em performance**, com fonte e ano | Marcos, 20/08, resolvendo a crítica M3. Ver §7.3 |
+| **A16** | **Sem página de clientes, e sem promessa de mobile** | Marcos, 21/08, e ele foi explícito que vale **"de todas as propostas e apresentações"**. Já aplicado na Proposta (§16 e §17 de lá). Aqui é **preventivo**: a página de prova social não entra, e nenhuma página escreve iOS ou Android. Ver §7.4 |
 
 ---
 
@@ -343,7 +344,7 @@ grava latência, modelo e contagem de fontes — custo medido, não estimado.
 | 01 | Capa · cliente · data · vendedor | **variável** | formulário |
 | 02 | Confidencialidade + **"o que você vai ler aqui"** | fixa | A10 |
 | 03 | Quem é a Bitdefender · 2001, +170 países, Bucareste e Santa Clara | fixa | §2.1 |
-| 04 | A quem ela responde · EC3 desde 2016, dark web, Gartner MQ 2025, Peer Insights 4.8/5 | fixa ⚠️ §7.4 | §2.1 |
+| 04 | A quem ela responde · EC3 desde 2016, dark web, Gartner MQ 2025, Peer Insights 4.8/5 | fixa ⚠️ §7.5 | §2.1 |
 | 05 | Quem é a Defenz · integrador, especialistas certificados, suporte no Brasil | fixa | §2.2 |
 | 06 | **O que está acontecendo no setor de [empresa]** · panorama + números do catálogo | **gerada (texto) + curada (números)** | §6, A13 |
 | 07 | **O que já aconteceu nesse setor** · até 4 casos anônimos, com veículo e ano | **gerada, liberada** | §6, A11/A12 |
@@ -387,7 +388,28 @@ Performance Test). Os três editoriais saem.
 hoje o slide sai quando alguém monta um deck à mão; depois desta feature ele sai em **todo
 deck gerado**, para leitor que lê sozinho.
 
-### 7.4 ⚠️ Números do fabricante e do mercado têm validade
+### 7.4 A16 — o que este documento não afirma
+
+Duas remoções que o Marcos mandou aplicar **em propostas e apresentações** (21/08). Aqui
+elas nascem aplicadas, em vez de serem removidas depois:
+
+**1. Não existe página "Alguns dos nossos clientes".** A Defenz não tem material de case
+(§2.5) e a página que existia na Proposta afirmava algo falso — a Ferrari aparecia sob o
+título "nossos clientes" e é patrocínio da Bitdefender, não cliente da Defenz. A prova
+social deste documento é a da **marca** (páginas 03 e 04), que é verdadeira e citável. Se
+um dia houver case de cliente da Defenz, ele entra com autorização por escrito, não com
+uma faixa de logos.
+
+**2. Nenhuma página promete iOS ou Android.** Não é preferência de texto: o comparativo do
+Anexo A tem 12 funcionalidades e **nenhuma é de mobile**. O que a Defenz licencia nos três
+planos é endpoint Windows/Linux/Mac. A página 09 (os três níveis) e qualquer texto de
+cobertura dizem **"Windows, Linux e Mac"**.
+
+⚠️ **Vale para o texto gerado também.** O prompt da chamada B proíbe prometer plataforma
+fora dessa lista, e o Anexo A é a única fonte do que o produto faz — a IA escolhe entre as
+12, não descreve cobertura por conta própria.
+
+### 7.5 ⚠️ Números do fabricante e do mercado têm validade
 
 "Gartner Magic Quadrant 2025", "4.8/5", "+170 países", "~2.400 especialistas" vêm de deck
 do fabricante de **janeiro/2026**. Não são invenção da IA (I9 está a salvo), mas
@@ -539,7 +561,7 @@ confidencialidade começa aqui.
 | **R7** | Chromium na função Vercel | `outputFileTracingIncludes` + `.nft.json` antes do deploy. Custo já pago uma vez |
 | **R8** | `@google/generative-ai@0.21` é SDK legado; o grounding dos modelos novos pode estar só no `@google/genai` | Verificar na doc **antes** de escrever a integração. Se preciso, REST direto |
 | **R9** | Vendedor libera caso barrado sem ler | `casosLiberados` mede. Não resolve, torna visível |
-| **R10** | **`mercado-fatos.ts` envelhece e ninguém revalida** | Carimbo de ano por fato + a mesma pergunta em aberto da tabela de preços: **quem é o dono e qual o prazo** (§7.4) |
+| **R10** | **`mercado-fatos.ts` envelhece e ninguém revalida** | Carimbo de ano por fato + a mesma pergunta em aberto da tabela de preços: **quem é o dono e qual o prazo** (§7.5) |
 
 ---
 

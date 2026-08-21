@@ -100,14 +100,34 @@ a transação comita mesmo se o render explode). Contador devolvido a 1985 — *
 proposta real sai como `DFZ-2026-01986`**. Inverter a ordem não resolve: o número é
 impresso na capa.
 
+### ⚠️ 21/08 — duas remoções no documento, por decisão do Marcos
+
+**1. A página "Alguns dos nossos clientes" saiu, e saiu da base.** Página, arte
+(`clientes-bd.png`), constante embutida, função de recorte: tudo apagado. Não foi remoção
+de uma linha — `PAGINAS_FIXAS` caiu de 9 para 8, as seções foram renumeradas (Parceria
+`05.`→`04.`, Governança `06.`→`05.`) e os rodapés andaram uma casa. **Com 3 planos o
+documento passou de 12 para 11 páginas**, conferido no PDF impresso: `Página 02 de 11` até
+`Página 10 de 11`, sem buraco.
+
+⚠️ **Morreu junto a pendência da arte de baixa resolução** — não há mais arte a trocar.
+E os testes de contagem de página **deixaram de espelhar Buffo e Liquos de propósito**: os
+documentos de referência ainda têm a página, o que a Defenz emite não tem. Está comentado
+no teste para ninguém "consertar" de volta.
+
+**2. `iOS` e `Android` saíram da página 05.** *"Windows, Linux, Mac, iOS e Android"* virou
+**"Windows, Linux e Mac"**. Não é ajuste de texto: o comparativo GravityZone tem 12
+funcionalidades e **nenhuma é de mobile** — o documento prometia cobertura de celular que
+não está no que o cliente compra. Protegido por teste.
+
+**As duas valem também para as apresentações** (spec da apresentação, A16 e §7.4).
+831 testes, `tsc` e `build` limpos. **Ainda não deployado.**
+
 **Também corrigido e no ar:** o borrão vermelho no diagrama XDR (box-shadow que o Skia
 rasteriza como retângulo), a sobreposição de "Análise de risco" sob o círculo central, e
-a **página de clientes agora mostra os logos** (arte recortada por CSS — o recorte tirou
+a ~~página de clientes agora mostra os logos~~ (arte recortada por CSS — o recorte tirou
 junto o "Bitdetender" do slide, o logo Defenz duplicado e o Ferrari, que aparecia como se
-fosse cliente da Defenz sem ser).
-
-⚠️ **Pendência da arte:** resolução ~72 dpi efetivos, sai mole impresso. Troca é só de
-arquivo quando o Marcos exportar em ≥2000px (spec §16).
+fosse cliente da Defenz sem ser). ⚠️ **Superado: a página inteira saiu em 21/08** (acima),
+e com ela a pendência dos ~72 dpi.
 
 ## ✅ A ANA ESTÁ RESPONDENDO (localhost, Gemini 3.6 Flash)
 O Portal está **navegável nas 3 abas** e a Ana responde de verdade, com fonte clicável. Testado clicando na interface.

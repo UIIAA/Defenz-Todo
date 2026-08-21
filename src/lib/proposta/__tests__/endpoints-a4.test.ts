@@ -23,12 +23,16 @@ function doc(over: Partial<PropostaDocumento> = {}, planos: PlanoId[] = ['BUSINE
 }
 
 describe('totalPaginas', () => {
-  // Conferido nos dois documentos reais: 9 páginas fixas (capa, confidencialidade,
-  // 01..06 e encerramento) + uma de investimento por plano. Liquos = 9+1 = 10.
-  it('é 9 fixas + uma por plano — nunca constante', () => {
-    expect(totalPaginas(1)).toBe(10)
-    expect(totalPaginas(2)).toBe(11)
-    expect(totalPaginas(3)).toBe(12)
+  // 8 páginas fixas (capa, confidencialidade, 01..05 e encerramento) + uma de
+  // investimento por plano.
+  //
+  // ⚠️ Era 9 até 21/08: a página "Alguns dos nossos clientes" saiu por decisão do
+  // Marcos. Os dois documentos de referência (Buffo e Liquos) ainda a têm — este
+  // teste deixou de espelhá-los DE PROPÓSITO, e é aqui que isso fica registrado.
+  it('é 8 fixas + uma por plano — nunca constante', () => {
+    expect(totalPaginas(1)).toBe(9)
+    expect(totalPaginas(2)).toBe(10)
+    expect(totalPaginas(3)).toBe(11)
   })
 })
 
@@ -45,16 +49,16 @@ describe('renderPropostaHtml — estrutura', () => {
 
   it('o rodapé traz o total REAL do documento, não um número fixo', () => {
     const um = renderPropostaHtml(doc({}, ['BUSINESS_SECURITY']))
-    expect(um).toContain('Página 02 de 10')
-    expect(um).toContain('Página 09 de 10') // única página de investimento
-    expect(um).not.toContain('de 11')
+    expect(um).toContain('Página 02 de 09')
+    expect(um).toContain('Página 08 de 09') // única página de investimento
+    expect(um).not.toContain('de 10')
 
     const tres = renderPropostaHtml(
       doc({}, ['BUSINESS_SECURITY', 'PREMIUM', 'ENTERPRISE'])
     )
-    expect(tres).toContain('Página 09 de 12')
-    expect(tres).toContain('Página 11 de 12')
-    expect(tres).not.toContain('de 10')
+    expect(tres).toContain('Página 08 de 11')
+    expect(tres).toContain('Página 10 de 11')
+    expect(tres).not.toContain('de 09')
   })
 
   it('conta exatamente uma section .page por página do documento', () => {
@@ -62,9 +66,26 @@ describe('renderPropostaHtml — estrutura', () => {
     expect(contar(html, '<section class="page">')).toBe(totalPaginas(2))
   })
 
+  it('não tem a página de clientes, e não cita iOS nem Android (21/08)', () => {
+    const html = renderPropostaHtml(
+      doc({}, ['BUSINESS_SECURITY', 'PREMIUM', 'ENTERPRISE'])
+    )
+    // A página inteira saiu: título, texto de apoio e a arte recortada.
+    expect(html).not.toContain('Alguns dos nossos clientes')
+    expect(html).not.toContain('empresa multidisciplinar')
+    expect(html).not.toContain('mix-blend-mode')
+    // As seções seguintes foram renumeradas — 06 não existe mais.
+    expect(html).toContain('Parceria estratégica')
+    expect(html).not.toMatch(/>06\.</)
+    // Plataformas: o documento não promete mais mobile.
+    expect(html).not.toMatch(/\biOS\b/)
+    expect(html).not.toContain('Android')
+    expect(html).toContain('Windows, Linux e Mac')
+  })
+
   it('capa e encerramento não têm numeração de rodapé (como nos documentos reais)', () => {
     const html = renderPropostaHtml(doc({}, ['BUSINESS_SECURITY']))
-    expect(contar(html, 'Página ')).toBe(8) // 02..09; capa e encerramento fora
+    expect(contar(html, 'Página ')).toBe(7) // 02..08; capa e encerramento fora
   })
 })
 
