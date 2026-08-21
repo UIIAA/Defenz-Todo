@@ -1,6 +1,6 @@
 # Feature: Apresentação — o Portal gera a apresentação de despertar, sob medida por setor
 
-**Status:** 🔵 **SPEC v2 — aguardando aprovação do Marcos**
+**Status:** 🔵 **SPEC v2.1 — aguardando só a conferência do Anexo C**
 **Priority:** P0 — próximo item do roadmap
 **Date:** 2026-08-20
 **Pai:** `feature-portal-defenz.md` · **Precedente direto:** `feature-portal-proposta.md`
@@ -143,11 +143,12 @@ caminho não é converter PDF, é gerar PPTX do mesmo modelo de dados.
 | **A3** | Pesquisa vira **seção própria e citada**, nunca diluída no texto fixo | Marcos. Texto de IA fica confinado e auditável |
 | **A5** | **CNAE sugere o setor; o vendedor confirma antes da busca** | CNAE é atividade fiscal declarada, muitas vezes genérica ou vencida: sugestão, não verdade (crítica C4) |
 | **A6** | **Sem numeração sequencial** | Cicatriz da Proposta: falha de render queima número. Aqui não há série a queimar |
-| **A9** | **Só sessão, sem Bearer**; gerar exige `gerencia` ou `admin` | Consome IA e emite documento em nome da Defenz (crítica M5) |
+| **A9** | **Só sessão, sem Bearer.** Gerar é liberado para **qualquer papel** — `user`, `gerencia`, `admin` — **mas só para quem é da empresa Defenz** | Marcos, 21/08: *"Podem users também gerar. Mas só users Defenz."* O corte que importa **não é o papel, é a empresa**: o vendedor que precisa da peça é `user`, e quem não pode emitir documento com o logo da Defenz é o usuário de uma empresa-cliente. Usa `resolveDefenzCompanyId()`, que já existe (`service-desk-server.ts`). Ver §10.1 |
 | **A10** | **O documento é autoexplicativo** | Marcos, 20/08. Vai por e-mail e é lido sem apresentador. **Consequências reais:** cada página fecha sozinha; texto corrido curto no lugar de bullet telegráfico; **não existem notas de apresentador**; e a página de FAQ deixa de ser apêndice e vira estrutural |
 | **A11** | **Cases são de problema, buscados ao vivo, no setor do cliente** | Marcos, 20/08: *"podem ser cases de problema sim, e vincule à necessidade"*. A Defenz não tem acervo de case de sucesso (§2.5), e o caso de problema é o que desperta quem ainda não sente o risco |
 | **A12** | **A vítima nunca é nomeada** | Marcos, 20/08. *"Uma rede de varejo brasileira…"* com veículo e ano no rodapé. Mantém a força e não aponta o dedo — inclusive porque o deck pode chegar a quem tem relação com a empresa citada. **Verificado em código** (§6.4), não confiado ao prompt |
-| **A13** | **Número de mercado só do catálogo curado** `mercado-fatos.ts` | Marcos, 20/08. Estatística vira arquivo versionado com valor, fonte e ano, tratado como a tabela de preços. **Nenhum número passa por LLM** — I9 preservada com o deck continuando a ter números |
+| **A13** | **Número de mercado só do catálogo curado** `mercado-fatos.ts` | Marcos, 20/08. Estatística vira arquivo versionado com valor, fonte e ano, tratado como a tabela de preços |
+| **A13b** | **O caso PODE carregar número** — duração, prejuízo, quantidade — desde que o número **exista literalmente no texto pesquisado** | Marcos, 21/08: *"Pode afrouxar, eu preciso do número."* Afrouxado **sem** virar promessa vazia: a verificação não é "o vendedor prometeu que leu", é código. Ver §6.5.1 |
 | **A14** | **Do técnico entra uma página-resumo dos três níveis** | Marcos, 20/08. O cliente entende que existem três degraus e o que muda entre eles; o aprofundamento é a apresentação técnica, na reunião |
 | **A15** | **O comparativo com concorrentes fica só com eficácia de detecção e impacto em performance**, com fonte e ano | Marcos, 20/08, resolvendo a crítica M3. Ver §7.3 |
 | **A16** | **Sem página de clientes, e sem promessa de mobile** | Marcos, 21/08, e ele foi explícito que vale **"de todas as propostas e apresentações"**. Já aplicado na Proposta (§16 e §17 de lá). Aqui é **preventivo**: a página de prova social não entra, e nenhuma página escreve iOS ou Android. Ver §7.4 |
@@ -295,12 +296,41 @@ setores regulados, que são os melhores clientes. Bloqueia **só**: `%` · moeda
 `US$`, `USD`) · "N em cada M", "N vezes mais", "Nx mais". **Ano passa** (é data, e o caso
 precisa dele). Sem retry: item que viola é descartado e **contado para o vendedor** (I4).
 
-⚠️ **Consequência que o Marcos precisa ver:** um caso sai como *"uma rede de varejo
-brasileira teve as operações interrompidas · Folha, 2025"* e **não** *"…por 3 dias, com
-prejuízo de R$ 40 milhões"*. A duração e o prejuízo são número vindo de LLM. Quem quiser
-esse peso **digita na tela de revisão**, depois de abrir a fonte — e aí o número veio de
-uma pessoa que leu e assinou. É o que I9 protege. Se você quiser afrouxar isso, é decisão
-sua e uma linha de configuração; eu não afrouxo sozinho.
+### 6.5.1 A13b — como o caso volta a ter número sem abrir a porta para invenção
+
+O Marcos afrouxou em 21/08: *"pode afrouxar, eu preciso do número"*. O caso volta a poder
+dizer **"parou 3 dias"** e **"prejuízo estimado em R$ 40 milhões"**.
+
+**O afrouxamento não é confiança, é uma verificação nova** — e ela é barata porque o
+desenho de duas chamadas (§6.2) já deixa o material na mão:
+
+> **A chamada B não tem internet: ela só reescreve o texto da chamada A.** Logo, todo
+> número legítimo do caso **já está no texto da A**. Então o código exige exatamente isso:
+> a sequência de dígitos precisa **aparecer literalmente no texto bruto da chamada A**.
+
+```
+digitosDe("parou por 3 dias, prejuízo de R$ 40 milhões")  →  ["3", "40"]
+        ⊆ digitosDe(textoDaChamadaA)   ?   entra   :   barrado para revisão
+```
+
+A comparação normaliza formato antes (`R$ 40 milhões`, `40 milhões de reais` e
+`R$40.000.000` colapsam para a mesma sequência), porque senão a guarda barraria número
+verdadeiro por diferença de escrita.
+
+**O que isso garante e o que não garante.** Garante que o modelo **não inventou** o número
+— ele veio da matéria. **Não** garante que a matéria esteja certa, nem que o modelo tenha
+atribuído o número ao fato certo. Por isso continua valendo a revisão, e o texto do aceite
+muda para: **"Li o que será apresentado ao cliente, conferi os números nas fontes, e assumo
+o conteúdo."**
+
+⚠️ **Estatística de mercado continua fora disso.** "X% do setor sofreu ataque" não é fato
+de um caso, é agregado — e agregado sai do catálogo curado (A13, Anexo C). O afrouxamento
+vale **dentro do bloco de casos**, onde existe uma reportagem específica por trás.
+
+⚠️ **Isto estende I9 conscientemente.** A invariante diz "nenhum número que vai para
+cliente sai de LLM". Depois de A13b, um número **passa** pelo LLM — mas só se for cópia
+verificável de fonte pesquisada, com veículo e ano impressos ao lado. A extensão fica
+registrada aqui e na SPEC-MAE quando a feature for implementada.
 
 ### 6.6 A revisão, e quem assina
 
@@ -496,9 +526,26 @@ Escopo por empresa (I1, `assertCompanyAccess`, `AND` nunca spread — I2). Cria�
 | `/api/portal/apresentacoes` | GET | log buscável (`q`, `de`, `ate`), cap 200 (I5) |
 | `/api/portal/apresentacoes/[id]/arquivo` | GET | re-download, do snapshot |
 
-**Só sessão, sem Bearer** (A9). **Gerar** exige `gerencia` ou `admin`; `user` vê o log da
-própria empresa e baixa. Liberar para `user` é uma linha — mas tem de ser escolha, não
-omissão (crítica M5).
+### 10.1 Quem pode gerar (A9)
+
+**Só sessão, sem Bearer.** E o corte é por **empresa**, não por papel:
+
+| Quem | Gera? |
+|---|---|
+| `user`, `gerencia` ou `admin` **da empresa Defenz** | ✅ sim |
+| Qualquer papel de **empresa-cliente** | ❌ não — 403 explicando, sem 500 (I4) |
+
+O vendedor que precisa da peça é `user`; quem não pode emitir documento com o logo da
+Defenz é o usuário de uma empresa-cliente que usa a plataforma. `resolveDefenzCompanyId()`
+já existe em `service-desk-server.ts` e é o mesmo mecanismo do Service Desk (SD-ADR-001).
+
+⚠️ **A mesma pergunta se aplica à Proposta, e lá a resposta hoje é "qualquer um".**
+`POST /api/portal/propostas` faz `getCurrentUser()` + `resolveActiveCompany()` e **não
+checa empresa nem papel**: um `user` de empresa-cliente com sessão válida emite uma
+proposta comercial com a marca Defenz, numerada na série `DFZ-`. Não é bug desta feature —
+é exposição que já está em produção, e a decisão de 21/08 sugere fechar. **Não fechei por
+conta própria**: mudar quem entra numa rota que já roda pode trancar alguém fora. É uma
+linha, quando o Marcos disser.
 
 ⚠️ **O POST de geração não confia no cliente.** Revalida Zod, faixa de `fonteIdx`, presença
 de fonte, enum, **e reexecuta a guarda de anonimato e a de número nos campos `origem:
