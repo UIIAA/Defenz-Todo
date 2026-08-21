@@ -653,14 +653,14 @@ M4). Do jeito escrito na v1, a suíte ficaria intermitente até alguém apagar o
 
 ## 15. O que ainda depende do Marcos
 
-1. **Semear `mercado-fatos.ts`** (F1). Preciso de meia dúzia de números de mercado com
-   fonte e ano — ou autorização para eu garimpar e trazer para você conferir. Um seed já
-   confirmado: *"55% das equipes de segurança foram orientadas a não divulgar uma
-   violação"* — Bitdefender Annual Cybersecurity Assessment, 1.200 profissionais.
-2. **Papel mínimo para gerar** (§10). Fechei em `gerencia`+`admin`. Se o time de vendas
-   opera como `user`, isso trava no primeiro dia.
-3. **O afrouxamento do §6.5**, se você quiser que o caso carregue duração e prejuízo. Hoje
-   não carrega, e a razão está escrita lá.
+As três pendências foram respondidas em 21/08. **Sobra uma:** conferir o **Anexo C** — os
+9 fatos de mercado que vão para o papel.
+
+| Era | Virou |
+|---|---|
+| Semear `mercado-fatos.ts` | ✅ levantado — **Anexo C**, aguardando o OK dele |
+| Papel mínimo para gerar | ✅ **A9 / §10.1** — qualquer papel, só empresa Defenz |
+| Afrouxar o número no caso | ✅ **A13b / §6.5.1** — liberado, com trava verificável em código |
 
 ---
 
@@ -712,6 +712,52 @@ Enterprise; o resto → Business Security. O enum de `funcionalidade` (§6.3) é
 As descrições técnicas vão transcritas em `src/lib/apresentacao/comparativo.ts` — é delas
 que a página 08 tira o texto do recurso que responde a cada caso, e a 09, o resumo dos
 três níveis.
+
+---
+
+## Anexo C — `mercado-fatos.ts`, semeado · ⚠️ AGUARDANDO CONFERÊNCIA DO MARCOS
+
+Levantado em 21/08 a pedido dele (*"traga para que eu confira"*). **Nada daqui entra em
+documento antes do OK.** Cada linha traz o número exato, quem publicou e o ano, porque é
+assim que vai para o rodapé do slide.
+
+### C.1 Os que eu recomendo aceitar
+
+| # | O fato | Número | Fonte | Ano | Onde entra |
+|---|---|---|---|---|---|
+| **M1** | Custo médio de uma violação de dados **no Brasil** | **R$ 7,19 milhões** (era R$ 6,75 mi em 2024, **+6,5%**) | IBM · *Cost of a Data Breach Report*, recorte Brasil | 2025 | pág. 06 · o número de abertura |
+| **M2** | Custo médio **por setor, no Brasil** | Saúde **R$ 11,43 mi** · Financeiro **R$ 8,92 mi** · Serviços **R$ 8,51 mi** | IBM · idem | 2025 | pág. 06 · **o mais valioso**: fala do setor do leitor |
+| **M3** | Vetor inicial mais comum **no Brasil** | Phishing **18%** (R$ 7,18 mi) · Terceiros/cadeia **15%** (R$ 8,98 mi) · Exploração de vulnerabilidade **13%** (R$ 7,61 mi) | IBM · idem | 2025 | pág. 06 · liga direto ao Antiexploit e à Proteção de Rede |
+| **M4** | Motivação dos ataques | **≥52%** dos ataques com motivação conhecida foram **extorsão ou ransomware**; espionagem pura, **4%** | Microsoft · *Digital Defense Report* | 2025 | pág. 06 · justifica a Mitigação de Ransomware |
+| **M5** | Posição do Brasil | **1º da América do Sul** entre os países cujos clientes mais sofreram atividade cibernética (1º semestre) | Microsoft · idem | 2025 | pág. 06 · "não é problema de fora" |
+| **M6** | Empresas menores e ransomware | Ransomware presente em **88%** das violações em **PMEs** | Verizon · *DBIR* | 2025 | pág. 06 · fala com o porte do cliente típico |
+| **M7** | Terceiros | Envolvimento de terceiros em violações **dobrou, para 30%** | Verizon · idem | 2025 | pág. 06 · casa com o M3 |
+| **M8** | O que a própria Bitdefender mediu | **55%** das equipes de segurança foram orientadas a **não divulgar** uma violação (1.200 profissionais) | Bitdefender · *Annual Cybersecurity Assessment* | 2025 | pág. 04 · e explica por que o cliente "nunca ouviu falar" de ataque nenhum |
+| **M9** | O que a lei já cobra | Multa de até **2% do faturamento**, limitada a **R$ 50 milhões por infração** | **LGPD, Art. 52** | lei | pág. 06 · setores regulados. **Não envelhece** |
+
+### C.2 O que eu encontrei e **recusei**, e por quê
+
+Isto é metade do valor deste anexo. Todos apareceram na busca, todos são citados por aí, e
+nenhum entra:
+
+| Recusado | Por quê |
+|---|---|
+| *"60% das pequenas empresas fecham em 6 meses após um ataque grave"* | **Estatística zumbi.** Circula há mais de uma década sem fonte primária rastreável — blog de fornecedor citando blog de fornecedor. Num deck com fonte no rodapé, é o item que um leitor cético derruba, e derruba os outros oito junto |
+| *"3.520 tentativas de ataque por semana"* · *"315 bilhões de tentativas em 2025"* | Plausíveis e provavelmente reais, mas só achei **agregadores**, sem o relatório primário na mão. Não vai para papel com a marca da Defenz sem o documento |
+| Multas aplicadas pela **ANPD** | Não há número consolidado confiável para citar. O que dá para afirmar é **o que a lei prevê** (M9), não o que foi cobrado |
+| *"46% das violações globais miraram PMEs"* | Atribuído ao DBIR por blogs, **não confirmei no relatório**. Troquei pelo M6, que veio da Verizon direto e é mais forte |
+
+### C.3 Duas ressalvas honestas
+
+1. **M1, M2 e M3 saem de uma fonte só (IBM).** É a melhor série com recorte Brasil que
+   existe, mas são três afirmações apoiadas num único relatório.
+2. **M4 a M7 vêm de fornecedores de segurança** (Microsoft, Verizon). São primárias e de
+   metodologia pública, mas têm interesse comercial no assunto. Num deck da Defenz isso é
+   normal e fica declarado pela citação — só não é o mesmo que dado independente.
+
+**Vigência:** todos carimbados **2025**, menos o M9. Na virada de 2027 este anexo precisa
+de revisão — e, como a tabela de preços já ensinou, **carimbo sem dono não revalida
+sozinho**.
 
 ---
 
