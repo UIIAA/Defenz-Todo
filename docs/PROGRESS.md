@@ -6,7 +6,25 @@
 
 ## 🎯 RETOMAR AQUI — apresentação de soluções Bitdefender + Defenz
 
-**É o próximo item, e o Marcos parou a sessão exatamente para retomar por aqui.**
+**Spec escrita e criticada em 20/08.** Documentos:
+[`feature-portal-apresentacao.md`](features/feature-portal-apresentacao.md) **v1.1** ·
+crítica adversarial [`feature-portal-apresentacao-review.md`](features/feature-portal-apresentacao-review.md)
+(4 críticos corrigidos, 5 médios, 3 menores). **Aguarda aprovação do Marcos + as 2
+decisões da §15** (slide competitivo, papel mínimo). Nada implementado ainda.
+
+⚠️ **Correções que esta seção acumulava e a leitura dos arquivos derrubou:**
+- `V9_PARCEIRO_EDITAVEL_SEM_PME.pptx` **não é o modelo** — é o deck do Programa de
+  Parceiros/Finder, com **a comissão do canal impressa**. Mandar para cliente final seria
+  vazamento comercial. O molde real é `DEFENZ_APRESENTAÇÃO_ESTRATÉGICA.pptx`, que já nasce
+  com `[Nome do Cliente] | [Data]` e já tem o slide de objeção "nunca ouvi falar".
+- `TECNICO_Bitdefender_Liderança_Global.pdf` (13,5 MB) **não é legível** pelo conector: é
+  PDF de imagem, retorna vazio. Não bloqueia — o papel dele está coberto.
+- Decisões do Marcos (20/08): **PDF** (não PPTX) · **Gemini com Google Search grounding** ·
+  dor pesquisada em **seção própria com fonte citada** · comparativo **fixo com plano
+  recomendado destacado**.
+
+<details><summary>Registro original desta seção (antes da spec)</summary>
+
 
 ### O que ele pediu
 Um formulário curto → **apresentação institucional Bitdefender + Defenz**, com
@@ -44,8 +62,9 @@ log buscável. Ver `src/lib/proposta/` e `feature-portal-proposta.md`.
 
 ### Estado do brainstorm
 Iniciado com a skill `superpowers:brainstorming` e **interrompido de propósito** para
-fazer o deploy. O achado dos três arquivos acima já veio dele. **Retomar dali**, sem
-re-descobrir.
+fazer o deploy. O achado dos três arquivos acima já veio dele.
+
+</details>
 
 ---
 
