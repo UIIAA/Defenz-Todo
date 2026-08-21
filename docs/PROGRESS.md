@@ -120,7 +120,27 @@ funcionalidades e **nenhuma é de mobile** — o documento prometia cobertura de
 não está no que o cliente compra. Protegido por teste.
 
 **As duas valem também para as apresentações** (spec da apresentação, A16 e §7.4).
-831 testes, `tsc` e `build` limpos. **Ainda não deployado.**
+
+⚠️ **E a remoção quebrou a numeração das seções em produção por ~25 minutos.** As seções
+fixas foram renumeradas, mas o **Investimento mora em outra função** e ficou em `07.` — o
+documento pulava de `05.` para `07.`. **Quem viu foi o Marcos, não o teste**: o teste que
+escrevi junto afirmava "não existe 06" e passava, porque espelhava o mesmo engano. Corrigido
+com `SECOES` centralizado + teste que exige a **sequência contígua** e rodapés contíguos.
+
+🔴 **DFZ-2026-01991 (Bacurity, 21/08 15:41) saiu com o defeito** — nasceu 4 min depois de o
+build quebrado subir, e a correção só entrou 16:01. **Se já foi ao cliente, reemitir.**
+Registro marcado `templateVersao: '2026-08-21-defeito'`. Mesmo vale para re-downloads feitos
+entre 15:37 e 16:03.
+
+**Também em 21/08 — dois buracos da Proposta fechados** (spec §18):
+- **Emitir agora é só da Defenz** (`src/lib/emissao-documento.ts`). Antes, qualquer usuário
+  de empresa-cliente com sessão emitia proposta com a marca Defenz. Impacto medido: 10 dos
+  11 usuários são Defenz; o único de fora nunca emitiu.
+- **Re-download deixou de mentir calado:** `templateVersao` no registro, aviso em âmbar no
+  log e header `X-Proposta-Template-Divergente`. O preço já era fiel; o texto fixo não é, e
+  agora isso aparece.
+
+837 testes, `tsc` e `build` limpos.
 
 **Também corrigido e no ar:** o borrão vermelho no diagrama XDR (box-shadow que o Skia
 rasteriza como retângulo), a sobreposição de "Análise de risco" sob o círculo central, e

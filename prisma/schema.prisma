@@ -1133,6 +1133,11 @@ model Proposta {
   precoSnapshot  Json
   tabelaVigencia String // '2024-11-29'
 
+  // Versao do TEXTO FIXO com que a proposta nasceu. Default = a versao anterior
+  // a 21/08 justamente para que os 6 registros ja existentes fiquem marcados
+  // como legado sem backfill. Ver TEMPLATE_VERSAO em templates/endpoints-a4.ts.
+  templateVersao String @default("2026-08-20")
+
   arquivoNome    String
   oneDriveItemId String? // null = ainda nao arquivado (F5)
   arquivadoEm    DateTime?

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { PortalTabs } from '@/components/portal/portal-tabs'
 import { AlertCircle, Download, FileText, Search } from 'lucide-react'
 import { formatDate } from '@/lib/date'
+import { TEMPLATE_VERSAO } from '@/lib/proposta/templates/endpoints-a4'
 
 interface PropostaItem {
   id: string
@@ -17,6 +18,7 @@ interface PropostaItem {
   planos: string[]
   ajustePercent: number
   tabelaVigencia: string
+  templateVersao: string
   arquivoNome: string
   arquivado: boolean
   createdAt: string
@@ -132,7 +134,21 @@ export default function LogPropostasPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {itens.map((p) => (
                 <tr key={p.id} className="text-slate-700 dark:text-slate-200">
-                  <td className="whitespace-nowrap px-4 py-2 font-mono text-xs">{p.codigo}</td>
+                  <td className="whitespace-nowrap px-4 py-2 font-mono text-xs">
+                    {p.codigo}
+                    {/* O preço do re-download é fiel (precoSnapshot); o texto fixo
+                        vive no código. Proposta emitida com outra versão do texto
+                        sai DIFERENTE do que o cliente recebeu — e isso tem que
+                        aparecer, não ser descoberto pelo cliente. */}
+                    {p.templateVersao !== TEMPLATE_VERSAO && (
+                      <div
+                        className="mt-1 font-sans text-xs font-medium text-amber-600 dark:text-amber-400"
+                        title={`Emitida com o modelo de ${p.templateVersao}. O preço do re-download é o mesmo; o texto institucional é o de hoje.`}
+                      >
+                        modelo {p.templateVersao}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-2">
                     {p.empresaNome}
                     {p.cnpj && (

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser, companyScopeWhere, resolveActiveCompany } from '@/lib/auth'
+import { exigirEmissorDefenz } from '@/lib/emissao-documento'
+import { TEMPLATE_VERSAO } from '@/lib/proposta/templates/endpoints-a4'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { createAuditLog } from '@/lib/audit'
 import { calcularInvestimento } from '@/lib/proposta/calculo'
@@ -42,6 +44,9 @@ async function exigirSessao() {
 export async function POST(request: NextRequest) {
   try {
     const user = await exigirSessao()
+    // Só quem é da Defenz emite documento com a marca da Defenz (Marcos, 21/08).
+    // Qualquer papel serve — o corte é por empresa, não por papel.
+    await exigirEmissorDefenz(user)
     const body = await request.json()
     const dados = createPropostaSchema.parse(body)
 
@@ -98,6 +103,7 @@ export async function POST(request: NextRequest) {
         tabelaVigencia: investimento.tabelaVigencia,
         arquivoNome: arquivo,
         companyId,
+        templateVersao: TEMPLATE_VERSAO,
         criadoPorId: user.id,
       },
       select: { id: true, codigo: true },
@@ -196,6 +202,7 @@ export async function GET(request: NextRequest) {
         planos: true,
         ajustePercent: true,
         tabelaVigencia: true,
+        templateVersao: true,
         arquivoNome: true,
         oneDriveItemId: true,
         arquivadoEm: true,

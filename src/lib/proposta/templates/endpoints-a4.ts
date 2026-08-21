@@ -138,6 +138,24 @@ function rodape(pagina: number, total: number, ano: number, margemTopo = 'auto')
  *
  * Agora o número vem daqui e `secoesContiguas()` exige a sequência sem buraco.
  */
+/**
+ * Versão do texto FIXO do documento (o que não vem do formulário).
+ *
+ * ⚠️ Existe porque o re-download reimprime a partir do `precoSnapshot`, mas o
+ * texto institucional vem do CÓDIGO — então mudar o template muda, em silêncio,
+ * o que sai ao rebaixar uma proposta antiga. Em 21/08 isso deixou de ser
+ * teórico: a página de clientes saiu e o documento passou de 12 para 11
+ * páginas, enquanto 6 propostas já emitidas tinham a página.
+ *
+ * Não tenta reimprimir versões antigas (isso exigiria guardar os templates
+ * todos). Faz o que resolve o problema real: o registro sabe com qual versão
+ * nasceu, e o re-download AVISA quando diverge, em vez de entregar outro
+ * documento calado.
+ *
+ * Subir quando o texto fixo mudar: páginas, seções, numeração, promessas.
+ */
+export const TEMPLATE_VERSAO = '2026-08-21'
+
 export const SECOES = {
   CONHECA_NOS: '01.',
   PORQUE_NOS: '02.',

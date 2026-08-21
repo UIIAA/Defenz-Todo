@@ -4,6 +4,7 @@ import { getCurrentUser, companyScopeWhere } from '@/lib/auth'
 import { handleApiError, ApiError } from '@/lib/api-helpers'
 import { renderPdf } from '@/lib/proposta/pdf'
 import { reconstruirDocumento, renderPropostaHtml } from '@/lib/proposta/proposta-server'
+import { TEMPLATE_VERSAO } from '@/lib/proposta/templates/endpoints-a4'
 
 export const maxDuration = 120
 
@@ -13,6 +14,12 @@ export const maxDuration = 120
  * Reimprime a partir do `precoSnapshot`, NUNCA da tabela de hoje: o mesmo
  * código de proposta tem que sair sempre com o mesmo preço. Quem quer preço
  * novo emite proposta nova, que ganha número novo (spec §8).
+ *
+ * ⚠️ O PREÇO é fiel; o TEXTO FIXO não necessariamente. Ele vive no código, e
+ * mudar o template muda o que sai aqui. Quando a proposta nasceu com outra
+ * versão do texto, a resposta traz `X-Proposta-Template-Divergente` e a tela
+ * mostra o aviso — melhor entregar um documento diferente AVISANDO do que
+ * calado. Reimprimir a versão antiga exigiria guardar todos os templates.
  */
 export async function GET(
   _request: NextRequest,
@@ -35,6 +42,7 @@ export async function GET(
         empresaNome: true,
         precoSnapshot: true,
         arquivoNome: true,
+        templateVersao: true,
         createdAt: true,
         criadoPor: { select: { name: true, email: true } },
       },
@@ -44,12 +52,17 @@ export async function GET(
 
     const pdf = await renderPdf(renderPropostaHtml(reconstruirDocumento(registro)))
 
+    const divergente = registro.templateVersao !== TEMPLATE_VERSAO
+
     return new NextResponse(new Uint8Array(pdf), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${encodeURIComponent(registro.arquivoNome)}"`,
         'Content-Length': String(pdf.length),
+        ...(divergente
+          ? { 'X-Proposta-Template-Divergente': registro.templateVersao }
+          : {}),
       },
     })
   } catch (error) {

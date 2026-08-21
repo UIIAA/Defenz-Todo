@@ -476,6 +476,73 @@ mais — o Marcos não conseguiu exportar maior em 20/08.
 
 ---
 
+## 18. Quem emite, e o que o re-download promete (21/08)
+
+Dois buracos fechados no mesmo dia, os dois descobertos por olhar o banco em vez de supor.
+
+### 18.1 Emitir é da Defenz, e o corte é por empresa
+
+**Decisão do Marcos, 21/08:** *"Podem users também gerar. Mas só users Defenz."*
+
+Até aqui `POST /api/portal/propostas` só exigia **sessão**. Qualquer usuário de qualquer
+empresa-cliente com login válido emitia proposta com a marca Defenz, numerada na série
+`DFZ-`. `src/lib/emissao-documento.ts` passa a exigir que o usuário seja da **Defenz** —
+`user`, `gerencia` ou `admin`, tanto faz. O corte é a empresa, não o papel: o vendedor que
+precisa emitir é `user`.
+
+**Impacto medido antes de mudar:** dos 11 usuários do banco, **10 são da Defenz**; o único
+de fora é 1 usuário da Cow Cycling, que **nunca emitiu proposta**. Ninguém perde acesso que
+usava.
+
+O helper já nasce compartilhado: a apresentação usa o mesmo (A9 da spec dela).
+
+### 18.2 O re-download é fiel no preço, e agora é honesto no texto
+
+O `precoSnapshot` garante o **preço**. O **texto fixo vive no código** — então mudar o
+template muda, calado, o que sai ao rebaixar uma proposta antiga.
+
+Em 21/08 isso deixou de ser teórico: a página de clientes saiu, o documento foi de 12 para
+11 páginas, e **6 propostas já emitidas** (DFZ-2026-01986 a 01991, para HM Engenharia,
+Norte Energia, Prefeitura de Gabriel Monteiro e Bacurity) tinham a página.
+
+**O que foi feito, e o que deliberadamente não foi:**
+
+- `TEMPLATE_VERSAO` no template + `Proposta.templateVersao` no registro. O default é
+  `'2026-08-20'` **de propósito**: os 6 registros existentes ficam marcados como legado sem
+  precisar de backfill.
+- Re-download de versão divergente devolve `X-Proposta-Template-Divergente` e o log mostra
+  **"modelo 2026-08-20"** em âmbar, com a explicação no `title`.
+- **Não** guardamos os templates antigos para reimprimir fielmente. Custaria manter todas
+  as versões vivas para um caso raro; o problema real é entregar documento diferente **em
+  silêncio**, e o aviso resolve isso.
+
+### 18.3 ⚠️ DFZ-2026-01991 saiu com o defeito de numeração
+
+Cruzando o horário das emissões com o dos deploys:
+
+| Proposta | Emitida | Build |
+|---|---|---|
+| 01986 · HM Engenharia | 20/08 14:33 | anterior ✓ |
+| 01987 · Norte Energia | 20/08 16:13 | anterior ✓ |
+| 01988 · Pref. Gabriel Monteiro | 21/08 11:03 | anterior ✓ |
+| 01989 · Pref. Gabriel Monteiro | 21/08 11:05 | anterior ✓ |
+| 01990 · Bacurity Com. Imp. Exp. | 21/08 14:58 | anterior ✓ |
+| **01991 · Bacurity** | **21/08 15:41** | ⚠️ **defeituoso** |
+
+O deploy com a página de clientes removida subiu **15:34** e ficou no ar por volta de
+**15:37**; a correção da numeração só entrou **16:01**. A **01991 nasceu 15:41**, dentro da
+janela: o PDF dela **pula de `05.` para `07.`**.
+
+Registro marcado como `templateVersao: '2026-08-21-defeito'`, então o log mostra o aviso.
+**Se a 01991 já foi enviada ao cliente, o certo é reemitir** — e reemitir gera número novo
+(§8), que é o comportamento correto: dois PDFs diferentes nunca compartilham código.
+
+⚠️ **Vale também para quem baixou de novo entre 15:37 e 16:03**: o re-download reimprime
+com o template do momento, então qualquer proposta rebaixada nessa janela saiu com o mesmo
+defeito.
+
+---
+
 ## 17. iOS e Android saíram da página 05 (21/08)
 
 **Decisão do Marcos, 21/08**, junto com a remoção acima e **também válida para as
