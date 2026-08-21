@@ -128,6 +128,34 @@ function rodape(pagina: number, total: number, ano: number, margemTopo = 'auto')
       </div>`
 }
 
+/**
+ * Numeração das seções, em UM lugar só.
+ *
+ * ⚠️ Existe porque em 21/08 a página de clientes saiu, as seções fixas foram
+ * renumeradas à mão e o **Investimento ficou para trás em '07.'** — ele mora em
+ * outra função, fora do bloco que foi renumerado. O documento passou a pular de
+ * `05.` para `07.` na cara do cliente, e quem viu foi o Marcos, não o teste.
+ *
+ * Agora o número vem daqui e `secoesContiguas()` exige a sequência sem buraco.
+ */
+export const SECOES = {
+  CONHECA_NOS: '01.',
+  PORQUE_NOS: '02.',
+  SERVICOS: '03.',
+  PARCERIA: '04.',
+  GOVERNANCA: '05.',
+  INVESTIMENTO: '06.',
+} as const
+
+/**
+ * Os números de seção que aparecem no HTML, na ordem, sem repetição consecutiva.
+ * (Investimento repete o mesmo número em cada página de plano — é a mesma seção.)
+ */
+export function secoesNoHtml(html: string): string[] {
+  const achados = [...html.matchAll(/>(\d{2}\.)<\/span>/g)].map((m) => m[1])
+  return achados.filter((n, i) => n !== achados[i - 1])
+}
+
 function tituloSecao(numero: string, texto: string, sufixo = ''): string {
   return `
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:22px;"></div>
@@ -261,7 +289,7 @@ function paginaInvestimento(
 
   return pagina(`${cabecalhoCorrido(doc.empresaNome)}
       <div style="margin-top:66px;">${tituloSecao(
-        '07.',
+        SECOES.INVESTIMENTO,
         'Investimento',
         continuacao
           ? ` &nbsp;<span style="font-size:22px; color:${C.faint}; font-weight:700;">continuação</span>`
@@ -413,7 +441,7 @@ ${rodape(2, total, doc.ano)}`)}
 
   <!-- ===================== 01 · CONHEÇA-NOS ===================== -->
 ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
-      <div style="margin-top:66px;">${tituloSecao('01.', 'Conheça-nos')}
+      <div style="margin-top:66px;">${tituloSecao(SECOES.CONHECA_NOS, 'Conheça-nos')}
         <div style="max-width:600px; display:flex; flex-direction:column; gap:22px;">
           <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; text-align:justify;">A <strong>Defenz</strong> é uma empresa especializada em soluções de cibersegurança para empresas que não podem parar. Reunimos a tecnologia líder global de proteção à excelência operacional de uma equipe brasileira, entregando defesa em camadas sob uma única console gerenciada.</p>
           <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; text-align:justify;">Nossa premissa é simples: segurança de ponta não precisa ser complexa. Desenhamos cada operação para reduzir a superfície de risco sem impactar a produtividade do time, com curadoria de fornecedores, implementação conforme as boas práticas do fabricante e acompanhamento contínuo da base instalada.</p>
@@ -427,7 +455,7 @@ ${rodape(3, total, doc.ano)}`)}
 
   <!-- ===================== 02 · PORQUE NÓS ===================== -->
 ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
-      <div style="margin-top:66px;">${tituloSecao('02.', 'Porque nós')}
+      <div style="margin-top:66px;">${tituloSecao(SECOES.PORQUE_NOS, 'Porque nós')}
         <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">Trazemos ordem e simplicidade a ambientes complexos, facilitando a tomada de decisão. Nossos valores orientam tudo o que fazemos e sustentam uma jornada de sucesso mútuo com clientes e parceiros.</p>
       </div>
 
@@ -444,7 +472,7 @@ ${rodape(4, total, doc.ano)}`)}
 
   <!-- ===================== 03 · NOSSOS SERVIÇOS ===================== -->
 ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
-      <div style="margin-top:66px;">${tituloSecao('03.', 'Nossos serviços')}
+      <div style="margin-top:66px;">${tituloSecao(SECOES.SERVICOS, 'Nossos serviços')}
         <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">Oferecemos um serviço completo de proteção em camadas, com arquitetura modular e total aderência às boas práticas. Uma inteligência unificada (XDR) correlaciona prevenção, detecção, resposta e análise de risco sob uma única console.</p>
       </div>
 
@@ -480,7 +508,7 @@ ${rodape(5, total, doc.ano)}`)}
 ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
       <div style="margin-top:66px;">
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:22px;"></div>
-        <h2 style="font-size:40px; font-weight:800; letter-spacing:-0.02em; margin:0 0 28px;"><span style="color:${C.accent};">04.</span>&nbsp;&nbsp;Parceria estratégica</h2>
+        <h2 style="font-size:40px; font-weight:800; letter-spacing:-0.02em; margin:0 0 28px;"><span style="color:${C.accent};">${SECOES.PARCERIA}</span>&nbsp;&nbsp;Parceria estratégica</h2>
         <div style="max-width:600px; display:flex; flex-direction:column; gap:20px;">
           <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; text-align:justify;">Para se manter à frente de um mercado competitivo, a <strong>sua operação</strong> estabelece uma referência de qualidade para seus clientes. A Defenz apresenta uma proposta de parceria baseada em experiência já adquirida em serviços de missão crítica, sustentando a alta disponibilidade dos recursos de tecnologia e a segurança da informação.</p>
           <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; text-align:justify;">Somamos a excelência operacional local à <strong>Bitdefender</strong>, uma das maiores potências globais em cibersegurança, reconhecida como Visionária no Magic Quadrant da Gartner, 6× vencedora do Best Protection e parceira oficial da Scuderia Ferrari.</p>
@@ -504,7 +532,7 @@ ${rodape(6, total, doc.ano, '28px')}`)}
 
   <!-- ===================== 05 · GOVERNANÇA ===================== -->
 ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
-      <div style="margin-top:66px;">${tituloSecao('05.', 'Governança tecnológica')}
+      <div style="margin-top:66px;">${tituloSecao(SECOES.GOVERNANCA, 'Governança tecnológica')}
         <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">Adotamos um modelo de entrega baseado no framework ITIL®V4, com padronização, previsibilidade e melhoria contínua. Toda a operação é conduzida em uma única console, visão 360° em <em>single-pane-of-glass</em>.</p>
       </div>
 

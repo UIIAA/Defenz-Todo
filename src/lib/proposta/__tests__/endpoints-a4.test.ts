@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   renderPropostaHtml,
   totalPaginas,
+  secoesNoHtml,
+  SECOES,
   escapeHtml,
   formatarPercent,
   type PropostaDocumento,
@@ -74,13 +76,52 @@ describe('renderPropostaHtml — estrutura', () => {
     expect(html).not.toContain('Alguns dos nossos clientes')
     expect(html).not.toContain('empresa multidisciplinar')
     expect(html).not.toContain('mix-blend-mode')
-    // As seções seguintes foram renumeradas — 06 não existe mais.
+    // As seções seguintes foram renumeradas. ⚠️ Esta asserção dizia `not >06.<` e
+    // PASSAVA — porque eu tinha renumerado só as fixas e esquecido o Investimento,
+    // que ficou em 07. O teste espelhava o mesmo engano do código, e por isso não
+    // pegou nada. Hoje 06 é o Investimento e o que não pode existir é 07.
     expect(html).toContain('Parceria estratégica')
-    expect(html).not.toMatch(/>06\.</)
+    expect(html).toMatch(/>06\.</) // Investimento
+    expect(html).not.toMatch(/>07\.</)
     // Plataformas: o documento não promete mais mobile.
     expect(html).not.toMatch(/\biOS\b/)
     expect(html).not.toContain('Android')
     expect(html).toContain('Windows, Linux e Mac')
+  })
+
+  // ⚠️ Este bloco existe por um bug que foi para PRODUÇÃO em 21/08 e quem viu foi o
+  // Marcos: ao remover a página de clientes, as seções fixas foram renumeradas mas o
+  // Investimento — que mora em outra função — ficou em '07.'. O documento pulava de
+  // `05.` para `07.` na cara do cliente. Contar não basta; a sequência tem de ser
+  // conferida como sequência.
+  describe('numeração, conferida como sequência e não item a item', () => {
+    it('as seções são contíguas de 01 até a última, com qualquer nº de planos', () => {
+      for (const planos of [
+        ['BUSINESS_SECURITY'],
+        ['BUSINESS_SECURITY', 'PREMIUM'],
+        ['BUSINESS_SECURITY', 'PREMIUM', 'ENTERPRISE'],
+      ] as PlanoId[][]) {
+        const secoes = secoesNoHtml(renderPropostaHtml(doc({}, planos)))
+        expect(secoes).toEqual(['01.', '02.', '03.', '04.', '05.', '06.'])
+        expect(secoes.at(-1)).toBe(SECOES.INVESTIMENTO) // a última é Investimento
+      }
+    })
+
+    it('os rodapés são contíguos de 02 até total-1, e o total bate', () => {
+      for (const qtd of [1, 2, 3]) {
+        const planos = (['BUSINESS_SECURITY', 'PREMIUM', 'ENTERPRISE'] as PlanoId[]).slice(0, qtd)
+        const html = renderPropostaHtml(doc({}, planos))
+        const total = totalPaginas(qtd)
+        const rodapes = [...html.matchAll(/Página (\d{2}) de (\d{2})/g)]
+
+        // todos declaram o MESMO total, e é o total real
+        expect(new Set(rodapes.map((m) => Number(m[2])))).toEqual(new Set([total]))
+        // capa (01) e encerramento (último) não numeram; o miolo é contíguo
+        const paginas = rodapes.map((m) => Number(m[1]))
+        const esperado = Array.from({ length: total - 2 }, (_, i) => i + 2)
+        expect(paginas).toEqual(esperado)
+      }
+    })
   })
 
   it('capa e encerramento não têm numeração de rodapé (como nos documentos reais)', () => {
