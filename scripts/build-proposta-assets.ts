@@ -20,8 +20,7 @@ const arquivos = {
   MANROPE_LATIN_WOFF2: 'manrope-latin.woff2',
   MANROPE_LATIN_EXT_WOFF2: 'manrope-latin-ext.woff2',
   LOGO_HORIZONTAL_INK_PNG: 'defenz-logo-horizontal-ink.png',
-  // Troca pendente — reativar junto com a arte corrigida (spec §16):
-  // CLIENTES_BD_PNG: 'clientes-bd.png',
+  CLIENTES_BD_PNG: 'clientes-bd.png',
 } as const
 
 const mime = (nome: string) =>

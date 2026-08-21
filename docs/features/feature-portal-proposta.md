@@ -394,36 +394,40 @@ Rotas em `src/app/api/portal/propostas/`. Telas em `src/app/dashboard/portal/pro
 
 ---
 
-## 16. Troca pendente — a arte com os logos dos clientes (20/08)
+## 16. A página de clientes usa a faixa de logos, recortada por CSS (20/08)
 
-A página 04 ainda mostra a **lista em texto**. O Marcos trouxe uma arte com os
-**logos** (`docs/clientes-BD.png`), ela foi implementada e **revertida antes do
-deploy**, por dois motivos:
+A página 04 mostra os **logos** dos clientes, e não mais a lista em texto. A arte é
+`assets/clientes-bd.png` (o slide que o Marcos trouxe, 664×376), e o documento usa **só
+a faixa de baixo** — recorte por CSS (`overflow:hidden` + deslocamento negativo), com o
+arquivo intacto.
 
-1. ⚠️ **A arte escreve "Bitdetender"** no lugar de "Bitdefender" — nome do fabricante
-   errado num documento que vai para cliente. (Também "Organizaçoes" sem til.)
-2. ⚠️ **Resolução no limite:** 664px de largura de origem para uma área de ~662px, ou
-   seja **~72 dpi efetivos** na impressão. Os textos menores já saem moles.
+**O recorte resolveu três coisas de uma vez, e é por isso que ele foi a saída:**
 
-Um terceiro ponto, estético: a arte traz o próprio logo Defenz, e a página já tem um no
-cabeçalho e outro no rodapé — **três na mesma folha** — e o título dela repete a função
-do parágrafo de abertura. Dá para recortar o topo por CSS (`overflow:hidden` + offset),
-sem editar o arquivo, se a decisão for usar só a faixa dos logos.
+1. O subtítulo do slide escrevia **"Bitdetender"** no lugar de "Bitdefender" — nome do
+   fabricante errado num documento que vai para cliente. Ficou fora do recorte.
+2. A arte trazia o próprio logo Defenz, e a página já tem um no cabeçalho e outro no
+   rodapé: eram **três na mesma folha**.
+3. O Ferrari ("Elite Global") aparecia sob o título "Alguns dos **nossos** clientes" — e
+   a Ferrari não é cliente da Defenz, é patrocínio da Bitdefender. **A página afirmava
+   algo falso**, e é o tipo de coisa que um cliente atento nota.
 
-### Como fazer a troca quando a arte corrigida chegar
+**Dois ajustes finos**, ambos verificados no PDF impresso:
+- `CLIENTES_CORTE_BASE = 14` apara a linha de rodapé do slide, que aparecia sob os logos.
+- `mix-blend-mode: multiply` funde o branco do slide no papel `#F6F3EE`. Sem isso a arte
+  desenhava um retângulo mais claro no meio da página. Sobre fundo quase branco, o
+  multiply não altera a cor dos logos (conferido lado a lado).
 
-1. Salvar o arquivo novo como `src/lib/proposta/assets/clientes-bd.png`
-   (idealmente **≥ 2000px** de largura, nome do fabricante corrigido).
-2. Descomentar `CLIENTES_BD_PNG` em `scripts/build-proposta-assets.ts`.
-3. `npx tsx scripts/build-proposta-assets.ts`
-4. Em `templates/endpoints-a4.ts`, na página 04, trocar o bloco do `SETORES.map(...)`
-   pela imagem, e reimportar `CLIENTES_BD_PNG`:
-   ```
-   <div style="flex:1; display:flex; align-items:center; justify-content:center;">
-     <img src="${CLIENTES_BD_PNG}" alt="Clientes Defenz" style="width:100%; max-width:662px; height:auto; display:block;">
-   </div>
-   ```
-5. Remover a constante `SETORES` (vira dead code) e conferir o resultado com
-   `npx tsx scripts/smoke-proposta-pdf.ts saida.pdf`.
+### Ajustar o recorte, ou trocar a arte
 
-O commit `e5e6e90` tem a implementação inteira, se for mais rápido reaproveitar o diff.
+O corte é **uma constante**: `CLIENTES_CORTE_TOPO` (hoje 185px) e `CLIENTES_CORTE_BASE`
+(14px), em `templates/endpoints-a4.ts`. Não há imagem a reprocessar.
+
+Para trocar a arte: substituir `src/lib/proposta/assets/clientes-bd.png`, rodar
+`npx tsx scripts/build-proposta-assets.ts`, reajustar as duas constantes e conferir com
+`npx tsx scripts/smoke-proposta-pdf.ts saida.pdf`.
+
+⚠️ **Resolução ainda é a limitação real:** a origem tem 664px de largura para uma área de
+662px, ou seja **~72 dpi efetivos** no papel. Na tela passa bem; impresso os textos
+menores saem moles. Quando der para exportar em **≥2000px**, é troca de arquivo e nada
+mais — o Marcos não conseguiu exportar maior em 20/08.
+

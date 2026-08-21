@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
+  CLIENTES_BD_PNG,
   LOGO_HORIZONTAL_INK_PNG,
   MANROPE_LATIN_EXT_WOFF2,
   MANROPE_LATIN_WOFF2,
@@ -103,6 +104,26 @@ export function formatarPercent(valor: number): string {
 // logo é redesenhado a cada página e o Skia embute o bitmap em cada uma delas,
 // então um PNG de 2000px viraria centenas de KB no PDF que vai por e-mail.
 const LOGO_RATIO = 480 / 131
+
+// ─── recorte da arte de clientes ─────────────────────────────────────────────
+//
+// A arte que o Marcos trouxe (664x376) e um slide inteiro: logo Defenz, titulo,
+// subtitulo e o Ferrari "Elite Global" ocupam a faixa de cima; os logos dos
+// clientes vem depois. Usamos SO a faixa de baixo, recortada por CSS — o arquivo
+// nao e editado.
+//
+// O recorte resolve tres coisas de uma vez:
+//  1. o subtitulo escrevia "Bitdetender" (nome do fabricante errado);
+//  2. a arte trazia um logo Defenz, e a pagina ja tem um no cabecalho e outro no
+//     rodape — eram tres na mesma folha;
+//  3. o Ferrari saia sob o titulo "Alguns dos NOSSOS clientes", e a Ferrari nao e
+//     cliente da Defenz: e patrocinio da Bitdefender. A pagina afirmava algo falso.
+const CLIENTES_ART_W = 664
+const CLIENTES_ART_H = 376
+/** Onde comeca a faixa dos logos, em px da arte original. */
+const CLIENTES_CORTE_TOPO = 185
+/** Quanto aparar da base: o slide traz uma linha de rodape logo abaixo dos logos. */
+const CLIENTES_CORTE_BASE = 14
 
 function logo(alturaPx: number): string {
   const largura = Math.round(alturaPx * LOGO_RATIO)
@@ -275,6 +296,27 @@ ${rodape(numeroPagina, total, doc.ano, '24px')}`)
 }
 
 // ─── documento ───────────────────────────────────────────────────────────────
+
+/**
+ * Faixa dos logos dos clientes, recortada por CSS.
+ *
+ * `overflow:hidden` no container + deslocamento negativo na imagem: o arquivo
+ * original fica intacto, e ajustar o corte e mudar UMA constante
+ * (`CLIENTES_CORTE_TOPO`), sem reprocessar imagem nenhuma.
+ */
+function arteClientes(larguraPx = 662): string {
+  const escala = larguraPx / CLIENTES_ART_W
+  const alturaVisivel = Math.round(
+    (CLIENTES_ART_H - CLIENTES_CORTE_TOPO - CLIENTES_CORTE_BASE) * escala
+  )
+  const deslocamento = Math.round(CLIENTES_CORTE_TOPO * escala)
+  // `mix-blend-mode: multiply` funde o branco do slide no papel (#F6F3EE). Sem
+  // isso, a arte desenhava um retangulo mais claro no meio da pagina. Multiply
+  // sobre um fundo quase branco praticamente nao altera a cor dos logos.
+  return `<div style="width:${larguraPx}px; height:${alturaVisivel}px; overflow:hidden; position:relative;">
+          <img src="${CLIENTES_BD_PNG}" alt="Clientes atendidos pela Defenz" style="width:${larguraPx}px; display:block; margin-top:-${deslocamento}px; mix-blend-mode:multiply;">
+        </div>`
+}
 
 export function renderPropostaHtml(doc: PropostaDocumento): string {
   const planos = doc.investimento.planos
@@ -479,21 +521,8 @@ ${pagina(`${cabecalhoCorrido(doc.empresaNome)}
         <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">Desenvolvemos negócios com clientes de vários setores da economia, o que nos torna uma empresa multidisciplinar com experiência em diferentes operações de missão crítica.</p>
       </div>
 
-      <!--
-        ⏸️ TROCA PENDENTE (20/08): esta lista sai e entra a arte com os LOGOS dos
-        clientes, assim que o Marcos trouxer o slide corrigido. A versao que ele
-        mandou tem "Bitdetender" no lugar de "Bitdefender" (nome do fabricante
-        errado num documento que vai para cliente) e resolucao no limite — 664px
-        de origem para ~662px de area, ~72dpi efetivos no papel.
-        O procedimento da troca esta em feature-portal-proposta.md §16.
-      -->
-      <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:34px;">
-        ${SETORES.map(
-          (s, i) => `<div>
-          <div style="font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:18px;">${s.titulo}</div>
-          <div style="display:flex; flex-wrap:wrap; gap:${s.miudo ? '12px 26px' : '14px 32px'}; font-size:${s.miudo ? '17px' : '20px'}; font-weight:${s.miudo ? 700 : 800}; letter-spacing:-0.0${s.miudo ? 1 : 2}em; color:${s.miudo ? C.muted : '#3A3833'};">${s.nomes.map((n) => `<span>${n}</span>`).join('')}</div>
-        </div>${i < SETORES.length - 1 ? `\n        <div style="height:1px; background:${C.line};"></div>` : ''}`
-        ).join('\n        ')}
+      <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+        ${arteClientes()}
       </div>
 ${rodape(6, total, doc.ano)}`)}
 
@@ -615,37 +644,7 @@ const VALORES = [
   },
 ] as const
 
-const SETORES = [
-  {
-    titulo: 'Setor Público e Governo',
-    nomes: ['Câmara dos Deputados', 'INFRAERO', 'CFMV', 'IFRS', 'Metrô/DF'],
-    miudo: false,
-  },
-  {
-    titulo: 'Indústria e Varejo',
-    nomes: ['Intelbras', 'Marisa', "Habib's", 'MadeiraMadeira', 'Polimix', 'Ambev'],
-    miudo: false,
-  },
-  {
-    titulo: 'Educação e Saúde',
-    nomes: ['Cruzeiro do Sul', 'São Camilo', 'Unimed', 'MedSenior'],
-    miudo: false,
-  },
-  {
-    titulo: 'Tecnologias &amp; parceiros',
-    nomes: [
-      'Bitdefender',
-      'Acronis',
-      'WatchGuard',
-      'NETGEAR',
-      'GoTo',
-      'SHARP',
-      'GFI Software',
-      'Kerio',
-    ],
-    miudo: true,
-  },
-] as const
+// SETORES: removido — a pagina 04 usa a faixa de logos recortada (arteClientes).
 
 const CONCEITOS = [
   'Aderência às boas práticas de entrega',
