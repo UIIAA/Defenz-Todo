@@ -25,7 +25,7 @@ do commit que você deployar vira o schema de produção. Duas consequências qu
 > Aditivo é seguro. Renomear, remover ou trocar tipo de coluna que o código deployado
 > lê **quebra a produção na hora, sem deploy nenhum**.
 
-**Estado hoje (13/08):** produção e `main` estão **em dia** — os 42 commits do lote
+**Estado hoje (20/08):** produção e `main` estão **em dia** — os 42 commits do lote
 Service Desk + Portal + Ana + Proposta subiram. Confira sempre, nunca confie em número
 escrito aqui:
 
@@ -94,7 +94,7 @@ Contagens envelhecem; comandos não. Para números atuais: `npm test`,
 | **Portal F1** (POPs + frescor) | ✅ | ✅ | 22 playbooks respondendo em prod; ⚠️ R1 do hotlink do Drive nunca testado |
 | **Portal — Biblioteca** | ✅ | ✅ | 14 fichas à mão; nada re-sincroniza |
 | **Portal — Ana** (A1/A2/A3) | ✅ | ✅ | `GEMINI_API_KEY` criada 13/08; modo web (A4) pendente |
-| **Portal — Proposta F1–F5** | ✅ | ✅ | ⚠️ geração de PDF (Chromium em Lambda) **ainda não exercitada em prod** — é o único caminho não coberto pelo smoke; F5 inerte sem o webhook do n8n |
+| **Portal — Proposta F1–F5** | ✅ | ✅ | **gerando PDF em produção** desde 20/08 (o Chromium em Lambda exigiu `outputFileTracingIncludes` — §8.2); F5 inerte sem o webhook do n8n |
 | Playbooks/Manuais (spec antiga) | — | — | **absorvido pelo Portal**; spec morta |
 | CRM, métricas M&A, AI Insights | arquivado | — | schema presente, UI fora — §3.2 |
 
@@ -342,6 +342,12 @@ npx prisma migrate diff --from-schema-datasource prisma/schema.prisma \
    em Lambda, e o que tem mais chance de falhar só em produção.
 
 ⚠️ **Rollback é `git revert` + push.** Nunca redeploy de commit antigo (§0).
+💡 **Dá para conferir o que vai dentro da função SEM deployar:**
+`.next/server/app/api/<rota>/route.js.nft.json` lista os arquivos rastreados. Foi assim
+que se pegou o Chromium faltando (0 binários `.br` no manifesto) antes de um segundo
+deploy às cegas. Binário aberto por caminho em runtime **nunca** é rastreado sozinho —
+precisa de `outputFileTracingIncludes`.
+
 ⚠️ **Se o PDF falhar em produção**, o primeiro botão é memória/duração da função:
 `vercel.json` → `functions` (o path para projeto com `src/` é
 `src/app/api/portal/propostas/route.ts`; um glob que não casa **quebra o build**, então

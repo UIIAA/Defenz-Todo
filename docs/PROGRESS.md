@@ -1,46 +1,81 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-08-09
-**Version:** 0.3.0
+**Last updated:** 2026-08-20
+**Version:** 0.4.0
 **Branch:** main
 
-## 🚀 DEPLOYADO EM 13/08 — o lote de 42 commits está em produção
+## 🎯 RETOMAR AQUI — apresentação de soluções Bitdefender + Defenz
 
-`defenz-todo.vercel.app` roda hoje o produto inteiro: kanban, **Service Desk**,
-**Portal** (POPs, Biblioteca, Ana) e **Proposta**. Build Ready em 2m, schema aplicado
-pelo `vercel-build` sem incidente (diff conferido antes: aditivo, 2 enums + 7 tabelas,
-nenhum `DROP`).
+**É o próximo item, e o Marcos parou a sessão exatamente para retomar por aqui.**
 
-**Smoke em produção, feito:** páginas públicas 200 · dashboard 307 para login · 4 rotas
-de API 401 sem credencial, **zero 500** · via Bearer: 22 playbooks, 2 tickets, 323
-demandas respondendo.
+### O que ele pediu
+Um formulário curto → **apresentação institucional Bitdefender + Defenz**, com
+**comparativo entre as soluções GravityZone**, para um cliente que **não conhece a
+marca**. Palavras dele: *"Pense que num primeiro momento, a pessoa não conhece o
+Bitdefender."*
 
-⚠️ **O único caminho NÃO exercitado em produção: gerar uma proposta.** É a rota que roda
-o Chromium em Lambda, aceita **só sessão** (por desenho), e é a mais provável de falhar
-só em prod. **Precisa de 1 clique do Marcos** — `/dashboard/portal` → "Nova proposta".
-Se falhar, o primeiro botão é memória/duração da função (SPEC-MAE §8.2).
+### ⚠️ Antes de desenhar: ler três arquivos
+Os materiais **já estão catalogados** na Biblioteca do Portal (tabela `Playbook`,
+`kind=BIBLIOTECA`), com caminho no OneDrive em
+`ADMINISTRATIVO/ESTRATEGICO_VENDAS/APRESENTAÇÕES/APRESENTAÇÃO_TÉCNICA`:
 
-**Env vars:** `GEMINI_API_KEY` criada em 13/08 (Sensitive, Production) — a Ana está viva.
-⚠️ A chave passou pelo chat: **rotacionar** e pôr **teto de gasto** no Google Cloud.
-`CRON_SECRET` e `EMAIL_FROM` seguem ausentes de propósito (e-mail não é prioridade agora)
-— o cron de lembretes toma 401 diário, como já tomava antes do deploy.
+| Arquivo | Por que importa |
+|---|---|
+| `V9_PARCEIRO_EDITAVEL_SEM_PME.pptx` | deck de parceiro do fabricante, editável — é "o modelo" que o Marcos disse que ia trazer |
+| `defenz_gravityzone_comparativo.pdf` (+ `.docx` na mesma pasta) | o comparativo entre as soluções, montado pela Defenz |
+| `TECNICO_Bitdefender_Lideranca_Global_Acao_Brasil.pdf` | a ficha diz literalmente: "reunião com decisor que não conhece a marca / objeção 'nunca ouvi falar'" |
 
-## 🎯 PRÓXIMO — apresentação de soluções Bitdefender (spec em aberto)
+⚠️ **As fichas avisam "conteúdo ainda não indexado"** — temos o ponteiro, não o conteúdo.
+**Ler os três é pré-requisito.** Foi assim que a Proposta acertou: o template saiu do
+**diff de dois documentos reais**, e a medição derrubou a suposição de que o A4 era o
+PPTX exportado. Desenhar sem ler repetiria o erro que já evitamos uma vez.
+(O conector do OneDrive caiu no fim da sessão de 13/08; reconectou depois.)
 
-Feature nova pedida pelo Marcos: formulário curto → apresentação institucional
-Bitdefender + Defenz, com **comparativo entre as soluções GravityZone**, para cliente
-que **não conhece a marca**.
+### Decisões em aberto (são do Marcos)
+1. **Formato de saída:** PDF, como a Proposta? Ou **PPTX editável**, já que o vendedor
+   provavelmente quer ajustar slide antes de apresentar?
+2. **O que o formulário pergunta** — e o que é derivado.
+3. **Quanto do comparativo é fixo × variável** por cliente.
 
-**Achado que adianta a spec:** os três materiais já estão catalogados na Biblioteca do
-Portal, com caminho no OneDrive —
-`V9_PARCEIRO_EDITAVEL_SEM_PME.pptx` (o modelo), `defenz_gravityzone_comparativo.pdf`
-(+ `.docx` editável, o comparativo) e `TECNICO_Bitdefender_Lideranca_Global_Acao_Brasil.pdf`
-(exatamente o "não conhece a marca"). **Mas as fichas dizem "conteúdo ainda não
-indexado"** — temos o ponteiro, não o conteúdo. Ler os três é pré-requisito: foi assim
-que a Proposta acertou (template por diff de documentos reais, não por adivinhação).
+### O que já existe e dá para reusar
+A Proposta é precedente direto e o pipeline está pronto: HTML versionado → Chromium
+headless → PDF, com fonte e imagens embutidas, numeração atômica, registro auditável e
+log buscável. Ver `src/lib/proposta/` e `feature-portal-proposta.md`.
 
-Decisões em aberto: formato de saída (PDF como a Proposta, ou PPTX editável?), o que o
-formulário pergunta, e quanto do comparativo é fixo x variável.
+### Estado do brainstorm
+Iniciado com a skill `superpowers:brainstorming` e **interrompido de propósito** para
+fazer o deploy. O achado dos três arquivos acima já veio dele. **Retomar dali**, sem
+re-descobrir.
+
+---
+
+## ✅ 20/08 — a Proposta está funcionando em produção, ponta a ponta
+
+O PDF **gera de verdade** em produção (era o único caminho que o smoke do deploy não
+cobria — e ele quebrou na primeira tentativa do Marcos).
+
+**O que quebrou e como foi resolvido:** a função subiu com o código do navegador e sem o
+navegador. `serverExternalPackages` não bastava: o Chromium são 66 MB de `bin/*.br`
+abertos **por caminho** em runtime, e o rastreador do Next só segue imports. Fix =
+`outputFileTracingIncludes`.
+
+💡 **Técnica que se paga:** dá para conferir o que vai para a função **sem deployar**,
+lendo `.next/server/app/api/.../route.js.nft.json`. Foi assim que confirmei 0 → 4
+binários antes de subir.
+
+⚠️ **Falha de render queima número de proposta** (a sequência é reservada antes do PDF;
+a transação comita mesmo se o render explode). Contador devolvido a 1985 — **a próxima
+proposta real sai como `DFZ-2026-01986`**. Inverter a ordem não resolve: o número é
+impresso na capa.
+
+**Também corrigido e no ar:** o borrão vermelho no diagrama XDR (box-shadow que o Skia
+rasteriza como retângulo), a sobreposição de "Análise de risco" sob o círculo central, e
+a **página de clientes agora mostra os logos** (arte recortada por CSS — o recorte tirou
+junto o "Bitdetender" do slide, o logo Defenz duplicado e o Ferrari, que aparecia como se
+fosse cliente da Defenz sem ser).
+
+⚠️ **Pendência da arte:** resolução ~72 dpi efetivos, sai mole impresso. Troca é só de
+arquivo quando o Marcos exportar em ≥2000px (spec §16).
 
 ## ✅ A ANA ESTÁ RESPONDENDO (localhost, Gemini 3.6 Flash)
 O Portal está **navegável nas 3 abas** e a Ana responde de verdade, com fonte clicável. Testado clicando na interface.
