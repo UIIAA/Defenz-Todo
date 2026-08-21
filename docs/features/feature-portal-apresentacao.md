@@ -138,7 +138,7 @@ caminho não é converter PDF, é gerar PPTX do mesmo modelo de dados.
 | # | Decisão | Racional |
 |---|---|---|
 | **A1** | **Saída é PDF**, pelo pipeline HTML → Chromium da Proposta | Marcos. Em produção desde 20/08 |
-| **A1b** | **16:9 paisagem** (338,67 × 190,5 mm), não A4 retrato | Derivada. É deck, e o original é 16:9 |
+| **A1b** | ~~16:9 paisagem~~ → **A4 retrato, o MESMO da proposta** | **Corrigida pelo Marcos em 21/08:** *"siga o mesmo formato A4 da proposta"*. A v2 tinha derivado 16:9 por ser "deck"; ele quer o documento na mesma família visual do que o cliente já recebe. Some uma geometria nova do projeto e o template reusa fonte, logo e grade da proposta |
 | **A2** | Pesquisa no **Gemini com Google Search grounding**, em **duas chamadas** (§6.2) | Marcos. Chave já existe. Duas chamadas porque busca e saída estruturada não coexistem de forma confiável (crítica C1) |
 | **A3** | Pesquisa vira **seção própria e citada**, nunca diluída no texto fixo | Marcos. Texto de IA fica confinado e auditável |
 | **A5** | **CNAE sugere o setor; o vendedor confirma antes da busca** | CNAE é atividade fiscal declarada, muitas vezes genérica ou vencida: sugestão, não verdade (crítica C4) |
@@ -630,7 +630,7 @@ documento com o logo da Defenz.
 | Fase | Entrega | DoD |
 |---|---|---|
 | **F1** ✅ | `comparativo.ts` (Anexo A) · `institucional-fatos.ts` · `mercado-fatos.ts` (Anexo C) · `recomendarNivel()` puro | **FEITA em 21/08.** 13 testes. XEDR → Enterprise ✓ · necessidade do básico não empurra plano ✓ · pesquisa vazia recomenda a entrada ✓ · fato do setor vem antes do nacional ✓ · **teste que varre os catálogos e falha se aparecer nome de concorrente ou superlativo de comparação** (A15 virou regra executável) |
-| **F2** | Template 16:9 + render + POST que gera **sem IA** (documento institucional puro) | PDF 16:9 correto antes de qualquer LLM. Sem `[Nome do Cliente]` literal. **Legível sem apresentador** — o teste é o Marcos ler sem eu explicar |
+| **F2** 🟡 | Template **A4** + render + POST que gera **sem IA** | **Template FEITO em 21/08** (10 testes): A4 210×297mm, sem box-shadow, numeração derivada do array de páginas, adapta ao nicho pelo catálogo. **Falta a rota POST.** Sem `[Nome do Cliente]` literal. **Legível sem apresentador** — o teste é o Marcos ler sem eu explicar |
 | **F3** | Passo zero (BrasilAPI + confirmação) + pesquisa em duas chamadas + guardas (anonimato, número, fonte, enum, faixa) | Padaria → `casos: []`. Hospital → casos anônimos com veículo e ano. **Antes de codar: confirmar na doc oficial como o SDK expõe a busca (R8)** |
 | **F4** | Formulário, revisão com liberação do que foi barrado, aceite, confirmação | Marcos gera a primeira apresentação em localhost |
 | **F5** | Log buscável + re-download + arquivamento no OneDrive | Reusa o webhook da proposta (que ainda não existe — §12) |
