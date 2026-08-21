@@ -6,6 +6,24 @@
 
 ## 🎯 RETOMAR AQUI — apresentação de soluções Bitdefender + Defenz
 
+> **21/08 · spec v3 APROVADA · F1 FEITA.** Próximo passo é a **F2**: template 16:9 +
+> render + o documento institucional saindo **sem uma linha de IA**. O teste de aceite é o
+> Marcos ler sem ninguém explicar.
+>
+> **Duas decisões do Marcos que mudaram páginas:** (1) a pesquisa **pode acrescentar** fato
+> de mercado do nicho ao catálogo curado, sujeito à trava do A13b; (2) **nenhum concorrente
+> é citado** — a página comparativa vira "o que os testes independentes dizem do
+> Bitdefender", na régua mais favorável, e a pergunta do FAQ sobre concorrentes sai.
+>
+> ⚠️ **Por que a (2) importa:** fui buscar as fontes que a regra anterior exigia e elas
+> **contradiziam o deck herdado** — no AV-Comparatives (mar–jun/2025) o impacto de
+> performance do Bitdefender é **32,8**, contra 13,8 do Defender e 4,8 do ESET. Em eficácia
+> o argumento se sustenta e é forte (99,8%, **1 falso alarme**). E o SentinelOne, sobre quem
+> o deck afirmava "consumo excessivo de disco", **não estava no teste**. Sem citar
+> concorrente, o problema todo desaparece — mas a régua favorável **não** autoriza
+> superlativo ("impacto mínimo"), e há **teste** que barra isso nos catálogos.
+
+
 **Spec v2 escrita e criticada em 20/08.** Documentos:
 [`feature-portal-apresentacao.md`](features/feature-portal-apresentacao.md) **v2** ·
 crítica adversarial [`feature-portal-apresentacao-review.md`](features/feature-portal-apresentacao-review.md)

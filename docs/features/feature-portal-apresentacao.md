@@ -1,6 +1,6 @@
 # Feature: Apresentação — o Portal gera a apresentação de despertar, sob medida por setor
 
-**Status:** 🔵 **SPEC v2.1 — aguardando só a conferência do Anexo C**
+**Status:** 🟢 **SPEC v3 — APROVADA em 21/08. F1 em implementação.**
 **Priority:** P0 — próximo item do roadmap
 **Date:** 2026-08-20
 **Pai:** `feature-portal-defenz.md` · **Precedente direto:** `feature-portal-proposta.md`
@@ -147,10 +147,10 @@ caminho não é converter PDF, é gerar PPTX do mesmo modelo de dados.
 | **A10** | **O documento é autoexplicativo** | Marcos, 20/08. Vai por e-mail e é lido sem apresentador. **Consequências reais:** cada página fecha sozinha; texto corrido curto no lugar de bullet telegráfico; **não existem notas de apresentador**; e a página de FAQ deixa de ser apêndice e vira estrutural |
 | **A11** | **Cases são de problema, buscados ao vivo, no setor do cliente** | Marcos, 20/08: *"podem ser cases de problema sim, e vincule à necessidade"*. A Defenz não tem acervo de case de sucesso (§2.5), e o caso de problema é o que desperta quem ainda não sente o risco |
 | **A12** | **A vítima nunca é nomeada** | Marcos, 20/08. *"Uma rede de varejo brasileira…"* com veículo e ano no rodapé. Mantém a força e não aponta o dedo — inclusive porque o deck pode chegar a quem tem relação com a empresa citada. **Verificado em código** (§6.4), não confiado ao prompt |
-| **A13** | **Número de mercado só do catálogo curado** `mercado-fatos.ts` | Marcos, 20/08. Estatística vira arquivo versionado com valor, fonte e ano, tratado como a tabela de preços |
+| **A13** | **O catálogo `mercado-fatos.ts` é a base** — e a pesquisa **pode acrescentar** fato de mercado do nicho | Marcos, 20/08 e 21/08: *"pode usar os fatos catalogados e ou pode pesquisar adicionais com aquele nicho também"*. O catálogo dá o chão (dado nacional, transversal, conferido por ele); a pesquisa cobre o que é específico do setor e o catálogo não teria como prever. **Fato pesquisado passa pela mesma trava do A13b**: o dígito tem de existir no texto da chamada A, com veículo e ano |
 | **A13b** | **O caso PODE carregar número** — duração, prejuízo, quantidade — desde que o número **exista literalmente no texto pesquisado** | Marcos, 21/08: *"Pode afrouxar, eu preciso do número."* Afrouxado **sem** virar promessa vazia: a verificação não é "o vendedor prometeu que leu", é código. Ver §6.5.1 |
 | **A14** | **Do técnico entra uma página-resumo dos três níveis** | Marcos, 20/08. O cliente entende que existem três degraus e o que muda entre eles; o aprofundamento é a apresentação técnica, na reunião |
-| **A15** | **O comparativo com concorrentes fica só com eficácia de detecção e impacto em performance**, com fonte e ano | Marcos, 20/08, resolvendo a crítica M3. Ver §7.3 |
+| **A15** | ~~comparativo com concorrentes~~ → **o documento NÃO cita concorrente nenhum.** A página passa a mostrar só o que os testes independentes dizem **do Bitdefender**, na régua mais favorável | Marcos, 21/08: *"Não faça essa comparação direta, não precisa citar os concorrentes. Escolha sempre a melhor régua Bitdefender."* Decidido depois de as fontes derrubarem a coluna de performance (§7.3.1). Sem nome de concorrente, some a exposição de publicidade comparativa **e** o problema da régua que se inverte. Ver §7.3.2 |
 | **A16** | **Sem página de clientes, e sem promessa de mobile** | Marcos, 21/08, e ele foi explícito que vale **"de todas as propostas e apresentações"**. Já aplicado na Proposta (§16 e §17 de lá). Aqui é **preventivo**: a página de prova social não entra, e nenhuma página escreve iOS ou Android. Ver §7.4 |
 
 ---
@@ -380,9 +380,9 @@ grava latência, modelo e contagem de fontes — custo medido, não estimado.
 | 07 | **O que já aconteceu nesse setor** · até 4 casos anônimos, com veículo e ano | **gerada, liberada** | §6, A11/A12 |
 | 08 | **O que teria mudado** · caso → necessidade → recurso que responde | **gerada + fixa** | §6.3 + Anexo A |
 | 09 | **Os três níveis do GravityZone** · uma página, com o nível sugerido destacado | fixa + destaque variável | A14, Anexo A |
-| 10 | Por que não basta o que já vem no sistema · **eficácia e performance**, com fonte e ano | fixa | A15, §7.3 |
+| 10 | **O que os testes independentes dizem** · resultado do Bitdefender, com quem testou e o ano. **Sem concorrente nomeado** | fixa | A15, §7.3.2 |
 | 11 | O que muda ter a Defenz do lado · pós-venda direto, sem intermediário | fixa | §2.2 |
-| 12 | **Perguntas que todo mundo faz** · inclui "nunca ouvi falar" | fixa | §2.2 |
+| 12 | **Perguntas que todo mundo faz** · inclui "nunca ouvi falar". ⚠️ A pergunta sobre concorrentes **sai** (§7.3.2) | fixa | §2.2 |
 | 13 | Próximos passos · como pedir uma avaliação | fixa | — |
 
 **A IA toca 06, 07, 08 e o destaque da 09.** Quatro lugares, todos identificáveis.
@@ -449,18 +449,45 @@ diz o contrário: **32,8 do Bitdefender contra 13,8 do Defender**, com Kaspersky
 3. *"Kaspersky: complexidade de políticas"* — é julgamento de usabilidade, sem número
    público que ampare.
 
-⚠️ **DECISÃO NOVA PARA O MARCOS.** A regra que ele mesmo escolheu ("só eficácia e
-performance, com fonte e ano") agora derruba a performance junto:
+**Resolvido pelo Marcos em 21/08 — e ele foi além das três saídas:** *"Não faça essa
+comparação direta, não precisa citar os concorrentes. Escolha sempre a melhor régua
+Bitdefender."* Ver §7.3.2.
 
-| Saída | Consequência |
+### 7.3.2 A15 — sem concorrente nomeado, e a régua mais favorável
+
+A página 10 deixa de ser comparativa. Passa a ser **"o que os testes independentes dizem do
+Bitdefender"**: resultado, quem testou, ano. Nenhum outro fabricante aparece, nem por
+insinuação.
+
+**O que isso resolve de uma vez:**
+1. Some a exposição de **publicidade comparativa** sobre concorrente nomeado, que sairia em
+   escala num documento lido sem apresentador.
+2. Some a contradição do §7.3.1 — a régua que se invertia era a **comparativa**. Afirmar o
+   próprio resultado num teste não depende de onde o outro ficou.
+3. Some a afirmação sobre o SentinelOne, que **não estava no teste** e portanto nunca teve
+   como ser sustentada.
+
+**"Melhor régua" tem um limite, e ele está no texto, não na escolha da fonte.** Escolher o
+teste mais favorável é legítimo — todo fabricante faz, e a citação declara qual foi. O que
+**não** é legítimo é usar a régua favorável para afirmar superlativo de mercado: dizer
+*"menor impacto do mercado"* é comparação implícita, e a outra régua a contradiz
+(AV-Comparatives: 32,8 do Bitdefender contra 13,8 do Defender).
+
+**Regra de redação, conferida na revisão do texto fixo:**
+
+| Pode | Não pode |
 |---|---|
-| **(a) Página só de eficácia** — proteção e falsos alarmes, AV-Comparatives 2025 | Verdadeira, verificável, e liga direto à fadiga de alertas. **Recomendada** |
-| (b) Manter performance com outra fonte (AV-TEST dá nota cheia ao Bitdefender) | Metodologia diferente, resultado diferente. É escolher a régua que favorece — e é o tipo de coisa que um leitor técnico pega |
-| (c) Sem página comparativa | Some o argumento mais concreto do documento |
+| "Nota máxima em desempenho no AV-TEST (2025)" | "O menor impacto do mercado" |
+| "99,8% de proteção real, com 1 falso alarme · AV-Comparatives, 2025" | "Mais eficaz que os concorrentes" |
+| "Premiado como Approved Business Product" | "Melhor que o antivírus nativo" |
 
-**Não decido isso sozinho:** é afirmação comercial sobre concorrente nomeado, agora em
-escala. Enquanto não houver resposta, **F2 renderiza a página com eficácia apenas**, que é
-o subconjunto verdadeiro em qualquer das saídas.
+Afirma-se **o resultado**, com a fonte. A comparação o leitor faz sozinho, com a régua dele.
+
+⚠️ **Consequência que pega outra página:** o FAQ (pág. 12) herdado responde *"Quem são os
+principais concorrentes?"* nomeando Microsoft, SentinelOne e Sophos. Essa pergunta **sai**,
+e no lugar entra *"Por que não basta a proteção que já vem no sistema operacional?"* —
+respondida com resultado de teste independente do Bitdefender, sem nomear ninguém. O
+argumento sobrevive; o nome do concorrente, não.
 
 ### 7.4 A16 — o que este documento não afirma
 
@@ -602,7 +629,7 @@ documento com o logo da Defenz.
 
 | Fase | Entrega | DoD |
 |---|---|---|
-| **F1** | `comparativo.ts` (Anexo A) · `institucional-fatos.ts` · **`mercado-fatos.ts` semeado** · `recomendarNivel()` puro | Necessidade que exige XEDR → Enterprise; necessidade coberta pelo básico não empurra Enterprise. Catálogo de mercado com ≥6 fatos, cada um com fonte e ano |
+| **F1** ✅ | `comparativo.ts` (Anexo A) · `institucional-fatos.ts` · `mercado-fatos.ts` (Anexo C) · `recomendarNivel()` puro | **FEITA em 21/08.** 13 testes. XEDR → Enterprise ✓ · necessidade do básico não empurra plano ✓ · pesquisa vazia recomenda a entrada ✓ · fato do setor vem antes do nacional ✓ · **teste que varre os catálogos e falha se aparecer nome de concorrente ou superlativo de comparação** (A15 virou regra executável) |
 | **F2** | Template 16:9 + render + POST que gera **sem IA** (documento institucional puro) | PDF 16:9 correto antes de qualquer LLM. Sem `[Nome do Cliente]` literal. **Legível sem apresentador** — o teste é o Marcos ler sem eu explicar |
 | **F3** | Passo zero (BrasilAPI + confirmação) + pesquisa em duas chamadas + guardas (anonimato, número, fonte, enum, faixa) | Padaria → `casos: []`. Hospital → casos anônimos com veículo e ano. **Antes de codar: confirmar na doc oficial como o SDK expõe a busca (R8)** |
 | **F4** | Formulário, revisão com liberação do que foi barrado, aceite, confirmação | Marcos gera a primeira apresentação em localhost |
@@ -697,8 +724,9 @@ M4). Do jeito escrito na v1, a suíte ficaria intermitente até alguém apagar o
 
 ## 15. O que ainda depende do Marcos
 
-As três pendências foram respondidas em 21/08. **Sobra uma:** conferir o **Anexo C** — os
-9 fatos de mercado que vão para o papel.
+**Nenhuma.** O Anexo C foi aprovado em 21/08, com a extensão de a pesquisa poder
+acrescentar fato do nicho (A13), e o §7.3.1 foi resolvido pelo §7.3.2 — sem concorrente
+nomeado. **A spec está aprovada; o que falta é código.**
 
 | Era | Virou |
 |---|---|
@@ -764,6 +792,10 @@ três níveis.
 Levantado em 21/08 a pedido dele (*"traga para que eu confira"*). **Nada daqui entra em
 documento antes do OK.** Cada linha traz o número exato, quem publicou e o ano, porque é
 assim que vai para o rodapé do slide.
+
+> ✅ **APROVADO pelo Marcos em 21/08**, com uma extensão: *"pode usar os fatos catalogados
+> e ou pode pesquisar adicionais com aquele nicho também"*. O catálogo é o chão; a pesquisa
+> acrescenta o que é específico do setor, sujeito à trava do A13b.
 
 ### C.1 Os que eu recomendo aceitar
 
