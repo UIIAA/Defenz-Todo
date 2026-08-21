@@ -418,6 +418,50 @@ Performance Test). Os três editoriais saem.
 hoje o slide sai quando alguém monta um deck à mão; depois desta feature ele sai em **todo
 deck gerado**, para leitor que lê sozinho.
 
+### 7.3.1 ⚠️ Fui buscar as fontes, e a coluna de PERFORMANCE não se sustenta
+
+Levantado em 21/08. Fonte primária: **AV-Comparatives · Business Security Test ·
+março–junho de 2025**, publicado em 15/07/2025.
+
+| Produto | Proteção real | Falsos alarmes | Malware | **Impacto na performance** |
+|---|---|---|---|---|
+| **Bitdefender** | **99,8%** | **1** | 99,6% | **32,8** |
+| Microsoft Defender | 98,9% | 5 | 99,3% | **13,8** |
+| Kaspersky | 99,3% | 3 | 100% | **8,9** |
+| ESET | 98,6% | 6 | 99,5% | **4,8** |
+| Sophos | 97,5% | 7 | 98,0% | 39,8 |
+
+*No impacto, menor é melhor.*
+
+**Em eficácia o argumento da Defenz é verdadeiro e forte:** Bitdefender lidera a proteção
+real e tem **1 falso alarme contra 5 do Defender** — que é exatamente a dor de "fadiga de
+alertas" da página 07.
+
+**Em performance o argumento se inverte.** O deck herdado dizia *"Mínimo, otimizado para
+VDI e Cloud"* para o Bitdefender e *"Alto em ambientes não-MS"* para o Defender. O teste
+diz o contrário: **32,8 do Bitdefender contra 13,8 do Defender**, com Kaspersky e ESET bem
+à frente dos dois. Só o Sophos fica atrás.
+
+**Três achados de brinde, do mesmo teste:**
+1. *"SentinelOne: consumo excessivo de disco (VSS)"* — **o SentinelOne não estava no
+   teste.** A afirmação não tinha como vir dali.
+2. *"Sophos: impacto significativo comprovado"* — **essa se sustenta** (39,8, o pior).
+3. *"Kaspersky: complexidade de políticas"* — é julgamento de usabilidade, sem número
+   público que ampare.
+
+⚠️ **DECISÃO NOVA PARA O MARCOS.** A regra que ele mesmo escolheu ("só eficácia e
+performance, com fonte e ano") agora derruba a performance junto:
+
+| Saída | Consequência |
+|---|---|
+| **(a) Página só de eficácia** — proteção e falsos alarmes, AV-Comparatives 2025 | Verdadeira, verificável, e liga direto à fadiga de alertas. **Recomendada** |
+| (b) Manter performance com outra fonte (AV-TEST dá nota cheia ao Bitdefender) | Metodologia diferente, resultado diferente. É escolher a régua que favorece — e é o tipo de coisa que um leitor técnico pega |
+| (c) Sem página comparativa | Some o argumento mais concreto do documento |
+
+**Não decido isso sozinho:** é afirmação comercial sobre concorrente nomeado, agora em
+escala. Enquanto não houver resposta, **F2 renderiza a página com eficácia apenas**, que é
+o subconjunto verdadeiro em qualquer das saídas.
+
 ### 7.4 A16 — o que este documento não afirma
 
 Duas remoções que o Marcos mandou aplicar **em propostas e apresentações** (21/08). Aqui
