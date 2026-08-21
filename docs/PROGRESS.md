@@ -6,11 +6,24 @@
 
 ## 🎯 RETOMAR AQUI — apresentação de soluções Bitdefender + Defenz
 
-**Spec escrita e criticada em 20/08.** Documentos:
-[`feature-portal-apresentacao.md`](features/feature-portal-apresentacao.md) **v1.1** ·
+**Spec v2 escrita e criticada em 20/08.** Documentos:
+[`feature-portal-apresentacao.md`](features/feature-portal-apresentacao.md) **v2** ·
 crítica adversarial [`feature-portal-apresentacao-review.md`](features/feature-portal-apresentacao-review.md)
-(4 críticos corrigidos, 5 médios, 3 menores). **Aguarda aprovação do Marcos + as 2
-decisões da §15** (slide competitivo, papel mínimo). Nada implementado ainda.
+(4 críticos corrigidos, 5 médios, 3 menores). Nada implementado ainda.
+
+⚠️ **A v2 mudou o EIXO do produto.** A v1 desenhava um deck técnico-comparativo; o Marcos
+corrigiu: **a apresentação técnica já existe e é dele, usada na reunião.** O que falta é a
+peça de **antes** — marca, mercado, cases — e ela é **autoexplicativa**: vai por e-mail e é
+lida sem apresentador.
+
+**E "case" mudou de significado.** A Defenz **não tem material de case nenhum** (varredura
+no OneDrive: só exports do Apollo). Decisão do Marcos: **cases de problema do setor**,
+buscados ao vivo, **com a vítima nunca nomeada**, cada um amarrado à necessidade que expõe
+e ao recurso que responde. Números de mercado saem de **catálogo curado no repo**
+(`mercado-fatos.ts`), nunca de LLM.
+
+**Aguarda:** aprovação + as 3 pendências da §15 (semear o catálogo de mercado, papel mínimo
+para gerar, e se o caso pode carregar duração/prejuízo).
 
 ⚠️ **Correções que esta seção acumulava e a leitura dos arquivos derrubou:**
 - `V9_PARCEIRO_EDITAVEL_SEM_PME.pptx` **não é o modelo** — é o deck do Programa de

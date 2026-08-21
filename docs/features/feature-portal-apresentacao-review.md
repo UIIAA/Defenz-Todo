@@ -8,6 +8,15 @@ texto mas não está decidido de fato.
 aplicada** na v1.1 (emenda no fim da spec). Dois itens **não** são para eu resolver: são
 decisão do Marcos e estão marcados assim.
 
+> **Estado em 20/08, depois da v2.** O Marcos mudou o eixo do produto (deck de despertar,
+> não deck técnico) — mas isso **não invalidou nenhum achado**: C1–C4 e M1–M5 são sobre o
+> encanamento, não sobre o conteúdo, e estão todos aplicados na v2. **M3 foi resolvido pelo
+> Marcos:** o slide competitivo fica só com eficácia de detecção e impacto em performance,
+> cada linha com fonte e ano — a saída (a), recomendada aqui. **M5 segue aberto** (papel
+> mínimo para gerar). A v2 trouxe uma guarda nova que esta crítica não cobriu, porque o
+> requisito não existia quando ela foi escrita: o **anonimato da vítima** (spec §6.4), que
+> merece uma segunda passada adversarial quando estiver implementado.
+
 ---
 
 ## 🔴 C1 — Grounding e saída estruturada provavelmente não coexistem na mesma chamada
