@@ -633,7 +633,7 @@ documento com o logo da Defenz.
 | **F2** ✅ | Template **A4** + render + POST que gera **sem IA** + entrada no Portal | **FEITA em 22/08.** A4 210×297mm, sem box-shadow, numeração derivada, adapta ao nicho pelo catálogo. `POST /api/portal/apresentacoes` gera e devolve o PDF; registro em `Apresentacao` com `fatosSnapshot`. Formulário em `/dashboard/portal/apresentacao` e **caixa de emissão** nas abas (§11.1) |
 | **F3** | Passo zero (BrasilAPI + confirmação) + pesquisa em duas chamadas + guardas (anonimato, número, fonte, enum, faixa) | Padaria → `casos: []`. Hospital → casos anônimos com veículo e ano. **Antes de codar: confirmar na doc oficial como o SDK expõe a busca (R8)** |
 | **F4** | Formulário, revisão com liberação do que foi barrado, aceite, confirmação | Marcos gera a primeira apresentação em localhost |
-| **F5** | Log buscável + re-download + arquivamento no OneDrive | Reusa o webhook da proposta (que ainda não existe — §12) |
+| **F5** 🟡 | Log buscável + re-download + arquivamento no OneDrive | **Log e re-download FEITOS em 22/08**: aba "Apresentações", busca por empresa/pessoa/setor + período, cap 200, e re-download que reimprime do `fatosSnapshot`. **Falta o arquivamento no OneDrive**, que depende do mesmo webhook n8n que a Proposta espera desde 09/08 e ainda não existe |
 | **F6** | Deploy | `.nft.json` conferido **antes** do push (§7.2) |
 
 **F2 antes de F3 é deliberado.** O documento institucional já é entregável sozinho: quem
@@ -976,9 +976,29 @@ quando não há nenhum, diz isso **explicitamente**: *"a apresentação sai com 
 nacionais, sem inventar um número setorial"*. Usa a mesma função pura do servidor, então a
 tela não consegue prometer um número que o documento não vai trazer.
 
-### E.3 O que ainda não existe
+### E.3 O log entrou logo em seguida (22/08)
 
-**Não há log de apresentações emitidas** (é a F5). O registro é gravado e auditável no
-banco, mas ainda não há tela para buscá-lo nem re-download. Por isso **não foi criada uma
-aba "Apresentações"**: seria exatamente a aba morta que a I11 proíbe. Ela entra quando o
-log existir.
+A aba **"Apresentações"** existe agora, e com ela a quinta aba do Portal. Ela só entrou
+depois de a tela existir — era a razão de não ter entrado junto com a caixa (I11).
+
+| Entregue | Detalhe |
+|---|---|
+| `GET /api/portal/apresentacoes` | busca por empresa, pessoa ou setor + período, cap 200 (I5), escopo por `AND` explícito (I2) |
+| `GET /api/portal/apresentacoes/[id]/arquivo` | re-download |
+| `/dashboard/portal/apresentacoes` | a tela, com aviso âmbar de modelo divergente |
+
+⚠️ **Consultar não exige ser emissor Defenz; emitir, sim.** São permissões diferentes de
+propósito: ver o que já saiu é outra coisa que emitir em nome da casa.
+
+**O re-download nasceu certo, e é a lição da Proposta aplicada de saída:** ele reimprime a
+partir do `fatosSnapshot`, então **um número que saiu do catálogo depois continua saindo no
+documento antigo**. Há teste que prova isso com um fato que não existe no catálogo. Na
+Proposta esse buraco foi descoberto em produção, com 6 documentos já emitidos.
+
+O texto institucional fixo ainda vem do código — por isso o `templateVersao` e o aviso
+âmbar no log, em vez de entregar documento diferente calado.
+
+### E.4 O que ainda não existe
+
+**Arquivamento no OneDrive** (resto da F5): depende do mesmo fluxo n8n que a Proposta espera
+desde 09/08 e que **ainda não existe**.

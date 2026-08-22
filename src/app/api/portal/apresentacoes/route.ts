@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser, resolveActiveCompany } from '@/lib/auth'
+import { getCurrentUser, resolveActiveCompany, companyScopeWhere } from '@/lib/auth'
+import type { Prisma } from '@prisma/client'
 import { handleApiError, ApiError } from '@/lib/api-helpers'
 import { exigirEmissorDefenz } from '@/lib/emissao-documento'
 import { createApresentacaoSchema } from '@/lib/validations/apresentacao'
@@ -88,6 +89,74 @@ export async function POST(request: NextRequest) {
         'Content-Length': String(pdf.length),
       },
     })
+  } catch (error) {
+    return handleApiError(error)
+  }
+}
+
+
+/** Cap duro de listagem (I5). */
+const MAX_ITENS = 200
+
+/**
+ * Log das apresentações emitidas, buscável.
+ *
+ * ⚠️ Aqui NÃO se exige emissor Defenz: consultar o que já saiu é diferente de
+ * emitir. O escopo de tenant continua valendo — quem é de outra empresa não vê.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) throw new ApiError('Nao autorizado', 401)
+
+    const { searchParams } = new URL(request.url)
+    const filtros: Prisma.ApresentacaoWhereInput[] = []
+
+    const q = searchParams.get('q')?.trim()
+    if (q) {
+      filtros.push({
+        OR: [
+          { empresaNome: { contains: q, mode: 'insensitive' } },
+          { clienteNome: { contains: q, mode: 'insensitive' } },
+          { setor: { contains: q, mode: 'insensitive' } },
+        ],
+      })
+    }
+
+    const de = searchParams.get('de')
+    const ate = searchParams.get('ate')
+    if (de || ate) {
+      const createdAt: Prisma.DateTimeFilter = {}
+      if (de) createdAt.gte = new Date(`${de}T00:00:00-03:00`)
+      // `ate` inclusivo: quem digita hoje espera ver o que emitiu hoje.
+      if (ate) createdAt.lte = new Date(`${ate}T23:59:59.999-03:00`)
+      filtros.push({ createdAt })
+    }
+
+    // Escopo por AND explícito: o `OR` da busca não pode engolir o tenant por
+    // spread (invariante I2).
+    const where: Prisma.ApresentacaoWhereInput = {
+      AND: [companyScopeWhere(user), ...filtros],
+    }
+
+    const apresentacoes = await db.apresentacao.findMany({
+      where,
+      select: {
+        id: true,
+        clienteNome: true,
+        empresaNome: true,
+        setor: true,
+        nivelDestaque: true,
+        templateVersao: true,
+        arquivoNome: true,
+        createdAt: true,
+        criadoPor: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: MAX_ITENS,
+    })
+
+    return NextResponse.json({ success: true, data: apresentacoes })
   } catch (error) {
     return handleApiError(error)
   }

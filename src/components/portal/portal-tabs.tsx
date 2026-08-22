@@ -29,6 +29,7 @@ const ABAS = [
   { href: '/dashboard/portal', label: 'POPs' },
   { href: '/dashboard/portal/biblioteca', label: 'Biblioteca' },
   { href: '/dashboard/portal/ia', label: 'IA Defenz' },
+  { href: '/dashboard/portal/apresentacoes', label: 'Apresentações' },
   { href: '/dashboard/portal/propostas', label: 'Propostas' },
 ] as const
 
@@ -58,7 +59,14 @@ export function PortalTabs() {
 
           // Emitir uma proposta pertence ao mesmo lugar que consultá-las: a aba
           // Propostas fica acesa também no formulário.
-          const acesa = aba.href === '/dashboard/portal/propostas' ? ativa || noFormulario : ativa
+          // Emitir pertence ao mesmo lugar que consultar: a aba do log fica
+          // acesa também no formulário correspondente.
+          const acesa =
+            aba.href === '/dashboard/portal/propostas'
+              ? ativa || noFormulario
+              : aba.href === '/dashboard/portal/apresentacoes'
+                ? ativa || noApresentacao
+                : ativa
 
           return (
             <Link

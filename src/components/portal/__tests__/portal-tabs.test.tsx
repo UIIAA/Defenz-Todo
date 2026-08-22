@@ -26,12 +26,12 @@ const clicavel = (rotulo: string) =>
 describe('PortalTabs', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('mostra as 4 abas e as DUAS emissões na caixa', () => {
+  it('mostra as 5 abas e as DUAS emissões na caixa', () => {
     // Os três caminhos do Marcos (22/08) são igualmente comuns: só apresentação,
     // as duas, ou só proposta. Por isso as duas ficam à mostra, lado a lado.
     mockPathname.mockReturnValue('/dashboard/portal')
     render(<PortalTabs />)
-    for (const r of ['POPs', 'Biblioteca', 'IA Defenz', 'Propostas']) {
+    for (const r of ['POPs', 'Biblioteca', 'IA Defenz', 'Apresentações', 'Propostas']) {
       expect(screen.getByText(r)).toBeTruthy()
     }
     expect(clicavel('Apresentação')).toBe('/dashboard/portal/apresentacao')
@@ -63,6 +63,18 @@ describe('PortalTabs', () => {
     render(<PortalTabs />)
     expect(clicavel('Apresentação')).toBeNull()
     expect(clicavel('Proposta')).toBe('/dashboard/portal/proposta')
+    // a aba do log acende no formulário, como já acontecia com Propostas
+    expect(ativa('Apresentações')).toBe(true)
+  })
+
+  it('a mesma armadilha do /propostas vale para /apresentacoes', () => {
+    // `/apresentacoes` (log) e `/apresentacao` (formulário) diferem por UMA
+    // letra. Um startsWith frouxo acenderia a aba errada ou esconderia a ação.
+    mockPathname.mockReturnValue('/dashboard/portal/apresentacoes')
+    render(<PortalTabs />)
+    expect(ativa('Apresentações')).toBe(true)
+    expect(ativa('Propostas')).toBe(false)
+    expect(clicavel('Apresentação')).toBe('/dashboard/portal/apresentacao')
   })
 
   it('POPs só acende na raiz e no detalhe de POP, não nas outras abas', () => {

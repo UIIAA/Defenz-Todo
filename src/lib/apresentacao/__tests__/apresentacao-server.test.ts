@@ -43,3 +43,37 @@ describe('schema de emissão', () => {
     ).toThrow()
   })
 })
+
+describe('re-download reimprime o que foi afirmado, não o catálogo de hoje', () => {
+  it('o snapshot basta para remontar o documento', async () => {
+    const { renderApresentacaoHtml } = await import('../templates/institucional-a4')
+    // Um fato que NÃO existe mais no catálogo: se a renderização dependesse do
+    // catálogo vivo, ele sumiria do re-download — que é exatamente o buraco que
+    // a Proposta pagou em 21/08.
+    const snapshot = [
+      {
+        id: 'M-antigo',
+        texto: 'Um dado de mercado que saiu do catálogo depois.',
+        valor: 'R$ 1,23 milhão',
+        fonte: 'Instituto Fictício',
+        ano: 2025,
+      },
+    ]
+    const html = renderApresentacaoHtml({
+      clienteNome: 'Fulano',
+      empresaNome: 'Empresa X',
+      setor: 'Saúde',
+      dataFormatada: '22/08/2026',
+      ano: 2026,
+      vendedor: { nome: 'V', email: 'v@defenz.com.br' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fatos: snapshot as any,
+      casos: [],
+      nivelDestaque: 'PREMIUM',
+    })
+    expect(html).toContain('R$ 1,23 milhão')
+    expect(html).toContain('Instituto Fictício')
+    // e o número de hoje NÃO aparece
+    expect(html).not.toContain('R$ 11,43 milhões')
+  })
+})
