@@ -31,6 +31,7 @@ model Company {
   authorizedClients AuthorizedClient[] // portal: clientes autorizados
   playbooks         Playbook[]        // portal defenz: POPs e biblioteca
   propostas         Proposta[]        // portal defenz: propostas comerciais
+  apresentacoes     Apresentacao[]    // portal defenz: apresentacoes institucionais
 }
 
 model Team {
@@ -126,6 +127,7 @@ model User {
   playbooksVerified       Playbook[]               @relation("PlaybookVerifier")
   playbooksCreated        Playbook[]               @relation("PlaybookCreator")
   propostasCriadas        Proposta[]               @relation("PropostaCriador")
+  apresentacoesCriadas    Apresentacao[]           @relation("ApresentacaoCriador")
 
   @@index([email])
   @@index([companyId])
@@ -1160,6 +1162,43 @@ model Proposta {
 // Numeracao propria e CONTINUA, no padrao atomico do TicketSequence.
 // Uma unica linha (id=1): o contador NAO zera na virada do ano (spec §8) —
 // o ano no codigo e rotulo, o numero e unico e monotonico para sempre.
+/// Apresentacao institucional Bitdefender + Defenz (feature-portal-apresentacao.md).
+///
+/// ⚠️ SEM sequencia reservada, ao contrario da Proposta (decisao A6): la o numero e
+/// reservado antes de o PDF existir e a falha de render QUEIMA o numero. Apresentacao
+/// nao e documento de valor contratual e nao precisa de serie.
+model Apresentacao {
+  id String @id @default(cuid())
+
+  clienteNome String
+  empresaNome String
+  /// Nicho confirmado pelo vendedor. E o que troca os numeros do documento.
+  setor       String?
+
+  /// Nivel destacado na tabela dos tres niveis.
+  nivelDestaque String
+
+  /// Os fatos de mercado que EFETIVAMENTE entraram, congelados. Mesma razao do
+  /// precoSnapshot da Proposta: sem isto, "o que a gente afirmou ao cliente X"
+  /// vira memoria assim que o catalogo mudar.
+  fatosSnapshot Json
+  /// Versao do texto fixo com que nasceu (mesma licao do templateVersao da Proposta).
+  templateVersao String @default("2026-08-22")
+
+  arquivoNome String
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  criadoPorId String?
+  criadoPor   User?    @relation("ApresentacaoCriador", fields: [criadoPorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([companyId, createdAt])
+  @@index([empresaNome])
+  @@map("apresentacoes")
+}
+
 model PropostaSequence {
   id      Int @id @default(1)
   lastSeq Int @default(1985) // proxima emissao = 01986

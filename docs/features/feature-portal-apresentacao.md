@@ -630,7 +630,7 @@ documento com o logo da Defenz.
 | Fase | Entrega | DoD |
 |---|---|---|
 | **F1** ✅ | `comparativo.ts` (Anexo A) · `institucional-fatos.ts` · `mercado-fatos.ts` (Anexo C) · `recomendarNivel()` puro | **FEITA em 21/08.** 13 testes. XEDR → Enterprise ✓ · necessidade do básico não empurra plano ✓ · pesquisa vazia recomenda a entrada ✓ · fato do setor vem antes do nacional ✓ · **teste que varre os catálogos e falha se aparecer nome de concorrente ou superlativo de comparação** (A15 virou regra executável) |
-| **F2** 🟡 | Template **A4** + render + POST que gera **sem IA** | **Template FEITO em 21/08** (10 testes): A4 210×297mm, sem box-shadow, numeração derivada do array de páginas, adapta ao nicho pelo catálogo. **Falta a rota POST.** Sem `[Nome do Cliente]` literal. **Legível sem apresentador** — o teste é o Marcos ler sem eu explicar |
+| **F2** ✅ | Template **A4** + render + POST que gera **sem IA** + entrada no Portal | **FEITA em 22/08.** A4 210×297mm, sem box-shadow, numeração derivada, adapta ao nicho pelo catálogo. `POST /api/portal/apresentacoes` gera e devolve o PDF; registro em `Apresentacao` com `fatosSnapshot`. Formulário em `/dashboard/portal/apresentacao` e **caixa de emissão** nas abas (§11.1) |
 | **F3** | Passo zero (BrasilAPI + confirmação) + pesquisa em duas chamadas + guardas (anonimato, número, fonte, enum, faixa) | Padaria → `casos: []`. Hospital → casos anônimos com veículo e ano. **Antes de codar: confirmar na doc oficial como o SDK expõe a busca (R8)** |
 | **F4** | Formulário, revisão com liberação do que foi barrado, aceite, confirmação | Marcos gera a primeira apresentação em localhost |
 | **F5** | Log buscável + re-download + arquivamento no OneDrive | Reusa o webhook da proposta (que ainda não existe — §12) |
@@ -932,3 +932,53 @@ trocado por respiro fixo. A página do setor manteve a distribuição, porque l�
 
 Se ele quiser qualquer um dos dois, é uma linha em `institucional-fatos.ts` — mas aí a
 regra A15 passa a ter exceção declarada, e isso precisa estar escrito.
+
+
+---
+
+## Anexo E — a caixa de emissão no Portal (22/08)
+
+> *"Coloque a geração da apresentação no mesmo menu da geração da proposta. Pode ser uma
+> caixa em evidência. Porque às vezes vamos gerar apresentação e não proposta. Mas algumas
+> vezes vamos gerar apresentação e proposta. E outras vezes vamos gerar apenas propostas."*
+> — Marcos, 22/08
+
+**O botão "Nova proposta" virou uma caixa com as duas emissões, lado a lado.** Mora no
+componente das abas, então toda tela do Portal a ganha sem ninguém repetir código.
+
+**Duas ações à mostra, e não um menu com submenu**, exatamente pelo que ele descreveu: os
+três caminhos são igualmente comuns. Esconder uma atrás da outra faria o caminho do meio
+("as duas") custar dois cliques e sugeriria uma ordem que não existe entre elas.
+
+**A ação da tela em que já se está aparece apagada e sem link.** No formulário de proposta,
+"Proposta" apaga e **"Apresentação" continua clicável** — é o caso "gerei a proposta, agora
+quero a apresentação também", que não pode custar uma volta pelo menu. Há teste para as
+duas direções.
+
+### E.1 Por que isto obrigou a fechar a F2 inteira
+
+A invariante **I11** diz que aba morta é promessa quebrada. Entregar só a caixa deixaria um
+botão levando a uma tela que não existe. Então entraram junto:
+
+- `POST /api/portal/apresentacoes` — só sessão, e só emissor Defenz (§10.1), reusando o
+  `exigirEmissorDefenz` que a Proposta já usa;
+- modelo `Apresentacao`, **sem sequência reservada** (A6) e com `fatosSnapshot` congelando
+  os fatos que entraram — mesma razão do `precoSnapshot`;
+- o formulário, com quatro campos: empresa, A/C, setor e nível em destaque.
+
+**O registro é gravado DEPOIS do render**, e não antes: sem número de série a queimar,
+gravar antes só criaria linha órfã se o Chromium falhasse.
+
+### E.2 O formulário mostra o que o nicho muda, antes de gerar
+
+O campo "setor" diz, ao vivo, quantos dados específicos daquele setor vão entrar — e,
+quando não há nenhum, diz isso **explicitamente**: *"a apresentação sai com os números
+nacionais, sem inventar um número setorial"*. Usa a mesma função pura do servidor, então a
+tela não consegue prometer um número que o documento não vai trazer.
+
+### E.3 O que ainda não existe
+
+**Não há log de apresentações emitidas** (é a F5). O registro é gravado e auditável no
+banco, mas ainda não há tela para buscá-lo nem re-download. Por isso **não foi criada uma
+aba "Apresentações"**: seria exatamente a aba morta que a I11 proíbe. Ela entra quando o
+log existir.

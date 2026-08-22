@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText } from 'lucide-react'
+import { FileText, Presentation } from 'lucide-react'
 
 /**
  * Navegação do Portal.
@@ -16,8 +16,14 @@ import { FileText } from 'lucide-react'
  * era exatamente o que estava acontecendo enquanto só se chegava lá pelo botão
  * que aparece depois de gerar.
  *
- * A AÇÃO ("Nova proposta") continua sendo botão, à direita e sempre à mostra.
- * Aba é lugar, botão é ação; misturar os dois é o que produz menu confuso.
+ * As AÇÕES ficam numa caixa própria à direita, sempre à mostra. Aba é lugar,
+ * botão é ação; misturar os dois é o que produz menu confuso.
+ *
+ * ⚠️ São DUAS ações lado a lado, e não um menu com submenu, porque os três
+ * caminhos do Marcos (22/08) são igualmente comuns: *"às vezes vamos gerar
+ * apresentação e não proposta; às vezes as duas; às vezes só proposta"*.
+ * Esconder uma atrás da outra faria o caminho do meio custar dois cliques e
+ * sugeriria uma ordem que não existe.
  */
 const ABAS = [
   { href: '/dashboard/portal', label: 'POPs' },
@@ -26,8 +32,9 @@ const ABAS = [
   { href: '/dashboard/portal/propostas', label: 'Propostas' },
 ] as const
 
-/** Formulário de emissão. Note o singular — `/proposta`, não `/propostas`. */
+/** Formulários de emissão. Note o singular — `/proposta`, não `/propostas`. */
 const ROTA_NOVA_PROPOSTA = '/dashboard/portal/proposta'
+const ROTA_NOVA_APRESENTACAO = '/dashboard/portal/apresentacao'
 
 export function PortalTabs() {
   const pathname = usePathname() || ''
@@ -35,6 +42,7 @@ export function PortalTabs() {
   // Comparação EXATA. `startsWith` aqui casaria também `/propostas` (o log) e
   // esconderia o botão justamente na tela onde ele é mais útil.
   const noFormulario = pathname === ROTA_NOVA_PROPOSTA
+  const noApresentacao = pathname === ROTA_NOVA_APRESENTACAO
 
   return (
     <div className="flex items-end justify-between gap-6 border-b border-slate-200 dark:border-slate-700/50">
@@ -69,19 +77,50 @@ export function PortalTabs() {
       </div>
 
       {/*
-        "Como se fosse um botão sempre à mostra chamado Proposta" (Marcos, 09/08).
-        Mora aqui, e não em cada página, justamente para não depender de alguém
-        lembrar de repeti-lo: quem renderiza as abas ganha o botão de graça.
+        "Como se fosse um botão sempre à mostra" (Marcos, 09/08), agora uma caixa
+        com as duas emissões (22/08). Mora aqui, e não em cada página, para não
+        depender de alguém lembrar de repeti-la: quem renderiza as abas ganha a
+        caixa de graça.
+
+        A ação da tela em que já se está aparece apagada e sem link — some o
+        clique que não leva a lugar nenhum, e a caixa continua mostrando que a
+        outra emissão existe.
       */}
-      {!noFormulario && (
-        <Link
-          href={ROTA_NOVA_PROPOSTA}
-          className="mb-2 inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-        >
-          <FileText className="h-4 w-4" />
-          Nova proposta
-        </Link>
-      )}
+      <div className="mb-2 flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50/70 p-1 dark:border-blue-900/60 dark:bg-blue-950/30">
+        <span className="px-2 text-[11px] font-semibold uppercase tracking-wider text-blue-700/80 dark:text-blue-300/80">
+          Gerar
+        </span>
+
+        {noApresentacao ? (
+          <span className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-blue-700/50 dark:text-blue-300/40">
+            <Presentation className="h-4 w-4" />
+            Apresentação
+          </span>
+        ) : (
+          <Link
+            href={ROTA_NOVA_APRESENTACAO}
+            className="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100 dark:bg-slate-800 dark:text-blue-300 dark:hover:bg-slate-700"
+          >
+            <Presentation className="h-4 w-4" />
+            Apresentação
+          </Link>
+        )}
+
+        {noFormulario ? (
+          <span className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-blue-700/50 dark:text-blue-300/40">
+            <FileText className="h-4 w-4" />
+            Proposta
+          </span>
+        ) : (
+          <Link
+            href={ROTA_NOVA_PROPOSTA}
+            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          >
+            <FileText className="h-4 w-4" />
+            Proposta
+          </Link>
+        )}
+      </div>
     </div>
   )
 }
