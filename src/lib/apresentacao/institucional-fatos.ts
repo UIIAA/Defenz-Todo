@@ -19,6 +19,8 @@ export const BITDEFENDER = {
   origem: 1990,
   paises: '+170',
   especialistas: '~2.400',
+  /** Pedido do Marcos em 22/08. Consta do material de parceiro do fabricante. */
+  dispositivos: '+500 milhões',
   sedeGlobal: 'Bucareste, Romênia',
   sedeEUA: 'Santa Clara, Califórnia',
   fonte: 'Material de parceiro Bitdefender · via Defenz',
