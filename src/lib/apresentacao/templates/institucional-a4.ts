@@ -234,12 +234,15 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
   secoes.push({
     titulo: 'Quem é a Defenz',
     corpo: (n) => `${tituloSecao(n, 'Quem é a Defenz')}
-        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 26px; max-width:620px; text-align:justify;">A Defenz é a operação brasileira que implanta, opera e sustenta a plataforma. A tecnologia é global; quem atende é local, e é a mesma equipe do começo ao fim.</p>
+        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 18px; max-width:620px; text-align:justify;">A Defenz é a operação brasileira que implanta, opera e sustenta a plataforma. A tecnologia é global; quem atende é local, e é a mesma equipe do começo ao fim.</p>
+        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 22px; max-width:620px; text-align:justify;">Comprar segurança é a parte fácil. Operar é o que separa quem fica protegido de quem só tem licença paga, e é nessa parte que a Defenz entra.</p>
         <div style="flex:1; display:flex; flex-direction:column; gap:26px; max-width:620px;">
           ${[
             ['Especialistas certificados', 'A equipe tem o mais alto nível de certificação técnica na plataforma.'],
             ['Implementação e suporte no Brasil', 'Agilidade na resposta, entendimento do contexto local e atendimento direto, sem intermediários nem barreira de idioma.'],
             ['Parceiro, não fornecedor', 'Ajudamos a extrair valor da ferramenta e a evoluir a maturidade de segurança, em vez de entregar licença e sumir.'],
+            ['Avaliação antes da decisão', 'Você testa a plataforma no seu próprio ambiente, com as suas máquinas e o seu tráfego, antes de assumir qualquer compromisso.'],
+            ['Um interlocutor, três etapas', 'A mesma equipe conduz o antes, o durante e o depois, sem transferência para outra área no meio do caminho.'],
           ]
             .map(
               ([t, d]) => `<div style="border-left:3px solid ${C.accent}; padding-left:18px;">

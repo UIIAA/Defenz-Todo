@@ -70,6 +70,52 @@ export const PROVAS: Prova[] = [
     origem: 'independente',
   },
   {
+    id: 'avcomparatives-protecao-2025b',
+    texto:
+      'O mesmo patamar se repetiu no ciclo seguinte: 99,8% de proteção contra ameaças reais, com 2 falsos alarmes.',
+    fonte: 'AV-Comparatives · Business Security Test, agosto a novembro',
+    ano: 2025,
+    origem: 'independente',
+  },
+  {
+    id: 'avcomparatives-malware-2025',
+    texto:
+      '99,9% de proteção no teste de malware, com zero falsos alarmes em software corporativo de uso comum.',
+    fonte: 'AV-Comparatives · Business Security Test, agosto a novembro',
+    ano: 2025,
+    origem: 'independente',
+  },
+  {
+    id: 'avcomparatives-epr-2025',
+    texto:
+      'Certificação EPR: preveniu os 50 cenários de ataque da primeira fase do teste e alcançou 99,3% de detecção na fase seguinte.',
+    fonte: 'AV-Comparatives · Endpoint Prevention and Response Test',
+    ano: 2025,
+    origem: 'independente',
+  },
+  {
+    id: 'best-protection-6x',
+    texto: 'Seis vezes vencedora do prêmio Best Protection.',
+    fonte: 'AV-TEST · via material de parceiro Bitdefender',
+    ano: 2026,
+    origem: 'fabricante',
+  },
+  {
+    id: 'ferrari',
+    texto: 'Parceira oficial de cibersegurança da Scuderia Ferrari.',
+    fonte: 'Material de parceiro Bitdefender',
+    ano: 2026,
+    origem: 'fabricante',
+  },
+  {
+    id: 'decryptors',
+    texto:
+      'Disponibiliza gratuitamente ferramentas de descriptografia para vítimas de ransomware, em iniciativa internacional de combate ao crime cibernético.',
+    fonte: 'Material de parceiro Bitdefender',
+    ano: 2026,
+    origem: 'fabricante',
+  },
+  {
     id: 'gartner-mq-2025',
     texto: 'Reconhecida como Visionária no Magic Quadrant de Plataformas de Proteção de Endpoint.',
     fonte: 'Gartner · via material de parceiro Bitdefender',

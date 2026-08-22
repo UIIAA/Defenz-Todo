@@ -903,3 +903,32 @@ O +15% de 21/08 ficou "grosseiro" na leitura dele. Recuado para **~+6%** sobre o
 entrelinha de 1,9 para 1,75, e o `space-evenly` — que abria vãos mecânicos entre blocos —
 trocado por respiro fixo. A página do setor manteve a distribuição, porque lá ele pediu
 **mais** respiro entre os campos.
+
+
+### D.5 As páginas ganharam corpo (22/08, segunda rodada)
+
+| Página | Era | Virou |
+|---|---|---|
+| 04 · Reconhecimento de mercado | 3 itens | **6** — entram Best Protection 6×, a parceria com a Scuderia Ferrari e as ferramentas gratuitas de descriptografia para vítimas de ransomware |
+| 05 · Quem é a Defenz | 3 blocos | **5**, mais um segundo parágrafo de abertura. Novos: *Avaliação antes da decisão* e *Um interlocutor, três etapas* |
+| 08 · Testes independentes | 3 resultados | **6** — todos buscados na fonte primária antes de entrar |
+
+**Os três resultados novos da página 08**, com procedência:
+
+| Resultado | Fonte |
+|---|---|
+| 99,8% de proteção real repetido no ciclo seguinte, com 2 falsos alarmes | AV-Comparatives · Business Security Test, ago–nov/2025 |
+| 99,9% no teste de malware, com **zero** falsos alarmes em software corporativo comum | AV-Comparatives · idem |
+| Certificação EPR: preveniu os 50 cenários de ataque da primeira fase; 99,3% de detecção na fase seguinte | AV-Comparatives · Endpoint Prevention and Response Test 2025 |
+
+⚠️ **Dois dados fortes ficaram DE FORA de propósito**, e a decisão é do Marcos se entram:
+
+1. **"Único fabricante a prevenir todos os 50 cenários"** — é o que o anúncio diz, e é
+   verdade no teste. Mas "único" é comparação com os outros participantes, e A15 tirou
+   comparação do documento. Ficou a versão factual: *"preveniu os 50 cenários"*.
+2. **"Custo total de propriedade 9,8× menor que a média dos demais fabricantes"** — número
+   do mesmo teste, e comercialmente forte. É **comparação direta com concorrentes**, ainda
+   que sem nomear. Fora, pela mesma regra.
+
+Se ele quiser qualquer um dos dois, é uma linha em `institucional-fatos.ts` — mas aí a
+regra A15 passa a ter exceção declarada, e isso precisa estar escrito.
