@@ -81,7 +81,7 @@ describe('o documento se adequa ao nicho', () => {
   })
 
   it('destaca o nível recomendado, e só ele', () => {
-    const html = renderApresentacaoHtml(doc({ nivelDestaque: recomendarNivel(['XEDR']) }))
+    const html = renderApresentacaoHtml(doc({ nivelDestaque: recomendarNivel(['XDR_SENSORES']) }))
     expect(html).toContain('recomendado')
     expect((html.match(/recomendado/g) ?? []).length).toBe(1)
   })

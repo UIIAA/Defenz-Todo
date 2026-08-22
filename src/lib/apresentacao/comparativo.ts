@@ -4,6 +4,12 @@
  * Fonte: `defenz_gravityzone_comparativo.pdf` · Defenz Cybersecurity · lido em
  * 20/08/2026 em ADMINISTRATIVO/ESTRATEGICO_VENDAS/APRESENTAÇÕES/APRESENTAÇÃO_TÉCNICA.
  *
+ * ⚠️ DESVIO DELIBERADO DO PDF (22/08). O documento transcrito traz uma única linha
+ * "XEDR", disponível só no Enterprise. O Marcos corrigiu: **o Premium já tem uma camada
+ * de EDR**, e o que o Enterprise acrescenta é **XDR com sensores adicionais**. Quem
+ * conhece o licenciamento é ele, não o PDF — que nesse ponto está defasado. Se o
+ * comparativo for reemitido pela Defenz, é essa linha que precisa mudar lá também.
+ *
  * ⚠️ Este arquivo é a ÚNICA fonte do que o produto faz. A IA da apresentação não
  * descreve solução: ela ESCOLHE um `FuncionalidadeId` desta lista (spec §6.3), e o
  * texto que vai ao PDF sai daqui, renderizado por código. É o "LLM interpreta, JS
@@ -34,7 +40,8 @@ export const FUNCIONALIDADES = [
   'ATAQUE_SEM_ARQUIVO',
   'HYPERDETECT',
   'ANALISADOR_SANDBOX',
-  'XEDR',
+  'EDR',
+  'XDR_SENSORES',
 ] as const
 export type FuncionalidadeId = (typeof FUNCIONALIDADES)[number]
 
@@ -126,10 +133,17 @@ export const COMPARATIVO: Funcionalidade[] = [
     aPartirDe: 'PREMIUM',
   },
   {
-    id: 'XEDR',
-    nome: 'XEDR · Extended Endpoint Detection and Response',
+    id: 'EDR',
+    nome: 'EDR · Detecção e resposta no endpoint',
     descricao:
-      'Correlaciona eventos de dispositivos de toda a rede para identificar ameaças avançadas e ataques em andamento. Oferece mapa interativo de incidentes, ações de remediação e integração com Sandbox e HyperDetect, estendendo a análise para além de um único endpoint.',
+      'Registra e correlaciona o que acontece dentro do endpoint para identificar ataques em andamento, com visualização do incidente e ações de resposta. É o que permite entender COMO o ataque entrou, e não apenas que ele foi bloqueado.',
+    aPartirDe: 'PREMIUM',
+  },
+  {
+    id: 'XDR_SENSORES',
+    nome: 'XDR + sensores adicionais',
+    descricao:
+      'Estende a detecção para além do endpoint, correlacionando sinais de sensores adicionais em uma única investigação. Um mesmo incidente passa a ser visto de vários ângulos ao mesmo tempo, o que encurta o tempo entre detectar e conter.',
     aPartirDe: 'ENTERPRISE',
   },
 ]

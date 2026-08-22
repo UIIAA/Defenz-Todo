@@ -89,7 +89,7 @@ function logo(alturaPx: number): string {
 function cabecalho(doc: ApresentacaoDocumento): string {
   return `
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div style="font-size:12.6px; color:${C.faint}; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; line-height:1.8;">${escapeHtml(doc.empresaNome)} · Bitdefender GravityZone com a Defenz</div>
+        <div style="font-size:11.6px; color:${C.faint}; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; line-height:1.8;">${escapeHtml(doc.empresaNome)} · Bitdefender GravityZone com a Defenz</div>
         ${logo(20)}
       </div>`
 }
@@ -98,18 +98,18 @@ function rodape(pagina: number, total: number, ano: number, margemTopo = 'auto')
   return `
       <div style="margin-top:${margemTopo}; padding-top:20px; display:flex; justify-content:space-between; align-items:flex-end;">
         ${logo(22)}
-        <div style="text-align:right; font-size:12.6px; color:${C.faint}; font-weight:600; line-height:1.7;"><div>Página ${pad2(pagina)} de ${pad2(total)}</div><div>© Defenz Cybersecurity ${ano} · Confidencial</div></div>
+        <div style="text-align:right; font-size:11.6px; color:${C.faint}; font-weight:600; line-height:1.7;"><div>Página ${pad2(pagina)} de ${pad2(total)}</div><div>© Defenz Cybersecurity ${ano} · Confidencial</div></div>
       </div>`
 }
 
 function tituloSecao(numero: string, texto: string): string {
   return `
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:22px;"></div>
-        <h2 style="font-size:43.7px; font-weight:800; letter-spacing:-0.02em; margin:0 0 22px; line-height:1.1;"><span style="color:${C.accent};">${numero}</span>&nbsp;&nbsp;${texto}</h2>`
+        <h2 style="font-size:40.2px; font-weight:800; letter-spacing:-0.02em; margin:0 0 22px; line-height:1.1;"><span style="color:${C.accent};">${numero}</span>&nbsp;&nbsp;${texto}</h2>`
 }
 
 function linhaFonte(texto: string): string {
-  return `<div style="font-size:12.6px; color:${C.faint}; font-weight:600; margin-top:6px;">${texto}</div>`
+  return `<div style="font-size:11.6px; color:${C.faint}; font-weight:600; margin-top:6px;">${texto}</div>`
 }
 
 /** Cartão de dado: o número grande, a frase, e a fonte embaixo. */
@@ -117,8 +117,8 @@ function cartaoFato(f: FatoMercado): string {
   const ano = f.ano === 'lei' ? '' : ` · ${f.ano}`
   return `
           <div style="border-left:3px solid ${C.accent}; padding:2px 0 2px 18px;">
-            <div style="font-size:29.9px; font-weight:800; letter-spacing:-0.02em; color:${C.accent}; line-height:1.2;">${escapeHtml(f.valor)}</div>
-            <p style="font-size:16.1px; line-height:1.6; color:${C.body}; margin:4px 0 0;">${escapeHtml(f.texto)}</p>
+            <div style="font-size:27.5px; font-weight:800; letter-spacing:-0.02em; color:${C.accent}; line-height:1.2;">${escapeHtml(f.valor)}</div>
+            <p style="font-size:14.8px; line-height:1.6; color:${C.body}; margin:4px 0 0;">${escapeHtml(f.texto)}</p>
             ${linhaFonte(`${escapeHtml(f.fonte)}${ano}`)}
           </div>`
 }
@@ -127,16 +127,16 @@ function cartaoFato(f: FatoMercado): string {
 function tabelaNiveis(destaque: NivelId): string {
   const th = (n: NivelId) => {
     const on = n === destaque
-    return `<th style="padding:10px 8px; text-align:center; font-size:13.8px; font-weight:800; ${on ? `color:${C.accent};` : `color:${C.muted};`}">${NIVEL_NOME[n].replace('Business Security', 'BS')}${on ? '<div style="font-size:10.9px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">recomendado</div>' : ''}</th>`
+    return `<th style="padding:10px 8px; text-align:center; font-size:12.7px; font-weight:800; ${on ? `color:${C.accent};` : `color:${C.muted};`}">${NIVEL_NOME[n].replace('Business Security', 'BS')}${on ? '<div style="font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">recomendado</div>' : ''}</th>`
   }
   const linhas = COMPARATIVO.map(
     (f, i) => `
               <tr style="background:${i % 2 ? C.surface : 'transparent'};">
-                <td style="padding:7px 10px; font-size:14.4px; color:${C.body}; font-weight:600;">${escapeHtml(f.nome.split(' · ')[0])}</td>
+                <td style="padding:7px 10px; font-size:13.2px; color:${C.body}; font-weight:600;">${escapeHtml(f.nome.split(' · ')[0])}</td>
                 ${NIVEIS.map((n) => {
                   const tem = disponivelEm(f.id, n)
                   const on = n === destaque
-                  return `<td style="padding:7px 8px; text-align:center; font-size:16.1px; font-weight:800; color:${tem ? (on ? C.accent : C.ink) : C.faint};">${tem ? '&#10003;' : '&mdash;'}</td>`
+                  return `<td style="padding:7px 8px; text-align:center; font-size:14.8px; font-weight:800; color:${tem ? (on ? C.accent : C.ink) : C.faint};">${tem ? '&#10003;' : '&mdash;'}</td>`
                 }).join('')}
               </tr>`
   ).join('')
@@ -144,7 +144,7 @@ function tabelaNiveis(destaque: NivelId): string {
   return `
           <table style="width:100%; border-collapse:collapse;">
             <thead><tr style="border-bottom:2px solid ${C.ink};">
-              <th style="padding:10px; text-align:left; font-size:13.8px; font-weight:800; color:${C.muted};">Recurso</th>
+              <th style="padding:10px; text-align:left; font-size:12.7px; font-weight:800; color:${C.muted};">Recurso</th>
               ${NIVEIS.map(th).join('')}
             </tr></thead>
             <tbody>${linhas}</tbody>
@@ -153,26 +153,27 @@ function tabelaNiveis(destaque: NivelId): string {
 
 const FAQ = [
   {
-    p: 'Onde fica a sede da Bitdefender?',
-    r: `A sede global fica em ${BITDEFENDER.sedeGlobal}, e há sede nos Estados Unidos em ${BITDEFENDER.sedeEUA}. A empresa foi fundada em ${BITDEFENDER.fundacao} e está presente em ${BITDEFENDER.paises} países.`,
+    p: 'Onde ficam a sede e a infraestrutura?',
+    r: `A sede global fica em ${BITDEFENDER.sedeGlobal}, com sede nos Estados Unidos em ${BITDEFENDER.sedeEUA} e infraestrutura principal no Texas e na Europa. Mais do que endereço, isso é cobertura de fuso: com equipes distribuídas por continentes diferentes, sempre há gente acordada olhando o ambiente. É o que sustenta operação 24 horas por dia, sete dias por semana, sem depender de plantão de uma única região.`,
   },
   {
-    p: 'Nunca ouvi falar. É uma marca conhecida?',
-    r: 'É uma das maiores fabricantes de segurança do mundo, e a tecnologia dela roda dentro de produtos de outras marcas que você provavelmente já usa. Nos testes independentes citados neste documento, ela aparece entre os melhores resultados do setor há anos.',
+    p: 'Nunca ouvi falar da marca. Ela é conhecida?',
+    r: `É uma das maiores fabricantes de segurança do mundo, com ${BITDEFENDER.dispositivos} de dispositivos protegidos, e a tecnologia dela é licenciada para outras fabricantes — ou seja, roda dentro de produtos vendidos sob outras marcas. Nos testes independentes citados neste documento ela aparece entre os melhores resultados do setor, ano após ano.`,
   },
   {
-    p: 'Por que não basta a proteção que já vem no sistema operacional?',
-    r: 'Porque a diferença aparece no que passa e no que atrapalha. Nos testes independentes deste documento, a solução bloqueou 99,8% das ameaças reais gerando um único falso alarme no período inteiro — e alerta falso custa hora de equipe, que é o recurso mais escasso de qualquer TI.',
+    p: 'A proteção que já vem no sistema operacional não resolve?',
+    r: 'São produtos de categorias diferentes, e por isso não se comparam diretamente. O que vem embutido no sistema é uma camada de antivírus de linha de base, pensada para o computador isolado. O GravityZone é uma plataforma de gestão: prevenção em camadas, análise de risco, controle de dispositivos, detecção e resposta, tudo em uma console única com política aplicada a todo o parque. Uma responde "esse arquivo é malicioso?"; a outra responde "o que está acontecendo na minha operação, e o que eu faço agora?".',
   },
   {
-    p: 'Vocês atendem órgãos públicos?',
-    r: 'Sim. A plataforma é implementada em órgãos públicos brasileiros que passaram por processo licitatório, com termos de referência exigentes.',
+    p: 'Como funciona o licenciamento?',
+    r: 'Por dispositivo e por período contratado, em três níveis. Todos partem da mesma base de proteção; o que muda é a profundidade da detecção avançada e a capacidade de investigar um ataque em andamento. O dimensionamento é feito com você, e é comum começar por um nível e evoluir depois.',
   },
   {
-    p: 'Quem me atende depois da venda?',
-    r: 'A Defenz, direto. Sem intermediário, sem fila internacional e sem barreira de idioma: quem implanta é quem atende.',
+    p: 'Quem me atende?',
+    r: 'A Defenz, do começo ao fim: antes, durante e depois. Antes, no dimensionamento e na prova de conceito no seu próprio ambiente. Durante, na implantação, na migração da ferramenta atual e na configuração das políticas. Depois, no suporte do dia a dia, nos ajustes e na renovação. É a mesma equipe nas três etapas, sem intermediário e sem transferência para uma fila internacional.',
   },
 ]
+
 
 export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
   const empresa = escapeHtml(doc.empresaNome)
@@ -187,9 +188,9 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
   secoes.push({
     titulo: 'Quem é a Bitdefender',
     corpo: (n) => `${tituloSecao(n, 'Quem é a Bitdefender')}
-        <p style="font-size:18px; line-height:1.9; color:${C.body}; margin:0 0 26px; max-width:630px; text-align:justify;">Uma fabricante global de cibersegurança fundada em ${BITDEFENDER.fundacao}, com origem que remonta a ${BITDEFENDER.origem}. Hoje protege <strong>${BITDEFENDER.dispositivos} de dispositivos</strong> ao redor do mundo, em ${BITDEFENDER.paises} países, com cerca de ${BITDEFENDER.especialistas} especialistas dedicados a pesquisa, engenharia e resposta a ameaças.</p>
-        <p style="font-size:18px; line-height:1.9; color:${C.body}; margin:0 0 32px; max-width:630px; text-align:justify;">Escala importa em segurança por um motivo prático: quanto mais dispositivos uma fabricante protege, mais cedo ela vê uma ameaça nova aparecer — e mais rápido a proteção chega a todos os outros.</p>
-        <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:22px 30px; align-content:space-evenly; max-width:640px;">
+        <p style="font-size:16.6px; line-height:1.75; color:${C.body}; margin:0 0 26px; max-width:630px; text-align:justify;">Uma fabricante global de cibersegurança fundada em ${BITDEFENDER.fundacao}, com origem que remonta a ${BITDEFENDER.origem}. Hoje protege <strong>${BITDEFENDER.dispositivos} de dispositivos</strong> ao redor do mundo, em ${BITDEFENDER.paises} países, com cerca de ${BITDEFENDER.especialistas} especialistas dedicados a pesquisa, engenharia e resposta a ameaças.</p>
+        <p style="font-size:16.6px; line-height:1.75; color:${C.body}; margin:0 0 32px; max-width:630px; text-align:justify;">Escala importa em segurança por um motivo prático: quanto mais dispositivos uma fabricante protege, mais cedo ela vê uma ameaça nova aparecer — e mais rápido a proteção chega a todos os outros.</p>
+        <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:26px 34px; align-content:start; max-width:640px;">
           ${[
             ['Dispositivos protegidos', `${BITDEFENDER.dispositivos} no mundo`],
             ['Presença', `${BITDEFENDER.paises} países`],
@@ -200,29 +201,29 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
           ]
             .map(
               ([k, v]) => `<div style="border-top:1px solid ${C.line}; padding-top:10px;">
-            <div style="font-size:12.1px; letter-spacing:0.1em; text-transform:uppercase; color:${C.accent}; font-weight:800;">${k}</div>
-            <div style="font-size:17.2px; font-weight:700; color:${C.ink}; margin-top:3px;">${v}</div>
+            <div style="font-size:11.1px; letter-spacing:0.1em; text-transform:uppercase; color:${C.accent}; font-weight:800;">${k}</div>
+            <div style="font-size:15.8px; font-weight:700; color:${C.ink}; margin-top:3px;">${v}</div>
           </div>`
             )
             .join('\n          ')}
         </div>
         <div style="margin-top:auto; padding-top:30px;">
           <div style="border-left:3px solid ${C.accent}; padding-left:22px;">
-            <p style="font-size:17px; line-height:1.75; color:${C.body}; margin:0;">A tecnologia da Bitdefender é licenciada por outras fabricantes de segurança e opera dentro de produtos de terceiros. É provável que ela já esteja protegendo algo no seu ambiente, sob outra marca.</p>
+            <p style="font-size:15.6px; line-height:1.75; color:${C.body}; margin:0;">A tecnologia da Bitdefender é licenciada por outras fabricantes de segurança e opera dentro de produtos de terceiros. É provável que ela já esteja protegendo algo no seu ambiente, sob outra marca.</p>
           </div>
         </div>`,
   })
 
   secoes.push({
-    titulo: 'A quem ela já responde',
-    corpo: (n) => `${tituloSecao(n, 'A quem ela já responde')}
-        <p style="font-size:17.8px; line-height:1.8; color:${C.body}; margin:0 0 24px; max-width:620px; text-align:justify;">Uma marca que você não conhece precisa ser verificável. Abaixo está o que instituições independentes e organismos públicos dizem, com a fonte e o ano de cada afirmação.</p>
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:space-evenly; max-width:640px;">
-          ${PROVAS.map(
+    titulo: 'Reconhecimento de mercado',
+    corpo: (n) => `${tituloSecao(n, 'Reconhecimento de mercado')}
+        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 24px; max-width:620px; text-align:justify;">Uma marca que você ainda não conhece precisa ser verificável. Abaixo está como analistas de mercado e instituições públicas se posicionam sobre a fabricante, com a fonte e o ano de cada afirmação. Os resultados de laboratório vêm adiante, em página própria.</p>
+        <div style="flex:1; display:flex; flex-direction:column; gap:22px; max-width:640px;">
+          ${PROVAS.filter((p) => p.origem === 'fabricante').map(
             (p) => `<div style="display:flex; gap:14px; align-items:flex-start;">
             <span style="flex-shrink:0; margin-top:5px; width:9px; height:9px; border-radius:50%; background:${p.origem === 'independente' ? C.accent : C.faint};"></span>
             <div>
-              <p style="font-size:16.7px; line-height:1.6; color:${C.body}; margin:0; font-weight:600;">${escapeHtml(p.texto)}</p>
+              <p style="font-size:15.4px; line-height:1.6; color:${C.body}; margin:0; font-weight:600;">${escapeHtml(p.texto)}</p>
               ${linhaFonte(`${escapeHtml(p.fonte)} · ${p.ano}${p.origem === 'fabricante' ? ' · dado do fabricante' : ''}`)}
             </div>
           </div>`
@@ -233,8 +234,8 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
   secoes.push({
     titulo: 'Quem é a Defenz',
     corpo: (n) => `${tituloSecao(n, 'Quem é a Defenz')}
-        <p style="font-size:17.8px; line-height:1.8; color:${C.body}; margin:0 0 26px; max-width:620px; text-align:justify;">A Defenz é a operação brasileira que implanta, opera e sustenta a plataforma. A tecnologia é global; quem atende é local, e é a mesma equipe do começo ao fim.</p>
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:space-evenly; max-width:620px;">
+        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 26px; max-width:620px; text-align:justify;">A Defenz é a operação brasileira que implanta, opera e sustenta a plataforma. A tecnologia é global; quem atende é local, e é a mesma equipe do começo ao fim.</p>
+        <div style="flex:1; display:flex; flex-direction:column; gap:26px; max-width:620px;">
           ${[
             ['Especialistas certificados', 'A equipe tem o mais alto nível de certificação técnica na plataforma.'],
             ['Implementação e suporte no Brasil', 'Agilidade na resposta, entendimento do contexto local e atendimento direto, sem intermediários nem barreira de idioma.'],
@@ -242,22 +243,22 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
           ]
             .map(
               ([t, d]) => `<div style="border-left:3px solid ${C.accent}; padding-left:18px;">
-            <div style="font-size:19.5px; font-weight:800; letter-spacing:-0.01em;">${t}</div>
-            <p style="font-size:16.7px; line-height:1.65; color:${C.muted}; margin:4px 0 0;">${d}</p>
+            <div style="font-size:17.9px; font-weight:800; letter-spacing:-0.01em;">${t}</div>
+            <p style="font-size:15.4px; line-height:1.65; color:${C.muted}; margin:4px 0 0;">${d}</p>
           </div>`
             )
             .join('\n          ')}
         </div>
         <div style="margin-top:auto; border-top:1px solid ${C.line}; padding-top:18px;">
-          <p style="font-size:17.2px; line-height:1.7; color:${C.body}; margin:0; font-style:italic;">Seu pós-venda é com a gente. Direto, eficiente, resolutivo.</p>
+          <p style="font-size:15.8px; line-height:1.7; color:${C.body}; margin:0; font-style:italic;">Seu pós-venda é com a gente. Direto, eficiente, resolutivo.</p>
         </div>`,
   })
 
   secoes.push({
     titulo: setor ? `O que está acontecendo em ${setor}` : 'O que está acontecendo',
     corpo: (n) => `${tituloSecao(n, setor ? `O que está acontecendo em ${setor}` : 'O que está acontecendo')}
-        <p style="font-size:17.8px; line-height:1.8; color:${C.body}; margin:0 0 26px; max-width:620px; text-align:justify;">${setor ? `Os números abaixo são do setor de ${setor} e do Brasil` : 'Os números abaixo são do Brasil'}, não do mercado global. Cada um traz a fonte e o ano — confira todos.</p>
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:space-evenly; max-width:640px;">
+        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 26px; max-width:620px; text-align:justify;">${setor ? `Os números abaixo são do setor de ${setor} e do Brasil` : 'Os números abaixo são do Brasil'}, não do mercado global. Cada um traz a fonte e o ano — confira todos.</p>
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between; max-width:640px;">
           ${fatos.map(cartaoFato).join('\n          ')}
         </div>`,
   })
@@ -266,16 +267,16 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
     secoes.push({
       titulo: 'O que já aconteceu, e o que responde por isso',
       corpo: (n) => `${tituloSecao(n, 'O que já aconteceu, e o que responde por isso')}
-        <p style="font-size:17.8px; line-height:1.8; color:${C.body}; margin:0 0 24px; max-width:620px; text-align:justify;">Casos públicos do setor. As empresas envolvidas não são identificadas de propósito: o que importa aqui é o que falhou, e o recurso que responde por aquela falha.</p>
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:space-evenly; max-width:640px;">
+        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 24px; max-width:620px; text-align:justify;">Casos públicos do setor. As empresas envolvidas não são identificadas de propósito: o que importa aqui é o que falhou, e o recurso que responde por aquela falha.</p>
+        <div style="flex:1; display:flex; flex-direction:column; gap:22px; max-width:640px;">
           ${doc.casos
             .map((c) => {
               const f = funcionalidade(c.funcionalidade)
               return `<div style="border:1px solid ${C.line}; background:${C.surface}; padding:16px 18px;">
-            <p style="font-size:16.7px; line-height:1.65; color:${C.ink}; margin:0; font-weight:700;">${escapeHtml(c.oQueAconteceu)}</p>
+            <p style="font-size:15.4px; line-height:1.65; color:${C.ink}; margin:0; font-weight:700;">${escapeHtml(c.oQueAconteceu)}</p>
             ${linhaFonte(`${escapeHtml(c.veiculo)} · ${c.ano}`)}
-            <p style="font-size:15.5px; line-height:1.6; color:${C.muted}; margin:10px 0 0;">${escapeHtml(c.necessidade)}</p>
-            <div style="margin-top:10px; padding-top:10px; border-top:1px solid ${C.line}; font-size:14.9px; color:${C.body};"><span style="color:${C.accent}; font-weight:800;">Responde por isso:</span> <strong>${escapeHtml(f.nome.split(' · ')[0])}</strong> — disponível a partir de ${NIVEL_NOME[f.aPartirDe]}.</div>
+            <p style="font-size:14.3px; line-height:1.6; color:${C.muted}; margin:10px 0 0;">${escapeHtml(c.necessidade)}</p>
+            <div style="margin-top:10px; padding-top:10px; border-top:1px solid ${C.line}; font-size:13.7px; color:${C.body};"><span style="color:${C.accent}; font-weight:800;">Responde por isso:</span> <strong>${escapeHtml(f.nome.split(' · ')[0])}</strong> — disponível a partir de ${NIVEL_NOME[f.aPartirDe]}.</div>
           </div>`
             })
             .join('\n          ')}
@@ -286,39 +287,39 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
   secoes.push({
     titulo: 'Os três níveis, e o que muda entre eles',
     corpo: (n) => `${tituloSecao(n, 'Os três níveis, e o que muda entre eles')}
-        <p style="font-size:17.8px; line-height:1.8; color:${C.body}; margin:0 0 20px; max-width:620px; text-align:justify;">Todos partem da mesma base de proteção. O que muda é a profundidade da detecção avançada e a capacidade de investigar um ataque em andamento.</p>
+        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 20px; max-width:620px; text-align:justify;">Todos partem da mesma base de proteção. O que muda é a profundidade da detecção avançada e a capacidade de investigar um ataque em andamento.</p>
         <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">${tabelaNiveis(doc.nivelDestaque)}
         </div>
-        <div style="font-size:14.4px; color:${C.faint}; font-weight:600; text-align:center; padding-top:10px;">BS = Business Security. O detalhamento técnico de cada recurso é apresentado na reunião.</div>`,
+        <div style="font-size:13.2px; color:${C.faint}; font-weight:600; text-align:center; padding-top:10px;">BS = Business Security. O detalhamento técnico de cada recurso é apresentado na reunião.</div>`,
   })
 
   secoes.push({
     titulo: 'O que dizem os testes independentes',
     corpo: (n) => `${tituloSecao(n, 'O que dizem os testes independentes')}
-        <p style="font-size:17.8px; line-height:1.8; color:${C.body}; margin:0 0 26px; max-width:620px; text-align:justify;">Segurança não se avalia por folheto. Estes são resultados de laboratórios independentes, que testam todos os fabricantes sob o mesmo protocolo e publicam o método.</p>
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:space-evenly; max-width:640px;">
+        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 26px; max-width:620px; text-align:justify;">Segurança não se avalia por folheto. Estes são resultados de laboratórios independentes, que testam todos os fabricantes sob o mesmo protocolo e publicam o método.</p>
+        <div style="flex:1; display:flex; flex-direction:column; gap:22px; max-width:640px;">
           ${PROVAS.filter((p) => p.origem === 'independente')
             .map(
               (p) => `<div style="border-left:3px solid ${C.accent}; padding-left:18px;">
-            <p style="font-size:17.8px; line-height:1.65; color:${C.ink}; margin:0; font-weight:700;">${escapeHtml(p.texto)}</p>
+            <p style="font-size:16.4px; line-height:1.65; color:${C.ink}; margin:0; font-weight:700;">${escapeHtml(p.texto)}</p>
             ${linhaFonte(`${escapeHtml(p.fonte)} · ${p.ano}`)}
           </div>`
             )
             .join('\n          ')}
         </div>
         <div style="margin-top:auto; border-top:1px solid ${C.line}; padding-top:18px; max-width:620px;">
-          <p style="font-size:16.1px; line-height:1.7; color:${C.muted}; margin:0;">Um único falso alarme em todo o período de teste é um número operacional, não de marketing: alerta falso consome hora de equipe, e hora de equipe é o recurso mais escasso de qualquer TI.</p>
+          <p style="font-size:14.8px; line-height:1.7; color:${C.muted}; margin:0;">Um único falso alarme em todo o período de teste é um número operacional, não de marketing: alerta falso consome hora de equipe, e hora de equipe é o recurso mais escasso de qualquer TI.</p>
         </div>`,
   })
 
   secoes.push({
-    titulo: 'Perguntas que todo mundo faz',
-    corpo: (n) => `${tituloSecao(n, 'Perguntas que todo mundo faz')}
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:space-evenly; max-width:640px; margin-top:4px;">
+    titulo: 'Perguntas frequentes',
+    corpo: (n) => `${tituloSecao(n, 'Perguntas frequentes')}
+        <div style="flex:1; display:flex; flex-direction:column; gap:22px; max-width:640px; margin-top:4px;">
           ${FAQ.map(
             (f) => `<div>
-            <div style="font-size:17.2px; font-weight:800; color:${C.ink};">${escapeHtml(f.p)}</div>
-            <p style="font-size:16.1px; line-height:1.65; color:${C.body}; margin:5px 0 0; text-align:justify;">${escapeHtml(f.r)}</p>
+            <div style="font-size:15.8px; font-weight:800; color:${C.ink};">${escapeHtml(f.p)}</div>
+            <p style="font-size:14.8px; line-height:1.65; color:${C.body}; margin:5px 0 0; text-align:justify;">${escapeHtml(f.r)}</p>
           </div>`
           ).join('\n          ')}
         </div>`,
@@ -334,26 +335,26 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
       </div>
       <div style="margin-top:auto; margin-bottom:auto;">
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:28px;"></div>
-        <h1 style="font-size:59.8px; line-height:1.06; font-weight:800; letter-spacing:-0.03em; margin:0 0 22px;">Segurança que<br>simplifica.<br>Performance<br>que escala.</h1>
-        <p style="font-size:19.5px; line-height:1.7; color:${C.muted}; margin:0; max-width:520px;">A plataforma Bitdefender GravityZone${setor ? `, aplicada ao contexto de ${setor}` : ''}, com implantação e suporte da Defenz no Brasil.</p>
+        <h1 style="font-size:55px; line-height:1.06; font-weight:800; letter-spacing:-0.03em; margin:0 0 22px;">Segurança que<br>simplifica.<br>Performance<br>que escala.</h1>
+        <p style="font-size:17.9px; line-height:1.7; color:${C.muted}; margin:0; max-width:520px;">A plataforma Bitdefender GravityZone${setor ? `, aplicada ao contexto de ${setor}` : ''}, com implantação e suporte da Defenz no Brasil.</p>
         <div style="margin-top:54px;">
-          <div style="font-size:12.6px; letter-spacing:0.14em; text-transform:uppercase; color:${C.faint}; font-weight:800;">Preparado para</div>
-          <div style="font-size:30px; font-weight:800; letter-spacing:-0.02em; color:${C.ink}; line-height:1.2; margin-top:8px;">${empresa}</div>
+          <div style="font-size:11.6px; letter-spacing:0.14em; text-transform:uppercase; color:${C.faint}; font-weight:800;">Preparado para</div>
+          <div style="font-size:25px; font-weight:800; letter-spacing:-0.02em; color:${C.ink}; line-height:1.25; margin-top:7px;">${empresa}</div>
         </div>
-        <div style="margin-top:30px;">
-          <div style="font-size:12.6px; letter-spacing:0.14em; text-transform:uppercase; color:${C.faint}; font-weight:800;">A/C</div>
-          <div style="font-size:24px; font-weight:700; letter-spacing:-0.01em; color:${C.ink}; line-height:1.3; margin-top:8px;">${cliente}</div>
+        <div style="margin-top:22px;">
+          <div style="font-size:11.6px; letter-spacing:0.14em; text-transform:uppercase; color:${C.faint}; font-weight:800;">A/C</div>
+          <div style="font-size:22px; font-weight:700; letter-spacing:-0.01em; color:${C.ink}; line-height:1.3; margin-top:7px;">${cliente}</div>
         </div>
       </div>
       <div style="display:flex; align-items:flex-end; justify-content:space-between; padding-top:28px; border-top:1px solid ${C.line};">
         <div>
-          <div style="font-size:12.6px; letter-spacing:0.1em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:6px;">Contato comercial</div>
-          <div style="font-size:16.1px; font-weight:700;">${escapeHtml(doc.vendedor.nome)}</div>
-          <div style="font-size:14.9px; color:${C.muted};">${escapeHtml(doc.vendedor.email)} · ${escapeHtml(doc.vendedor.telefone || TELEFONE_DEFENZ)}</div>
+          <div style="font-size:11.6px; letter-spacing:0.1em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:6px;">Contato comercial</div>
+          <div style="font-size:14.8px; font-weight:700;">${escapeHtml(doc.vendedor.nome)}</div>
+          <div style="font-size:13.7px; color:${C.muted};">${escapeHtml(doc.vendedor.email)} · ${escapeHtml(doc.vendedor.telefone || TELEFONE_DEFENZ)}</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:16.1px; color:${C.ink}; font-weight:700;">${escapeHtml(doc.dataFormatada)}</div>
-          <div style="font-size:12.1px; letter-spacing:0.12em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-top:6px;">Confidencial</div>
+          <div style="font-size:14.8px; color:${C.ink}; font-weight:700;">${escapeHtml(doc.dataFormatada)}</div>
+          <div style="font-size:11.1px; letter-spacing:0.12em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-top:6px;">Confidencial</div>
         </div>
       </div>
     </div>
@@ -364,19 +365,19 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
     <div style="height:100%; padding:56px 66px 44px; display:flex; flex-direction:column;">${cabecalho(doc)}
       <div style="margin-top:52px; flex:1; display:flex; flex-direction:column;">
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:26px;"></div>
-        <h2 style="font-size:38px; font-weight:800; letter-spacing:-0.02em; margin:0 0 30px;">O que você vai ler aqui</h2>
-        <p style="font-size:18px; line-height:1.9; color:${C.body}; margin:0 0 28px; max-width:620px; text-align:justify;">Este documento foi montado para ser lido sem ninguém do lado explicando. Ele responde, nesta ordem: quem é a fabricante, o que instituições independentes dizem dela, quem é a Defenz${setor ? `, o que está acontecendo hoje em ${setor}` : ''} e o que existe dentro da plataforma.</p>
-        <p style="font-size:18px; line-height:1.9; color:${C.body}; margin:0 0 28px; max-width:620px; text-align:justify;">Todo número apresentado traz a fonte e o ano. Nada aqui é estimativa nossa: se um dado não tinha origem verificável, ele ficou de fora.</p>
+        <h2 style="font-size:35px; font-weight:800; letter-spacing:-0.02em; margin:0 0 30px;">O que você vai ler aqui</h2>
+        <p style="font-size:16.6px; line-height:1.75; color:${C.body}; margin:0 0 28px; max-width:620px; text-align:justify;">Este documento foi montado para ser lido sem ninguém do lado explicando. Ele responde, nesta ordem: quem é a fabricante, o que instituições independentes dizem dela, quem é a Defenz${setor ? `, o que está acontecendo hoje em ${setor}` : ''} e o que existe dentro da plataforma.</p>
+        <p style="font-size:16.6px; line-height:1.75; color:${C.body}; margin:0 0 28px; max-width:620px; text-align:justify;">Todo número apresentado traz a fonte e o ano. Nada aqui é estimativa nossa: se um dado não tinha origem verificável, ele ficou de fora.</p>
 
         <div style="margin-top:14px; border:1px solid ${C.line}; background:${C.surface}; padding:30px 34px; max-width:620px;">
-          <div style="font-size:13px; letter-spacing:0.14em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:20px;">Confidencialidade</div>
-          <p style="font-size:16.5px; line-height:2; color:${C.body}; margin:0 0 20px; text-align:justify;">As informações contidas neste documento são <strong>confidenciais</strong> e destinadas exclusivamente a ${empresa}.</p>
-          <p style="font-size:16.5px; line-height:2; color:${C.muted}; margin:0 0 20px; text-align:justify;">É vedada a reprodução, a distribuição ou a divulgação a terceiros, no todo ou em parte, sem autorização prévia e por escrito da Defenz Cybersecurity.</p>
-          <p style="font-size:16.5px; line-height:2; color:${C.muted}; margin:0; text-align:justify;">Ao dar seguimento à análise, o destinatário concorda em preservar o sigilo das informações aqui contidas e em utilizá-las apenas para avaliar a solução proposta.</p>
+          <div style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:20px;">Confidencialidade</div>
+          <p style="font-size:15.2px; line-height:1.85; color:${C.body}; margin:0 0 20px; text-align:justify;">As informações contidas neste documento são <strong>confidenciais</strong> e destinadas exclusivamente a ${empresa}.</p>
+          <p style="font-size:15.2px; line-height:1.85; color:${C.muted}; margin:0 0 20px; text-align:justify;">É vedada a reprodução, a distribuição ou a divulgação a terceiros, no todo ou em parte, sem autorização prévia e por escrito da Defenz Cybersecurity.</p>
+          <p style="font-size:15.2px; line-height:1.85; color:${C.muted}; margin:0; text-align:justify;">Ao dar seguimento à análise, o destinatário concorda em preservar o sigilo das informações aqui contidas e em utilizá-las apenas para avaliar a solução proposta.</p>
         </div>
 
         <div style="margin-top:auto; padding-top:34px;">
-          <div style="border-left:3px solid ${C.accent}; padding-left:22px;"><div style="font-size:25px; font-weight:800; letter-spacing:-0.01em; line-height:1.35;">Proteção não se compra por folheto.<br>Se confere.</div></div>
+          <div style="border-left:3px solid ${C.accent}; padding-left:22px;"><div style="font-size:23px; font-weight:800; letter-spacing:-0.01em; line-height:1.35;">Proteção não se compra por folheto.<br>Se confere.</div></div>
         </div>
       </div>
 ${rodape(n, total, doc.ano, '24px')}
@@ -390,24 +391,24 @@ ${rodape(n, total, doc.ano, '24px')}
       <div style="align-self:flex-start;">${logo(34)}</div>
       <div style="margin-top:auto; margin-bottom:auto;">
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:28px;"></div>
-        <h1 style="font-size:55.2px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; margin:0 0 22px;">O próximo passo<br>é uma conversa<br>de 30 minutos.</h1>
-        <p style="font-size:19px; line-height:1.7; color:#4A4740; margin:0 0 26px; max-width:540px;">Nela mostramos a plataforma funcionando, dimensionamos para o seu ambiente e, se fizer sentido, montamos uma avaliação sem custo com um grupo de máquinas suas.</p>
+        <h1 style="font-size:50.8px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; margin:0 0 22px;">O próximo passo<br>é uma conversa<br>de 30 minutos.</h1>
+        <p style="font-size:17.5px; line-height:1.7; color:#4A4740; margin:0 0 26px; max-width:540px;">Nela mostramos a plataforma funcionando, dimensionamos para o seu ambiente e, se fizer sentido, montamos uma avaliação sem custo com um grupo de máquinas suas.</p>
         <div style="display:flex; flex-direction:column; gap:10px; max-width:540px;">
           ${['Demonstração técnica da console, com o seu cenário', 'Dimensionamento e proposta comercial', 'Avaliação assistida no seu ambiente']
             .map(
               (t) =>
-                `<div style="display:flex; gap:12px; align-items:flex-start;"><span style="color:${C.accent}; font-weight:800; font-size:18.4px; line-height:1.5;">·</span><span style="font-size:17.2px; color:#3A3833; font-weight:600;">${t}</span></div>`
+                `<div style="display:flex; gap:12px; align-items:flex-start;"><span style="color:${C.accent}; font-weight:800; font-size:16.9px; line-height:1.5;">·</span><span style="font-size:15.8px; color:#3A3833; font-weight:600;">${t}</span></div>`
             )
             .join('\n          ')}
         </div>
       </div>
       <div style="display:flex; align-items:flex-end; justify-content:space-between; padding-top:30px; border-top:1px solid ${C.line};">
         <div>
-          <div style="font-size:12.6px; letter-spacing:0.1em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:6px;">Contato</div>
-          <div style="font-size:16.1px; font-weight:700;">${escapeHtml(doc.vendedor.nome)}</div>
-          <div style="font-size:14.9px; color:${C.muted};">${escapeHtml(doc.vendedor.email)} · ${escapeHtml(doc.vendedor.telefone || TELEFONE_DEFENZ)}</div>
+          <div style="font-size:11.6px; letter-spacing:0.1em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:6px;">Contato</div>
+          <div style="font-size:14.8px; font-weight:700;">${escapeHtml(doc.vendedor.nome)}</div>
+          <div style="font-size:13.7px; color:${C.muted};">${escapeHtml(doc.vendedor.email)} · ${escapeHtml(doc.vendedor.telefone || TELEFONE_DEFENZ)}</div>
         </div>
-        <div style="text-align:right; font-size:13.8px; color:${C.faint}; font-weight:600;">www.defenz.com.br</div>
+        <div style="text-align:right; font-size:12.7px; color:${C.faint}; font-weight:600;">www.defenz.com.br</div>
       </div>
     </div>
   </section>`

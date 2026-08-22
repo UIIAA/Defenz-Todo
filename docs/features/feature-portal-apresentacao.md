@@ -852,3 +852,54 @@ voltar vazio.
 
 **A proibição é verificada em código depois**, não confiada ao prompt. Prompt é pedido;
 `zod` + guarda de anonimato + guarda de dígitos é regra.
+
+---
+
+## Anexo D — o que o Marcos corrigiu no conteúdo (22/08)
+
+Ajustes vindos da leitura dele no documento gerado. Os de tipografia estão no código; os
+de **fato** ficam aqui porque mudam o que a Defenz afirma.
+
+### D.1 ⚠️ O Premium tem EDR — o comparativo transcrito estava defasado
+
+O `defenz_gravityzone_comparativo.pdf` traz **uma** linha, "XEDR", disponível só no
+Enterprise. O Marcos corrigiu: **o Premium já tem uma camada de EDR**, e o que o Enterprise
+acrescenta é **XDR com sensores adicionais**.
+
+A tabela passou de 12 para **13 linhas**, e o `aPartirDe` mudou de acordo. É o primeiro
+desvio deliberado da transcrição, e está anotado no topo do `comparativo.ts`.
+
+⚠️ **Consequência fora daqui:** o PDF do comparativo que a Defenz usa na reunião técnica
+**continua com a informação antiga**. Se a apresentação diz uma coisa e o comparativo diz
+outra, o cliente atento vê. Vale corrigir o documento de origem.
+
+### D.2 ⚠️ Infraestrutura no Texas e na Europa — declarado, não verificado
+
+A pergunta sobre sedes passou a citar **infraestrutura principal no Texas e na Europa**,
+além das sedes de Bucareste e Santa Clara, e a usar isso para sustentar cobertura 24×7 por
+fuso.
+
+**A informação veio do Marcos; eu não a confirmei em fonte pública.** Fica registrado
+porque: (a) é afirmação sobre infraestrutura de terceiro num documento que vai a cliente;
+(b) para cliente de **saúde ou financeiro**, localização de dado é assunto regulatório, e
+uma pergunta de acompanhamento sobre residência de dados é provável. **Confirmar com o
+fabricante antes de emitir para cliente regulado.**
+
+### D.3 O que mudou de texto
+
+| Onde | Era | Virou |
+|---|---|---|
+| Pág. 04 · título | "A quem ela já responde" | **"Reconhecimento de mercado"** — e a página passou a mostrar **só** o reconhecimento de mercado; os resultados de laboratório ficaram na página própria, que antes duplicava |
+| Pág. 09 · título | "Perguntas que todo mundo faz" | **"Perguntas frequentes"** |
+| Pág. 09 · sedes | só Bucareste e Santa Clara | + Texas e Europa, + cobertura por fuso 24×7 (D.2) |
+| Pág. 09 · proteção nativa | não existia | pergunta nova: **não são produtos comparáveis**, são categorias diferentes — antivírus de linha de base × plataforma de gestão. **Sem nomear ninguém** (A15) |
+| Pág. 09 · licenciamento | não existia | pergunta nova |
+| Pág. 09 · atendimento | "Quem me atende depois da venda?" | **"Quem me atende?"** — a Defenz atende **antes, durante e depois**, com a mesma equipe |
+| Pág. 09 · órgão público | pergunta sobre licitações | **removida**, a pedido dele |
+
+### D.4 Tipografia
+
+O +15% de 21/08 ficou "grosseiro" na leitura dele. Recuado para **~+6%** sobre o original,
+entrelinha de 1,9 para 1,75, e o `space-evenly` — que abria vãos mecânicos entre blocos —
+trocado por respiro fixo. A página do setor manteve a distribuição, porque lá ele pediu
+**mais** respiro entre os campos.

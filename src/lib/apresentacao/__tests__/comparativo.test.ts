@@ -11,26 +11,31 @@ import { MERCADO_FATOS, fatosParaSetor, normalizarSetor } from '../mercado-fatos
 
 describe('comparativo — transcrição do PDF da Defenz', () => {
   it('tem as 12 funcionalidades, e o enum casa com a tabela', () => {
-    expect(COMPARATIVO).toHaveLength(12)
+    expect(COMPARATIVO).toHaveLength(13)
     expect(COMPARATIVO.map((f) => f.id).sort()).toEqual([...FUNCIONALIDADES].sort())
   })
 
-  it('respeita a matriz do documento: 8 no básico, 3 no Premium, 1 no Enterprise', () => {
+  it('respeita a matriz: 8 no básico, 4 no Premium, 1 no Enterprise', () => {
     const conta = (n: string) => COMPARATIVO.filter((f) => f.aPartirDe === n).length
     expect(conta('BUSINESS_SECURITY')).toBe(8)
-    expect(conta('PREMIUM')).toBe(3)
+    expect(conta('PREMIUM')).toBe(4)
     expect(conta('ENTERPRISE')).toBe(1)
-    // XEDR é o único exclusivo do Enterprise — é o que justifica o degrau
-    expect(funcionalidade('XEDR').aPartirDe).toBe('ENTERPRISE')
-    expect(disponivelEm('XEDR', 'PREMIUM')).toBe(false)
+    // ⚠️ Correção do Marcos (22/08), que desvia do PDF transcrito: o Premium JÁ tem
+    // uma camada de EDR; o que é exclusivo do Enterprise é o XDR com sensores.
+    expect(funcionalidade('EDR').aPartirDe).toBe('PREMIUM')
+    expect(disponivelEm('EDR', 'PREMIUM')).toBe(true)
+    expect(disponivelEm('EDR', 'BUSINESS_SECURITY')).toBe(false)
+    expect(funcionalidade('XDR_SENSORES').aPartirDe).toBe('ENTERPRISE')
+    expect(disponivelEm('XDR_SENSORES', 'PREMIUM')).toBe(false)
     expect(disponivelEm('ANTIMALWARE', 'BUSINESS_SECURITY')).toBe(true)
   })
 })
 
 describe('recomendarNivel', () => {
-  it('necessidade que exige XEDR sobe para Enterprise', () => {
-    expect(recomendarNivel(['XEDR'])).toBe('ENTERPRISE')
-    expect(recomendarNivel(['ANTIMALWARE', 'XEDR', 'FIREWALL'])).toBe('ENTERPRISE')
+  it('necessidade que exige XDR sobe para Enterprise; EDR para no Premium', () => {
+    expect(recomendarNivel(['XDR_SENSORES'])).toBe('ENTERPRISE')
+    expect(recomendarNivel(['ANTIMALWARE', 'XDR_SENSORES', 'FIREWALL'])).toBe('ENTERPRISE')
+    expect(recomendarNivel(['EDR'])).toBe('PREMIUM')
   })
 
   it('necessidade coberta pelo básico NÃO empurra plano', () => {
