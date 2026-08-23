@@ -230,9 +230,91 @@ passando no Zod e **virando citação falsa em documento de cliente** (crítica 
 A chamada B **não tem internet**: não pode introduzir fato novo, só reorganizar o da A.
 Fonte que não veio no `groundingMetadata` da A não existe.
 
-⚠️ **Antes de escrever a integração (R8):** confirmar na doc oficial como o SDK
-`@google/generative-ai@0.21` expõe a ferramenta de busca para o modelo em uso — é SDK
-legado. Se não expuser, chamar a REST direto. Não descobrir por tentativa e erro.
+✅ **R8 RESOLVIDO (22/08).** Confirmado na fonte e medido contra a API real — ver
+**§6.2.1**. Resumo: o SDK legado **não** expõe a ferramenta certa, o campo que ele expõe é
+**rejeitado** pelo modelo em uso, e as duas chamadas são obrigatórias por um motivo pior do
+que o que a C1 previa.
+
+### 6.2.1 ⚠️ R8 — o que o SDK expõe, medido contra a API (22/08)
+
+Três perguntas, três respostas, nenhuma por tentativa e erro. Fontes: os *typings* do
+pacote instalado, o `types.ts` do SDK novo (`googleapis/js-genai`), e **chamadas reais** à
+`generativelanguage.googleapis.com` com a chave do projeto.
+
+**1. O SDK legado não expõe a ferramenta certa, e a que ele expõe é recusada.**
+
+O `Tool` do `@google/generative-ai@0.21` é uma união de três, e nenhuma é a busca atual:
+
+```ts
+// node_modules/@google/generative-ai/dist/generative-ai.d.ts:1259
+export declare type Tool = FunctionDeclarationsTool | CodeExecutionTool | GoogleSearchRetrievalTool
+```
+
+`googleSearchRetrieval` é a forma da era Gemini 1.5. Contra o modelo que a Ana usa hoje
+(`gemini-3.6-flash`), a API responde:
+
+```
+HTTP 400 — google_search_retrieval is not supported. Please use google_search tool instead.
+```
+
+A forma atual é `tools: [{ googleSearch: {} }]` — que existe no SDK novo (`@google/genai`)
+e **não** no `Tool` do legado.
+
+**2. Dá para seguir no SDK legado, mas com dois remendos — e um deles é invisível.**
+
+O legado repassa o campo desconhecido ao corpo da requisição, então
+`tools: [{ googleSearch: {} } as any]` **funciona** (verificado: HTTP 200 com
+`groundingMetadata`). O problema está na volta: **os *typings* da resposta têm erro de
+digitação**, e o campo certo não é o que a tipagem promete.
+
+| O que os *typings* do legado declaram | O que a API devolve de verdade |
+|---|---|
+| `groundingMetadata.groundingChuncks` | `groundingChunks` |
+| `groundingMetadata.groundingSupport` | `groundingSupports` |
+| `GroundingSupport.groundingChunckIndices` | `groundingChunkIndices` |
+| `GroundingSupport.segment?: string` | objeto `{ startIndex, endIndex, text, partIndex }` |
+
+⚠️ **Por que isto é pior do que um erro de compilação:** quem programar contra a tipagem lê
+`gm.groundingChuncks` e recebe `undefined` — sem exceção, sem aviso. Cai no caminho de
+"nenhuma fonte encontrada" e o documento sai **sem citação**, ou com o `fonteIdx` apontando
+para uma lista vazia. O TypeScript aprova. Medido: `gm.groundingChuncks → undefined`,
+`gm.groundingChunks → 1 chunk`; `gm.groundingSupport → undefined`,
+`gm.groundingSupports → 3 supports`.
+
+**Decisão: migrar para `@google/genai` na F3.** O legado está fora de suporte desde
+**30/11/2025** (o repositório é hoje `google-gemini/deprecated-generative-ai-js`), a chamada
+A depende de um campo que o pacote não conhece, e a leitura da resposta depende de
+contornar quatro nomes errados. Isso é dívida com data de vencimento vencida, num caminho
+que imprime citação em documento de cliente. A Ana (`src/lib/portal/ask.ts`) fica onde está
+por ora — ela não usa grounding.
+
+**3. A premissa da C1 estava certa, mas o modo de falha é outro — e é pior.**
+
+A C1 previa índice de fonte inventado passando no Zod. O que a API faz é mais silencioso:
+
+| Requisição | Resultado medido |
+|---|---|
+| `googleSearch` + prosa | HTTP 200, `groundingMetadata` completo (`searchEntryPoint`, `groundingChunks`, `groundingSupports`, `webSearchQueries`) |
+| `googleSearch` + `responseMimeType: json` + `responseSchema` | HTTP 200, JSON perfeito e plausível — e **`groundingMetadata` simplesmente ausente** |
+| `googleSearch` + `responseMimeType: json` **sem** schema | HTTP 200 **sem candidato nenhum** — só `usageMetadata` |
+
+⚠️ **A linha do meio é a que mata.** O modelo devolve casos bem formados, com nome de
+empresa e nome de veículo, validando no Zod — e **zero** metadado de atribuição. Não há
+índice errado para o `fonteIdx` pegar: não há índice. O `veiculo` teria vindo da memória do
+modelo, não da matéria, e o documento sairia com citação que ninguém pode conferir. **Sem
+erro, sem aviso.** É a "citação falsa em documento de cliente" da C1, entrando por outra
+porta — e uma implementação ingênua embarcaria isso.
+
+**Portanto o desenho de duas chamadas do §6.2 não é preferência: é a única forma de a
+chamada A ter `groundingMetadata`.** E A13b (§6.5.1) depende disso duas vezes — precisa do
+texto bruto da A para conferir os dígitos, e das fontes da A para o `fonteIdx`.
+
+**4. Achado que ajuda o §6.1 (incidentes *recentes*).** `googleSearch` aceita
+`timeRangeFilter: { startTime, endTime }` (ISO-8601) na API Gemini — verificado, HTTP 200
+com grounding. Serve para prender a chamada A à janela de recência em vez de pedir isso em
+prosa no prompt. Vale como recomendação, não como obrigação.
+
+---
 
 ### 6.3 Contrato de saída da chamada B (Zod)
 
@@ -482,6 +564,39 @@ teste mais favorável é legítimo — todo fabricante faz, e a citação declar
 | "Premiado como Approved Business Product" | "Melhor que o antivírus nativo" |
 
 Afirma-se **o resultado**, com a fonte. A comparação o leitor faz sozinho, com a régua dele.
+
+#### 7.3.2-bis ⚠️ A exceção declarada da A15 (Marcos, 22/08)
+
+> *"Pode manter o único fabricante, e o TCO."*
+
+Duas frases passam a **comparar** — com o conjunto de fabricantes avaliados, sem nomear
+nenhum. A A15 continua de pé para todo o resto; isto é exceção, e por isso está escrita.
+
+**Fui ao relatório primário antes de escrever qualquer uma das duas, e ele derrubou a
+redação do anúncio nos dois casos.** Fonte: `avc_epr_2025.pdf`, o comparativo público do
+AV-Comparatives (37 páginas, tabelas em imagem — não sai por extração de texto).
+
+| O que o anúncio diz | O que o relatório mostra | O que foi ao papel |
+|---|---|---|
+| "Único fabricante a prevenir todos os 50 cenários" | **Falso como está escrito.** Na p. 22, os **12** produtos previnem 50/50 no acumulado das três fases. O que é exclusivo do Bitdefender é a **primeira fase**: 100% de resposta ativa na coluna *Phase 1 Only*, contra 98% do segundo colocado | "único dos 12 produtos avaliados a bloquear os 50 cenários **logo na primeira fase**" |
+| "TCO 9,8× menor que a média dos demais" | A p. 14 dá o TCO de 5 anos por estação: Bitdefender **US$ 210**, média dos outros 11 **US$ 2.042** → **9,7×**. (Com os 12 na média dá 9,0×. Não achei aritmética que feche 9,8×) | "US$ 210 por estação em cinco anos, contra US$ 2.042 de média dos demais — **9,7 vezes menos**" |
+
+⚠️ **A diferença não é preciosismo.** A frase do anúncio é refutável **pelo próprio
+relatório que ela cita** — um leitor técnico abre a p. 22 e vê onze concorrentes com os
+mesmos 50/50. Seria o erro do deck herdado outra vez (§7.3.1), agora impresso.
+
+⚠️ **Uma armadilha de leitura registrada:** a p. 23 tem uma tabela *EPR Cost* onde a G Data
+(US$ 397 mil) é **mais barata** que a Bitdefender (US$ 500 mil). Ela é só o preço de lista.
+O TCO do quadrante (p. 14) soma custo de acurácia operacional, atraso de workflow e
+**economia de custo de brecha** — e aí a Bitdefender é a menor. Quem citar a p. 23 achando
+que é TCO afirma o contrário do que quer.
+
+**A exceção é estreita, e o código a mantém estreita.** `Prova.comparativoAnonimo` marca as
+duas; `COMPARACAO_VOCAB` lista o vocabulário de comparação; e o teste exige, para toda prova
+marcada: `origem: 'independente'` (anúncio do fabricante não sustenta comparação — foi o
+relatório que derrubou o anúncio), o conjunto comparado dito no texto, e nenhum concorrente
+nomeado. Prova que compare **sem** a marca quebra o build. Uma terceira exceção aparecendo
+sem decisão do Marcos também quebra.
 
 ⚠️ **Consequência que pega outra página:** o FAQ (pág. 12) herdado responde *"Quem são os
 principais concorrentes?"* nomeando Microsoft, SentinelOne e Sophos. Essa pergunta **sai**,
@@ -921,17 +1036,20 @@ trocado por respiro fixo. A página do setor manteve a distribuição, porque l�
 | 99,9% no teste de malware, com **zero** falsos alarmes em software corporativo comum | AV-Comparatives · idem |
 | Certificação EPR: preveniu os 50 cenários de ataque da primeira fase; 99,3% de detecção na fase seguinte | AV-Comparatives · Endpoint Prevention and Response Test 2025 |
 
-⚠️ **Dois dados fortes ficaram DE FORA de propósito**, e a decisão é do Marcos se entram:
+✅ **Os dois dados fortes ENTRARAM** (Marcos, 22/08: *"pode manter o único fabricante, e o
+TCO"*). A exceção declarada à A15 está escrita no **§7.3.2-bis**, com o que o relatório
+primário mudou na redação de cada um — porque nos **dois** casos a frase do anúncio não se
+sustenta como está, e uma delas é refutável pelo próprio teste que cita.
 
-1. **"Único fabricante a prevenir todos os 50 cenários"** — é o que o anúncio diz, e é
-   verdade no teste. Mas "único" é comparação com os outros participantes, e A15 tirou
-   comparação do documento. Ficou a versão factual: *"preveniu os 50 cenários"*.
-2. **"Custo total de propriedade 9,8× menor que a média dos demais fabricantes"** — número
-   do mesmo teste, e comercialmente forte. É **comparação direta com concorrentes**, ainda
-   que sem nomear. Fora, pela mesma regra.
+A página 08 passou de 6 para **7 resultados** (a prova de prevenção e a do "único" viraram
+uma frase só, para não dizer o mesmo duas vezes).
 
-Se ele quiser qualquer um dos dois, é uma linha em `institucional-fatos.ts` — mas aí a
-regra A15 passa a ter exceção declarada, e isso precisa estar escrito.
+⚠️ **E isso quase saiu cortado.** Com o 7º bloco a página passou a medir **1244px numa folha
+de 1123** — 121px a mais. Como `.page` é `overflow:hidden`, não haveria erro: o último
+resultado sumiria em silêncio, que é exatamente o modo de falha que o
+`scripts/smoke-apresentacao-html.ts` existe para pegar. Corrigido apertando a seção
+(corpo 16,4→15,4px, entrelinha 1,65→1,5, respiro 22→14px) e re-medido: as 10 páginas fecham
+sem corte, em dois setores e com razão social longa.
 
 
 ---

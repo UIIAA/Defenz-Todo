@@ -1,14 +1,28 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-08-20
+**Last updated:** 2026-08-22
 **Version:** 0.4.0
 **Branch:** main
 
 ## 🎯 RETOMAR AQUI — apresentação de soluções Bitdefender + Defenz
 
-> **21/08 · spec v3 APROVADA · F1 FEITA.** Próximo passo é a **F2**: template 16:9 +
-> render + o documento institucional saindo **sem uma linha de IA**. O teste de aceite é o
-> Marcos ler sem ninguém explicar.
+> **22/08 · F1 e F2 FEITAS. Próximo passo é a F3 — a IA da pesquisa.**
+>
+> **R8 está resolvido** (spec §6.2.1), medido contra a API e não deduzido: o SDK legado
+> **não serve** — `googleSearchRetrieval` leva **400** no `gemini-3.6-flash`, a forma certa
+> é `tools: [{ googleSearch: {} }]`, e os *typings* da resposta no legado têm quatro nomes
+> com erro de digitação que fazem a leitura devolver `undefined` **sem erro**.
+> **A F3 começa migrando para `@google/genai`.**
+>
+> ⚠️ **E as duas chamadas viraram obrigatórias por um motivo pior do que a C1 previa:**
+> `googleSearch` + `responseSchema` devolve **200, JSON perfeito e `groundingMetadata`
+> ausente** — caso plausível, com veículo, validando no Zod, e nenhuma atribuição. Não há
+> índice errado para pegar: não há índice.
+>
+> **Os dois dados fortes entraram** (único fabricante + TCO), como exceção declarada da A15,
+> **com a redação corrigida pelo relatório primário**: "único a prevenir os 50 cenários" é
+> falso como o anúncio escreve (os 12 previnem 50/50; o exclusivo é a 1ª fase), e o TCO é
+> **9,7×**, não 9,8×.
 >
 > **Duas decisões do Marcos que mudaram páginas:** (1) a pesquisa **pode acrescentar** fato
 > de mercado do nicho ao catálogo curado, sujeito à trava do A13b; (2) **nenhum concorrente

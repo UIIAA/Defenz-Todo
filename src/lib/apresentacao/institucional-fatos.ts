@@ -31,11 +31,29 @@ export type OrigemProva = 'independente' | 'fabricante'
 
 export interface Prova {
   id: string
-  /** A frase como vai ao papel. Resultado, nunca comparação. */
+  /** A frase como vai ao papel. */
   texto: string
   fonte: string
   ano: number
   origem: OrigemProva
+  /**
+   * ⚠️ EXCEÇÃO DECLARADA à A15 (Marcos, 22/08 — spec §7.3.2).
+   *
+   * A regra geral é: resultado, nunca comparação. Estas duas provas comparam
+   * o Bitdefender com o CONJUNTO de fabricantes avaliados — sem nomear nenhum,
+   * e sem "melhor do mercado". A exceção é estreita de propósito:
+   *
+   * 1. só vale para número lido na **fonte primária** (o relatório do
+   *    laboratório, não o anúncio do fabricante) — daí `origem` ter de ser
+   *    `independente`;
+   * 2. o texto tem de dizer **qual** é o conjunto comparado, para o leitor
+   *    saber o tamanho da afirmação;
+   * 3. nenhum concorrente é nomeado — isso continua proibido sem exceção.
+   *
+   * O teste em `comparativo.test.ts` aplica os três. Prova com vocabulário de
+   * comparação e sem esta marca **quebra o build**.
+   */
+  comparativoAnonimo?: true
 }
 
 /**
@@ -88,10 +106,21 @@ export const PROVAS: Prova[] = [
   {
     id: 'avcomparatives-epr-2025',
     texto:
-      'Certificação EPR: preveniu os 50 cenários de ataque da primeira fase do teste e alcançou 99,3% de detecção na fase seguinte.',
-    fonte: 'AV-Comparatives · Endpoint Prevention and Response Test',
+      'Certificação EPR, e o único dos 12 produtos avaliados a bloquear os 50 cenários de ataque logo na primeira fase — antes de o invasor ganhar posição na rede.',
+    fonte: 'AV-Comparatives · Endpoint Prevention and Response Test, tabela de resposta ativa por fase',
     ano: 2025,
     origem: 'independente',
+    comparativoAnonimo: true,
+  },
+  {
+    id: 'avcomparatives-epr-tco-2025',
+    texto:
+      'Menor custo total de propriedade entre os 12 produtos avaliados: US$ 210 por estação em cinco anos, contra US$ 2.042 de média dos demais — 9,7 vezes menos.',
+    fonte:
+      'AV-Comparatives · Endpoint Prevention and Response Test, TCO de 5 anos para 5.000 estações',
+    ano: 2025,
+    origem: 'independente',
+    comparativoAnonimo: true,
   },
   {
     id: 'best-protection-6x',
@@ -170,3 +199,22 @@ export const PROIBIDO = {
     'líder absoluto',
   ],
 } as const
+
+/**
+ * Vocabulário que caracteriza COMPARAÇÃO com os demais fabricantes.
+ *
+ * Diferente de `PROIBIDO`: isto não é proibido, é **controlado**. Prova que
+ * contenha qualquer um destes precisa da marca `comparativoAnonimo` (exceção
+ * declarada da A15) — senão o teste quebra.
+ *
+ * ⚠️ A razão de existir: sem isto, a exceção que o Marcos autorizou para DUAS
+ * frases viraria licença para comparação solta entrar despercebida na próxima
+ * vez que alguém editar o catálogo. A regra fica no código, não na memória.
+ */
+export const COMPARACAO_VOCAB = [
+  'único',
+  'menor custo',
+  'média dos demais',
+  'vezes menos',
+  'entre os 12',
+] as const

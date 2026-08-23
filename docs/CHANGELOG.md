@@ -3,6 +3,22 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Added (2026-08-22 — os dois dados fortes entram, e a F3 sai do escuro)
+> **871 testes verdes**, `tsc` + `build` limpos. Nada deployado.
+
+- **"Único fabricante" e o TCO entraram na página 08** (Marcos: *"pode manter o único fabricante, e o TCO"*), como **exceção declarada à A15** — comparação com o conjunto avaliado, sem nomear ninguém. `Prova.comparativoAnonimo` + `COMPARACAO_VOCAB` + teste que exige, para toda prova marcada, fonte independente, o conjunto comparado dito no texto e nenhum concorrente nomeado. Comparação **sem** a marca quebra o build; uma terceira exceção sem decisão do Marcos também.
+- ⚠️ **Fui ao relatório primário do AV-Comparatives (`avc_epr_2025.pdf`) e ele derrubou a redação do anúncio nos DOIS casos.** (1) *"Único a prevenir todos os 50 cenários"* é **falso como está escrito** — na p. 22 os **12** produtos previnem 50/50 no acumulado; o exclusivo é a **primeira fase** (100% contra 98% do segundo). A frase do anúncio é refutável pelo próprio teste que cita. (2) O TCO é **9,7×**, não 9,8× — p. 14: US$ 210 contra US$ 2.042 de média dos outros 11. Não achei aritmética que feche 9,8.
+- ⚠️ **Armadilha registrada:** a p. 23 (*EPR Cost*) mostra a G Data **mais barata** que a Bitdefender. É preço de lista. O TCO do quadrante (p. 14) soma acurácia operacional, atraso de workflow e economia de custo de brecha — e aí a Bitdefender é a menor. Quem citar a p. 23 achando que é TCO afirma o contrário do que quer.
+- **O 7º bloco quase saiu cortado:** a página passou a 1244px numa folha de 1123. Com `overflow:hidden` não haveria erro — o último resultado sumiria calado. Pego pelo `smoke-apresentacao-html.ts`, corrigido apertando a seção, re-medido em dois setores com razão social longa: 10 páginas sem corte.
+
+### Research (2026-08-22 — R8: como o SDK do Google expõe o Google Search grounding)
+Medido contra a API real, não deduzido. Detalhe em `feature-portal-apresentacao.md` §6.2.1.
+
+- **O SDK legado não expõe a ferramenta certa.** O `Tool` do `@google/generative-ai@0.21` só tem `googleSearchRetrieval` (era Gemini 1.5). Contra `gemini-3.6-flash` a API responde **400 — `google_search_retrieval is not supported`**. A forma atual é `tools: [{ googleSearch: {} }]`, que existe só no `@google/genai`.
+- ⚠️ **Os typings da resposta no legado têm erro de digitação:** declaram `groundingChuncks`, `groundingSupport`, `groundingChunckIndices`; a API devolve `groundingChunks`, `groundingSupports`, `groundingChunkIndices`. Quem programa contra a tipagem lê `undefined` **sem exceção e sem aviso**, e o documento sai sem citação. O TypeScript aprova. → **Decisão: migrar para `@google/genai` na F3** (o legado está fora de suporte desde 30/11/2025).
+- ⚠️ **A C1 estava certa pelo motivo errado, e o real é pior.** `googleSearch` + `responseSchema` devolve **HTTP 200, JSON perfeito e `groundingMetadata` AUSENTE** — casos plausíveis, com veículo, validando no Zod, e zero atribuição. Não há índice inventado para o `fonteIdx` pegar: não há índice. (E `responseMimeType: json` sem schema devolve 200 **sem candidato nenhum**.) O desenho de duas chamadas do §6.2 não é preferência — é a única forma de a chamada A ter `groundingMetadata`.
+- **Achado útil:** `googleSearch` aceita `timeRangeFilter: { startTime, endTime }` na API Gemini — prende a chamada A à janela de recência sem pedir isso em prosa.
+
 ### Fixed (2026-08-20 — a proposta em produção: o PDF que não gerava e três defeitos visuais)
 > **830 testes verdes**, `tsc` + `build` limpos. Tudo em produção; smoke pós-deploy verde.
 

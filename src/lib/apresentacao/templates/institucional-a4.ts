@@ -299,19 +299,19 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
   secoes.push({
     titulo: 'O que dizem os testes independentes',
     corpo: (n) => `${tituloSecao(n, 'O que dizem os testes independentes')}
-        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 26px; max-width:620px; text-align:justify;">Segurança não se avalia por folheto. Estes são resultados de laboratórios independentes, que testam todos os fabricantes sob o mesmo protocolo e publicam o método.</p>
-        <div style="flex:1; display:flex; flex-direction:column; gap:22px; max-width:640px;">
+        <p style="font-size:15.6px; line-height:1.7; color:${C.body}; margin:0 0 18px; max-width:620px; text-align:justify;">Segurança não se avalia por folheto. Estes são resultados de laboratórios independentes, que testam todos os fabricantes sob o mesmo protocolo e publicam o método.</p>
+        <div style="flex:1; display:flex; flex-direction:column; gap:14px; max-width:640px;">
           ${PROVAS.filter((p) => p.origem === 'independente')
             .map(
-              (p) => `<div style="border-left:3px solid ${C.accent}; padding-left:18px;">
-            <p style="font-size:16.4px; line-height:1.65; color:${C.ink}; margin:0; font-weight:700;">${escapeHtml(p.texto)}</p>
+              (p) => `<div style="border-left:3px solid ${C.accent}; padding-left:16px;">
+            <p style="font-size:15.4px; line-height:1.5; color:${C.ink}; margin:0; font-weight:700;">${escapeHtml(p.texto)}</p>
             ${linhaFonte(`${escapeHtml(p.fonte)} · ${p.ano}`)}
           </div>`
             )
             .join('\n          ')}
         </div>
-        <div style="margin-top:auto; border-top:1px solid ${C.line}; padding-top:18px; max-width:620px;">
-          <p style="font-size:14.8px; line-height:1.7; color:${C.muted}; margin:0;">Um único falso alarme em todo o período de teste é um número operacional, não de marketing: alerta falso consome hora de equipe, e hora de equipe é o recurso mais escasso de qualquer TI.</p>
+        <div style="margin-top:auto; border-top:1px solid ${C.line}; padding-top:14px; max-width:620px;">
+          <p style="font-size:14.2px; line-height:1.6; color:${C.muted}; margin:0;">Um falso alarme é número operacional, não de marketing: alerta falso consome hora de equipe — o recurso mais escasso de qualquer TI.</p>
         </div>`,
   })
 

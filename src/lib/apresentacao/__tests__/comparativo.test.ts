@@ -6,7 +6,7 @@ import {
   disponivelEm,
   funcionalidade,
 } from '../comparativo'
-import { PROVAS, PROIBIDO, BITDEFENDER } from '../institucional-fatos'
+import { PROVAS, PROIBIDO, BITDEFENDER, COMPARACAO_VOCAB } from '../institucional-fatos'
 import { MERCADO_FATOS, fatosParaSetor, normalizarSetor } from '../mercado-fatos'
 
 describe('comparativo — transcrição do PDF da Defenz', () => {
@@ -110,6 +110,41 @@ describe('A15 — o texto fixo não cita concorrente nem afirma superlativo', ()
     for (const frase of PROIBIDO.superlativos) {
       const achou = textos.filter((t) => t.toLowerCase().includes(frase.toLowerCase()))
       expect(achou, `"${frase}" apareceu em: ${achou.join(' | ')}`).toHaveLength(0)
+    }
+  })
+
+  it('comparação com os demais fabricantes só existe marcada como exceção declarada', () => {
+    // Marcos, 22/08: "pode manter o único fabricante, e o TCO". A A15 passa a
+    // ter exceção — e a exceção é ESTREITA. Prova que compara sem se declarar
+    // quebra aqui, que é o único lugar onde alguém vai reparar.
+    for (const p of PROVAS) {
+      const comparaEm = COMPARACAO_VOCAB.filter((v) => p.texto.toLowerCase().includes(v))
+      if (comparaEm.length > 0) {
+        expect(
+          p.comparativoAnonimo,
+          `"${p.id}" compara (${comparaEm.join(', ')}) sem a marca comparativoAnonimo`
+        ).toBe(true)
+      }
+    }
+  })
+
+  it('a exceção só vale com número da fonte primária, e nunca com concorrente nomeado', () => {
+    const excecoes = PROVAS.filter((p) => p.comparativoAnonimo)
+    // Duas, e só duas: as que o Marcos liberou em 22/08. Uma terceira aparecendo
+    // sem decisão dele derruba o teste de propósito.
+    expect(excecoes.map((p) => p.id).sort()).toEqual([
+      'avcomparatives-epr-2025',
+      'avcomparatives-epr-tco-2025',
+    ])
+    for (const p of excecoes) {
+      // Anúncio do fabricante não sustenta comparação — só o relatório do
+      // laboratório sustenta. Foi o relatório que derrubou a versão do anúncio.
+      expect(p.origem, `"${p.id}" compara apoiado em material do fabricante`).toBe('independente')
+      // O texto tem de dizer QUAL é o conjunto comparado.
+      expect(p.texto, `"${p.id}" não diz contra quem compara`).toMatch(/12 produtos avaliados/)
+      for (const nome of PROIBIDO.concorrentes) {
+        expect(p.texto.toLowerCase()).not.toContain(nome.toLowerCase())
+      }
     }
   })
 
