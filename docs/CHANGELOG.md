@@ -3,6 +3,16 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Fixed (2026-08-23 — a tabela dos níveis saía SEM NENHUM TIQUE em produção)
+> **873 testes verdes**, `tsc` + `build` limpos.
+
+- **O `&#10003;` (U+2713) não existe na fonte embutida.** O Manrope do documento é o subset latino do Google Fonts: o glifo **não está no `cmap`** (218 glifos, conferido com fontTools) e o ponto de código **não está em nenhuma das duas `unicode-range`**. O Chromium caía na fonte do sistema.
+- ⚠️ **Por isso funcionava aqui e quebrava lá.** O `pdffonts` do PDF gerado no Mac mostrava, no meio de 40 subsets do Manrope, **um `DBAAAA+LucidaGrande-Bold`** — fonte do macOS, embutida só para desenhar o tique. No Lambda não há Lucida Grande nem equivalente, e a coluna inteira saía em branco. **Os travessões apareciam** porque U+2014 está dentro de `U+2000-206F`; o tique não está em faixa nenhuma. Foi o que fez o defeito parecer lógica ("é porque recomendei o Enterprise?") em vez de fonte.
+- **Fix:** `iconeCheck()` desenha o tique em **SVG** — sem dependência de fonte, herda a cor, escala. Teste decisivo: o `pdffonts` do PDF novo dá **40 fontes, 40 Manrope**. O documento voltou a ser autossuficiente.
+- **A trava ataca a causa, não o sintoma:** `UNICODE_RANGES_EMBUTIDAS` passou a ser exportada e a alimentar o próprio `@font-face` (fonte única), e um teste varre **todo caractere renderizado** contra ela, nomeando o infrator. Verificado que falha se o fix for revertido.
+- **Nenhum cliente real afetado:** havia **uma** apresentação emitida, de teste. `TEMPLATE_VERSAO` → `2026-08-23`, então o log marca a divergência.
+- ⚠️ **A proposta hoje está limpa mas continua sem a trava** — os `→` e `⚠` que aparecem lá estão só em comentários. É a mesma classe, num documento com dinheiro atrelado.
+
 ### Added (2026-08-22 — os dois dados fortes entram, e a F3 sai do escuro)
 > **871 testes verdes**, `tsc` + `build` limpos. Nada deployado.
 

@@ -45,7 +45,7 @@ const C = {
 } as const
 
 export const TELEFONE_DEFENZ = '(11) 3040-2960'
-export const TEMPLATE_VERSAO = '2026-08-21'
+export const TEMPLATE_VERSAO = '2026-08-23'
 
 export interface CasoApresentado {
   oQueAconteceu: string
@@ -124,6 +124,26 @@ function cartaoFato(f: FatoMercado): string {
 }
 
 /** Tabela dos três níveis, com a coluna recomendada em destaque. */
+/**
+ * O "tem este recurso" da tabela dos níveis, desenhado em SVG.
+ *
+ * ⚠️ NÃO usar caractere de check (`&#10003;`, U+2713). O Manrope embutido é o
+ * subset latino do Google Fonts: o glifo **não existe** nele (`cmap` conferido,
+ * 218 glifos) e a `unicode-range` das duas `@font-face` também não cobre o ponto
+ * de código. O Chromium então cai na fonte do sistema — que no macOS resolve
+ * (o PDF gerado aqui trazia um `LucidaGrande-Bold` embutido só por causa deste
+ * caractere) e **no Lambda não existe**, deixando a coluna inteira em branco.
+ *
+ * Foi assim que a tabela chegou ao cliente sem nenhum tique, com os travessões
+ * aparecendo normalmente — o travessão (U+2014) está dentro de `U+2000-206F` e
+ * o check não está em faixa nenhuma.
+ *
+ * Traço em SVG não depende de fonte, escala com o zoom e herda a cor.
+ */
+function iconeCheck(cor: string): string {
+  return `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="${cor}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;" aria-hidden="true"><path d="M2.5 8.6 L6.2 12.3 L13.5 4"/></svg>`
+}
+
 function tabelaNiveis(destaque: NivelId): string {
   const th = (n: NivelId) => {
     const on = n === destaque
@@ -136,7 +156,8 @@ function tabelaNiveis(destaque: NivelId): string {
                 ${NIVEIS.map((n) => {
                   const tem = disponivelEm(f.id, n)
                   const on = n === destaque
-                  return `<td style="padding:7px 8px; text-align:center; font-size:14.8px; font-weight:800; color:${tem ? (on ? C.accent : C.ink) : C.faint};">${tem ? '&#10003;' : '&mdash;'}</td>`
+                  const cor = on ? C.accent : C.ink
+                  return `<td style="padding:7px 8px; text-align:center; font-size:14.8px; font-weight:800; color:${tem ? cor : C.faint};">${tem ? iconeCheck(cor) : '&mdash;'}</td>`
                 }).join('')}
               </tr>`
   ).join('')
@@ -174,6 +195,35 @@ const FAQ = [
   },
 ]
 
+
+/**
+ * As `unicode-range` das duas `@font-face` embutidas — exportadas de propósito.
+ *
+ * ⚠️ São a lista COMPLETA do que este documento sabe desenhar sem depender de
+ * fonte do sistema. Caractere fora daqui não dá erro: o Chromium busca no
+ * sistema, acha no macOS e **não acha no Lambda**, e a coisa some do PDF do
+ * cliente. Foi o que aconteceu com o tique da tabela dos níveis (`iconeCheck`).
+ *
+ * O teste `institucional-a4.test.ts` varre o texto renderizado contra isto.
+ */
+export const UNICODE_RANGES_EMBUTIDAS = [
+  'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD',
+  'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF',
+] as const
+
+/** `true` se o ponto de código é desenhável pela fonte embutida. */
+export function cobertoPelaFonte(cp: number): boolean {
+  return UNICODE_RANGES_EMBUTIDAS.some((faixas) =>
+    faixas.split(',').some((r) => {
+      const corpo = r.trim().slice(2)
+      if (corpo.includes('-')) {
+        const [a, b] = corpo.split('-')
+        return cp >= parseInt(a, 16) && cp <= parseInt(b, 16)
+      }
+      return parseInt(corpo, 16) === cp
+    })
+  )
+}
 
 export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
   const empresa = escapeHtml(doc.empresaNome)
@@ -436,8 +486,8 @@ ${rodape(i + 3, total, doc.ano)}
 <meta charset="utf-8">
 <title>Apresentação Defenz · ${empresa}</title>
 <style>
-  @font-face { font-family:'Manrope'; font-style:normal; font-weight:400 800; font-display:block; src:url(${MANROPE_LATIN_WOFF2}) format('woff2'); unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
-  @font-face { font-family:'Manrope'; font-style:normal; font-weight:400 800; font-display:block; src:url(${MANROPE_LATIN_EXT_WOFF2}) format('woff2'); unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+  @font-face { font-family:'Manrope'; font-style:normal; font-weight:400 800; font-display:block; src:url(${MANROPE_LATIN_WOFF2}) format('woff2'); unicode-range:${UNICODE_RANGES_EMBUTIDAS[0]}; }
+  @font-face { font-family:'Manrope'; font-style:normal; font-weight:400 800; font-display:block; src:url(${MANROPE_LATIN_EXT_WOFF2}) format('woff2'); unicode-range:${UNICODE_RANGES_EMBUTIDAS[1]}; }
   .dz-logo { display:inline-block; background-image:url(${LOGO_HORIZONTAL_INK_PNG}); background-repeat:no-repeat; background-position:left center; background-size:contain; }
   * { box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   html, body { margin:0; padding:0; background:${C.paper}; }

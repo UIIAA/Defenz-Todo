@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   renderApresentacaoHtml,
+  cobertoPelaFonte,
   type ApresentacaoDocumento,
 } from '../templates/institucional-a4'
 import { fatosParaSetor } from '../mercado-fatos'
@@ -133,3 +134,41 @@ function caso() {
     ano: 2025,
   }
 }
+
+describe('o documento não depende de fonte do sistema', () => {
+  // ⚠️ Bug real, achado em 23/08 com o PDF na mão do cliente: a tabela dos níveis
+  // saiu de produção SEM NENHUM TIQUE, com os travessões aparecendo normalmente.
+  //
+  // Causa: o `&#10003;` (U+2713) não está em nenhuma `unicode-range` das duas
+  // @font-face, e o glifo nem existe no subset do Manrope embutido (cmap com 218
+  // glifos, conferido). O Chromium caía na fonte do sistema — no macOS resolvia
+  // (o PDF gerado local trazia um `LucidaGrande-Bold` embutido SÓ por causa desse
+  // caractere) e no Lambda não havia o que resolver.
+  //
+  // Falhava só em produção, e em silêncio. Este teste ataca a causa.
+  const html = renderApresentacaoHtml(doc())
+  const texto = html
+    .replace(/<style[\s\S]*?<\/style>/g, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+    .replace(/&[a-z]+;/g, ' ')
+
+  it('todo caractere renderizado é desenhável pela fonte embutida', () => {
+    const forasteiros = [...new Set([...texto])]
+      .filter((ch) => !cobertoPelaFonte(ch.codePointAt(0)!))
+      .map((ch) => `${JSON.stringify(ch)} (U+${ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')})`)
+
+    expect(
+      forasteiros,
+      `Caractere fora da fonte embutida. No Lambda ele SOME do PDF, sem erro. ` +
+        `Se for ícone, desenhe em SVG (ver iconeCheck): ${forasteiros.join(', ')}`
+    ).toEqual([])
+  })
+
+  it('a guarda pega o caractere que causou o bug', () => {
+    // Sem isto o teste acima poderia estar passando por não varrer nada.
+    expect(cobertoPelaFonte(0x2713)).toBe(false) // ✓ — o que quebrou
+    expect(cobertoPelaFonte(0x2014)).toBe(true) // — travessão, que aparecia
+    expect(cobertoPelaFonte('ç'.codePointAt(0)!)).toBe(true)
+  })
+})
