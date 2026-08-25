@@ -1,42 +1,39 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-08-22
+**Last updated:** 2026-08-23
 **Version:** 0.4.0
 **Branch:** main
 
 ## 🎯 RETOMAR AQUI — apresentação de soluções Bitdefender + Defenz
 
-> **22/08 · F1 e F2 FEITAS. Próximo passo é a F3 — a IA da pesquisa.**
+> **23/08 · 4 commits LOCAIS no `main`, NADA DEPLOYADO.** 873 testes verdes.
+> ⚠️ **O fix do tique (`55d9fb2`) só chega ao cliente no próximo push** — até lá, quem
+> gerar apresentação em produção recebe a tabela dos níveis **sem nenhum tique**.
 >
-> **R8 está resolvido** (spec §6.2.1), medido contra a API e não deduzido: o SDK legado
-> **não serve** — `googleSearchRetrieval` leva **400** no `gemini-3.6-flash`, a forma certa
-> é `tools: [{ googleSearch: {} }]`, e os *typings* da resposta no legado têm quatro nomes
-> com erro de digitação que fazem a leitura devolver `undefined` **sem erro**.
-> **A F3 começa migrando para `@google/genai`.**
+> **R8 RESOLVIDO** (spec §6.2.1), medido contra a API: `googleSearchRetrieval` leva **400**
+> no `gemini-3.6-flash`; a forma certa é `tools: [{ googleSearch: {} }]`, que só existe no
+> `@google/genai`; e os *typings* de resposta do SDK legado têm quatro nomes com typo que
+> devolvem `undefined` **sem erro**. **A F3 começa migrando o SDK.**
 >
-> ⚠️ **E as duas chamadas viraram obrigatórias por um motivo pior do que a C1 previa:**
+> ⚠️ **As duas chamadas viraram obrigatórias por um motivo pior que a C1 previa:**
 > `googleSearch` + `responseSchema` devolve **200, JSON perfeito e `groundingMetadata`
-> ausente** — caso plausível, com veículo, validando no Zod, e nenhuma atribuição. Não há
-> índice errado para pegar: não há índice.
+> ausente** — caso plausível, com veículo, validando no Zod, e nenhuma atribuição.
 >
-> **Os dois dados fortes entraram** (único fabricante + TCO), como exceção declarada da A15,
-> **com a redação corrigida pelo relatório primário**: "único a prevenir os 50 cenários" é
-> falso como o anúncio escreve (os 12 previnem 50/50; o exclusivo é a 1ª fase), e o TCO é
-> **9,7×**, não 9,8×.
+> **Os dois dados fortes entraram** (único fabricante + TCO), como exceção declarada da A15
+> (§7.3.2-bis), **com a redação corrigida pelo relatório primário**: "único a prevenir os 50
+> cenários" é **falso como o anúncio escreve** (os 12 previnem 50/50; o exclusivo é a 1ª
+> fase), e o TCO é **9,7×**, não 9,8×.
 >
-> **Duas decisões do Marcos que mudaram páginas:** (1) a pesquisa **pode acrescentar** fato
-> de mercado do nicho ao catálogo curado, sujeito à trava do A13b; (2) **nenhum concorrente
-> é citado** — a página comparativa vira "o que os testes independentes dizem do
-> Bitdefender", na régua mais favorável, e a pergunta do FAQ sobre concorrentes sai.
+> **Feature nova especificada:** [`feature-calculadora-tco.md`](features/feature-calculadora-tco.md)
+> — ebook + calculadora para empresas de TI. **DRAFT v2**, aguarda Q6/Q7/Q8. A v1 foi
+> reescrita depois de eu olhar o `defenz.com.br`: o site é **Apache + SPA React estática** e o
+> backend **já é o n8n**, com uma cotação funcionando (PDFShift → Resend → Zoho → Sheets →
+> Outlook). A v1 teria construído um segundo caminho de lead ao lado de um que já funciona.
+> ⚠️ **Q6 é bloqueante:** há **três cópias do site no disco**, byte-idênticas, e só
+> `defenz-site` tem git confiável.
 >
-> ⚠️ **Por que a (2) importa:** fui buscar as fontes que a regra anterior exigia e elas
-> **contradiziam o deck herdado** — no AV-Comparatives (mar–jun/2025) o impacto de
-> performance do Bitdefender é **32,8**, contra 13,8 do Defender e 4,8 do ESET. Em eficácia
-> o argumento se sustenta e é forte (99,8%, **1 falso alarme**). E o SentinelOne, sobre quem
-> o deck afirmava "consumo excessivo de disco", **não estava no teste**. Sem citar
-> concorrente, o problema todo desaparece — mas a régua favorável **não** autoriza
-> superlativo ("impacto mínimo"), e há **teste** que barra isso nos catálogos.
-
+> **F1 da calculadora (`constantes.ts` + `calculo.ts`) não depende de nenhuma resposta** — é
+> por onde dá para começar agora.
 
 **Spec v2 escrita e criticada em 20/08.** Documentos:
 [`feature-portal-apresentacao.md`](features/feature-portal-apresentacao.md) **v2** ·
