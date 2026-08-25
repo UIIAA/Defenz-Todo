@@ -1,14 +1,27 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-08-23
+**Last updated:** 2026-08-25
 **Version:** 0.4.0
 **Branch:** main
 
 ## 🎯 RETOMAR AQUI — apresentação de soluções Bitdefender + Defenz
 
-> **23/08 · 4 commits LOCAIS no `main`, NADA DEPLOYADO.** 873 testes verdes.
-> ⚠️ **O fix do tique (`55d9fb2`) só chega ao cliente no próximo push** — até lá, quem
-> gerar apresentação em produção recebe a tabela dos níveis **sem nenhum tique**.
+> **25/08 · TUDO DEPLOYADO.** Os 4 commits de 23/08 + a extensão da trava de fonte
+> foram para produção (`9ad3bd1` e `cd0d6f0`, duas builds Ready no Vercel). 876 testes.
+> ✅ **O fix do tique está em produção** — quem gerar apresentação agora recebe a tabela
+> dos níveis com os tiques (desenhados em SVG, não em glifo de fonte).
+> ⚠️ Falta a conferência com PDF de produção na mão (`pdffonts` num arquivo gerado pelo
+> Lambda). O fix foi provado local: 40 fontes, 40 Manrope.
+>
+> **A trava de fonte agora cobre a proposta** (`cd0d6f0`). As faixas viraram fonte única em
+> `src/lib/pdf/fonte-embutida.ts` e alimentam o próprio `@font-face` dos DOIS templates —
+> não existe mais lista escrita à mão para divergir da guarda. A proposta está limpa hoje;
+> a trava é para o próximo ícone que alguém colar no documento que leva preço impresso.
+>
+> **Decisões do Marcos em 25/08:** F3 (IA da apresentação) **pode seguir** — começa pela
+> migração do SDK. A **calculadora fica para outro momento** (Q6/Q7/Q8 não precisam de
+> resposta agora). **VALIDADE-DA-TABELA: encerrada** — o Marcos resolveu o assunto fora
+> do repo; deixa de ser blocker de proposta real.
 >
 > **R8 RESOLVIDO** (spec §6.2.1), medido contra a API: `googleSearchRetrieval` leva **400**
 > no `gemini-3.6-flash`; a forma certa é `tools: [{ googleSearch: {} }]`, que só existe no
