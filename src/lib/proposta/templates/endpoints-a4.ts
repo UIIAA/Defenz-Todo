@@ -15,6 +15,8 @@
 // como data URI. Fonte que não carrega = PDF quebrado em silêncio (risco R2).
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { UNICODE_RANGES_EMBUTIDAS } from '@/lib/pdf/fonte-embutida'
+
 import {
   LOGO_HORIZONTAL_INK_PNG,
   MANROPE_LATIN_EXT_WOFF2,
@@ -346,14 +348,17 @@ export function renderPropostaHtml(doc: PropostaDocumento): string {
 <title>Proposta Defenz ${escapeHtml(doc.codigo)} · ${empresa}</title>
 <style>
   /* Manrope embutida (variable 400..800). Sem rede: se cair para fonte
-     substituta, o documento sai visualmente errado sem avisar (R2). */
+     substituta, o documento sai visualmente errado sem avisar (R2).
+     As faixas vêm de @/lib/pdf/fonte-embutida — mesma fonte que alimenta a
+     guarda de glifo (23/08: o tique sumiu do PDF do cliente por estar fora
+     delas). Nunca escrever a lista à mão aqui. */
   @font-face {
     font-family: 'Manrope';
     font-style: normal;
     font-weight: 400 800;
     font-display: block;
     src: url(${MANROPE_LATIN_WOFF2}) format('woff2');
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    unicode-range: ${UNICODE_RANGES_EMBUTIDAS[0]};
   }
   @font-face {
     font-family: 'Manrope';
@@ -361,7 +366,7 @@ export function renderPropostaHtml(doc: PropostaDocumento): string {
     font-weight: 400 800;
     font-display: block;
     src: url(${MANROPE_LATIN_EXT_WOFF2}) format('woff2');
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    unicode-range: ${UNICODE_RANGES_EMBUTIDAS[1]};
   }
 
   /* Logo declarado UMA vez. Repetir o data URI em ~20 <img> inchava o PDF. */

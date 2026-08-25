@@ -16,6 +16,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
+  UNICODE_RANGES_EMBUTIDAS,
+  cobertoPelaFonte,
+} from '@/lib/pdf/fonte-embutida'
+import {
   LOGO_HORIZONTAL_INK_PNG,
   MANROPE_LATIN_EXT_WOFF2,
   MANROPE_LATIN_WOFF2,
@@ -196,34 +200,9 @@ const FAQ = [
 ]
 
 
-/**
- * As `unicode-range` das duas `@font-face` embutidas — exportadas de propósito.
- *
- * ⚠️ São a lista COMPLETA do que este documento sabe desenhar sem depender de
- * fonte do sistema. Caractere fora daqui não dá erro: o Chromium busca no
- * sistema, acha no macOS e **não acha no Lambda**, e a coisa some do PDF do
- * cliente. Foi o que aconteceu com o tique da tabela dos níveis (`iconeCheck`).
- *
- * O teste `institucional-a4.test.ts` varre o texto renderizado contra isto.
- */
-export const UNICODE_RANGES_EMBUTIDAS = [
-  'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD',
-  'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF',
-] as const
-
-/** `true` se o ponto de código é desenhável pela fonte embutida. */
-export function cobertoPelaFonte(cp: number): boolean {
-  return UNICODE_RANGES_EMBUTIDAS.some((faixas) =>
-    faixas.split(',').some((r) => {
-      const corpo = r.trim().slice(2)
-      if (corpo.includes('-')) {
-        const [a, b] = corpo.split('-')
-        return cp >= parseInt(a, 16) && cp <= parseInt(b, 16)
-      }
-      return parseInt(corpo, 16) === cp
-    })
-  )
-}
+// As faixas e a guarda moram em `@/lib/pdf/fonte-embutida` — a proposta usa as
+// MESMAS (mesmo woff2). Re-exportadas aqui porque este módulo já era a porta.
+export { UNICODE_RANGES_EMBUTIDAS, cobertoPelaFonte }
 
 export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
   const empresa = escapeHtml(doc.empresaNome)

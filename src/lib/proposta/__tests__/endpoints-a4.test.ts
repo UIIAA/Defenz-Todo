@@ -10,6 +10,11 @@ import {
 } from '../templates/endpoints-a4'
 import { calcularInvestimento } from '../calculo'
 import type { PlanoId } from '../tabela-precos'
+import {
+  UNICODE_RANGES_EMBUTIDAS,
+  caracteresForaDaFonte,
+  textoRenderizado,
+} from '@/lib/pdf/fonte-embutida'
 
 function doc(over: Partial<PropostaDocumento> = {}, planos: PlanoId[] = ['BUSINESS_SECURITY'], ajuste = 0): PropostaDocumento {
   return {
@@ -280,5 +285,39 @@ describe('re-download de proposta antiga (snapshot anterior à coluna 36+12)', (
     const html = renderPropostaHtml(antigo)
     expect(html).not.toContain('undefined')
     expect(html).toContain('36 meses') // cai no rótulo derivado dos meses
+  })
+})
+
+describe('a proposta não depende de fonte do sistema', () => {
+  // ⚠️ Mesma classe de bug que apagou o tique da apresentação em 23/08, aqui no
+  // documento que leva PREÇO IMPRESSO. Caractere fora da `unicode-range` some do
+  // PDF no Lambda sem erro nenhum — e funciona no Mac, o que faz o defeito
+  // parecer lógica em vez de tipografia.
+  it('todo caractere renderizado é desenhável pela fonte embutida', () => {
+    for (const planos of [
+      ['BUSINESS_SECURITY'],
+      ['BUSINESS_SECURITY', 'PREMIUM', 'ENTERPRISE'],
+    ] as PlanoId[][]) {
+      const forasteiros = caracteresForaDaFonte(renderPropostaHtml(doc({}, planos, 12)))
+      expect(
+        forasteiros,
+        `Caractere fora da fonte embutida. No Lambda ele SOME do PDF, sem erro. ` +
+          `Se for ícone, desenhe em SVG: ${forasteiros.join(', ')}`
+      ).toEqual([])
+    }
+  })
+
+  it('a guarda enxerga o texto e reprova o caractere que causou o bug', () => {
+    // Sem isto o teste acima poderia passar por não varrer nada.
+    expect(textoRenderizado(renderPropostaHtml(doc()))).toContain('Acme Indústria')
+    expect(caracteresForaDaFonte('<p>&#10003;</p>')).toEqual(['"✓" (U+2713)'])
+    expect(caracteresForaDaFonte('<p>preço — R$ 1.234</p>')).toEqual([])
+  })
+
+  it('o @font-face publica exatamente as faixas da guarda', () => {
+    const html = renderPropostaHtml(doc())
+    for (const faixa of UNICODE_RANGES_EMBUTIDAS) {
+      expect(html).toContain(`unicode-range: ${faixa};`)
+    }
   })
 })

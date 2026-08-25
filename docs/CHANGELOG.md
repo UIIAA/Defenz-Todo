@@ -225,3 +225,20 @@ Medido contra a API real, não deduzido. Detalhe em `feature-portal-apresentacao
 
 ### Fixed
 - Dropdown com texto invisível em light mode (a8ea9be)
+
+## 2026-08-25 — a trava de fonte passa a valer para a proposta
+
+A guarda de glifo criada em 23/08 para a apresentação cobria só ela. A proposta
+tinha as MESMAS duas `unicode-range` copiadas à mão e o mesmo woff2 — ou seja, a
+mesma classe de bug, no documento que leva preço impresso.
+
+- `src/lib/pdf/fonte-embutida.ts` (novo): fonte única das faixas + `cobertoPelaFonte`,
+  `textoRenderizado` e `caracteresForaDaFonte`. Os dois templates alimentam o
+  próprio `@font-face` a partir dela — lista duplicada à mão não existe mais.
+- `endpoints-a4.test.ts`: varre o HTML da proposta (1 plano e 3 planos, com ajuste)
+  contra a fonte; confere que a varredura enxerga o texto real; confere que o
+  `@font-face` publica exatamente as faixas da guarda.
+- A proposta hoje está limpa — nenhum caractere fora da fonte. A trava é para o
+  próximo ícone que alguém colar.
+
+876 testes.
