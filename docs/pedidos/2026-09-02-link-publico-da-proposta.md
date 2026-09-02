@@ -15,13 +15,18 @@ Não é pedido novo de produto: é o **subitem 1 do item 20** da f-039 e o que *
 
 | Fato | Onde |
 |---|---|
-| A proposta **já é arquivada no OneDrive** | `src/lib/proposta/arquivamento.ts`, via webhook n8n `N8N_PROPOSTA_ARQUIVO_WEBHOOK_URL` |
+| ~~A proposta já é arquivada no OneDrive~~ **ERRO MEU, corrigido em 02/09** | O app-side está pronto (`src/lib/proposta/arquivamento.ts`), mas **INERTE**: o `CHANGELOG.md` de vocês diz, com todas as letras, "o workflow do n8n ainda não existe — é o que falta para a F5 fechar". Sem `N8N_PROPOSTA_ARQUIVO_WEBHOOK_URL` a função devolve `false` na primeira linha. Hoje **nenhuma proposta está no OneDrive** e `oneDriveItemId` é null em todas |
 | O que volta é **só o id do item**, não um endereço | `Proposta.oneDriveItemId` no `prisma/schema.prisma`; **não existe campo de URL** |
 | O acesso ao arquivo hoje é **download forçado** | `src/app/api/portal/propostas/[id]/arquivo/route.ts`: `Content-Disposition: attachment` |
 | E exige sessão | mesma rota, atrás de `getCurrentUser()` |
 
-Ou seja: o arquivo está lá, o que falta é **transformar o id num endereço que abre para quem não
-tem login**. A metade pesada já está pronta.
+Ou seja: **o arquivo não está lá.** Eu escrevi antes que a metade pesada estava pronta e isso
+estava errado — o que está pronto é o lado de vocês, que é o mais difícil de refazer. O que falta
+é inteiro do meu lado: **o workflow de arquivamento não existe e precisa ser construído**, já
+nascendo com o `createLink`. O contrato que o `arquivamento.ts` espera está definido por vocês e
+eu me encaixo nele: POST com o PDF binário no corpo, `X-Defenz-Token`, `X-Proposta-Codigo`,
+`X-Proposta-Empresa`, `X-Proposta-Arquivo` nos headers, e resposta JSON com `itemId` — mais
+`webUrl` e `permissionId`, que entram agora.
 
 ---
 

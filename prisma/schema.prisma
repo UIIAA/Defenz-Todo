@@ -16,22 +16,23 @@ datasource db {
 // ============================================================
 
 model Company {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  logoUrl     String?   // URL da logo da empresa (ex: https://cdn.example.com/logo.png)
-  accentColor String?   // Cor accent hex (ex: #2563eb)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  users       User[]
-  teams       Team[]
-  demandas    Demanda[]
-  invites     InviteToken[]
-  userCompanies     UserCompany[]     // memberships adicionais (multi-empresa)
-  tickets           Ticket[]          // service desk
-  authorizedClients AuthorizedClient[] // portal: clientes autorizados
-  playbooks         Playbook[]        // portal defenz: POPs e biblioteca
-  propostas         Proposta[]        // portal defenz: propostas comerciais
-  apresentacoes     Apresentacao[]    // portal defenz: apresentacoes institucionais
+  id                    String                 @id @default(cuid())
+  name                  String                 @unique
+  logoUrl               String? // URL da logo da empresa (ex: https://cdn.example.com/logo.png)
+  accentColor           String? // Cor accent hex (ex: #2563eb)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  users                 User[]
+  teams                 Team[]
+  demandas              Demanda[]
+  invites               InviteToken[]
+  userCompanies         UserCompany[] // memberships adicionais (multi-empresa)
+  tickets               Ticket[] // service desk
+  authorizedClients     AuthorizedClient[] // portal: clientes autorizados
+  playbooks             Playbook[] // portal defenz: POPs e biblioteca
+  propostas             Proposta[] // portal defenz: propostas comerciais
+  apresentacoes         Apresentacao[] // portal defenz: apresentacoes institucionais
+  apresentacaoPesquisas ApresentacaoPesquisa[] // cap de custo da pesquisa de nicho
 }
 
 model Team {
@@ -65,11 +66,11 @@ model UserTeam {
 // UserCompany guarda apenas as empresas ADICIONAIS. Conjunto acessivel =
 // dedup([companyId, ...userCompanies.companyId]). Ver feature-multi-company-membership.
 model UserCompany {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
   companyId String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([userId, companyId])
@@ -84,10 +85,10 @@ model User {
   name                    String?
   password                String
   role                    String                   @default("user")
-  position                String?                  // Cargo/funcao
+  position                String? // Cargo/funcao
   companyId               String?
   company                 Company?                 @relation(fields: [companyId], references: [id])
-  department              String?                  // vendas, gerencia, marketing, operacional, financeiro, tecnologia, rh, juridico, estrategico
+  department              String? // vendas, gerencia, marketing, operacional, financeiro, tecnologia, rh, juridico, estrategico
   emailVerified           DateTime?
   image                   String?
   createdAt               DateTime                 @default(now())
@@ -109,25 +110,26 @@ model User {
   businessMetrics         BusinessMetric[]
 
   // CRM Relations
-  clients                 Client[]
-  opportunities           Opportunity[]
-  interactions            Interaction[]
-  marketingLists          MarketingList[]
-  dailyActivityLogs       DailyActivityLog[]
-  demandas                Demanda[]                @relation("DemandaCreator")
-  demandasAssignedTo      Demanda[]                @relation("DemandaAssignee")
-  inviteTokens            InviteToken[]
-  userCompanies           UserCompany[]            // empresas adicionais (multi-empresa)
-  apiTokens               ApiToken[]               // tokens de serviço (Bearer) deste usuario
-  timeEntries             TimeEntry[]              // diário de horas (delta-on-save)
-  ticketsAsAgent          Ticket[]                 @relation("TicketAgent")
-  ticketsCreated          Ticket[]                 @relation("TicketCreator")
-  ticketMessages          TicketMessage[]          @relation("TicketMessageAuthor")
-  playbooksOwned          Playbook[]               @relation("PlaybookOwner")
-  playbooksVerified       Playbook[]               @relation("PlaybookVerifier")
-  playbooksCreated        Playbook[]               @relation("PlaybookCreator")
-  propostasCriadas        Proposta[]               @relation("PropostaCriador")
-  apresentacoesCriadas    Apresentacao[]           @relation("ApresentacaoCriador")
+  clients               Client[]
+  opportunities         Opportunity[]
+  interactions          Interaction[]
+  marketingLists        MarketingList[]
+  dailyActivityLogs     DailyActivityLog[]
+  demandas              Demanda[]              @relation("DemandaCreator")
+  demandasAssignedTo    Demanda[]              @relation("DemandaAssignee")
+  inviteTokens          InviteToken[]
+  userCompanies         UserCompany[] // empresas adicionais (multi-empresa)
+  apiTokens             ApiToken[] // tokens de serviço (Bearer) deste usuario
+  timeEntries           TimeEntry[] // diário de horas (delta-on-save)
+  ticketsAsAgent        Ticket[]               @relation("TicketAgent")
+  ticketsCreated        Ticket[]               @relation("TicketCreator")
+  ticketMessages        TicketMessage[]        @relation("TicketMessageAuthor")
+  playbooksOwned        Playbook[]             @relation("PlaybookOwner")
+  playbooksVerified     Playbook[]             @relation("PlaybookVerifier")
+  playbooksCreated      Playbook[]             @relation("PlaybookCreator")
+  propostasCriadas      Proposta[]             @relation("PropostaCriador")
+  apresentacoesCriadas  Apresentacao[]         @relation("ApresentacaoCriador")
+  apresentacaoPesquisas ApresentacaoPesquisa[] @relation("ApresentacaoPesquisaCriador")
 
   @@index([email])
   @@index([companyId])
@@ -138,13 +140,13 @@ model User {
 // ============================================================
 
 model Client {
-  id        String   @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  company   String?
-  segment   String?  // Ex: Varejo, Indústria, Tecnologia
-  notes     String?
+  id      String  @id @default(cuid())
+  name    String
+  email   String?
+  phone   String?
+  company String?
+  segment String? // Ex: Varejo, Indústria, Tecnologia
+  notes   String?
 
   // Campos Executivos
   licenseCount Int?
@@ -160,8 +162,8 @@ model Client {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
   opportunities Opportunity[]
 
@@ -181,8 +183,8 @@ model Opportunity {
 
   expectedCloseDate DateTime?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Campos Executivos
   responsibleExecutive String?
@@ -197,11 +199,11 @@ model Opportunity {
   marketingList   MarketingList? @relation(fields: [marketingListId], references: [id])
   marketingListId String?
 
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  clientId    String
-  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   interactions      Interaction[]
   activities        Activity[]
@@ -213,16 +215,16 @@ model Opportunity {
 }
 
 model Interaction {
-  id        String   @id @default(cuid())
-  type      String   // call, email, whatsapp, meeting, note
-  content   String   // Resumo da interação
-  date      DateTime @default(now())
+  id      String   @id @default(cuid())
+  type    String // call, email, whatsapp, meeting, note
+  content String // Resumo da interação
+  date    DateTime @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
   opportunityId String
   opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
@@ -233,25 +235,25 @@ model Interaction {
 }
 
 model Activity {
-  id          String            @id @default(cuid())
-  priority    Int // 0=Alta, 1=Média, 2=Baixa
-  area        String // Marketing, Vendas, Gestão, Estratégico, Back office
-  title       String // O Quê? (What) - Título da ação
-  description String? // Por Quê? (Why) - Justificativa detalhada
-  responsible String? // Quem? (Who) - Responsável pela execução
-  deadline    String? // Quando? (When) - Prazo/Timeline
-  location    String? // Onde? (Where) - Local/Plataforma de execução
-  how         String? // Como? (How) - Método/Processo detalhado
-  cost        String? // Quanto? (How Much) - Investimento/Custo
-  dependsOn   String            @default("[]") // JSON array de IDs de Activity que esta depende
-  status      String            @default("pending") // pending, in_progress, completed, ok
-  deletedAt   DateTime? // Soft delete
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  userId      String
-  user        User              @relation(fields: [userId], references: [id])
-  comments    ActivityComment[]
-  insight     ActivityInsight? // 1:1 com AI insights
+  id            String            @id @default(cuid())
+  priority      Int // 0=Alta, 1=Média, 2=Baixa
+  area          String // Marketing, Vendas, Gestão, Estratégico, Back office
+  title         String // O Quê? (What) - Título da ação
+  description   String? // Por Quê? (Why) - Justificativa detalhada
+  responsible   String? // Quem? (Who) - Responsável pela execução
+  deadline      String? // Quando? (When) - Prazo/Timeline
+  location      String? // Onde? (Where) - Local/Plataforma de execução
+  how           String? // Como? (How) - Método/Processo detalhado
+  cost          String? // Quanto? (How Much) - Investimento/Custo
+  dependsOn     String            @default("[]") // JSON array de IDs de Activity que esta depende
+  status        String            @default("pending") // pending, in_progress, completed, ok
+  deletedAt     DateTime? // Soft delete
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  userId        String
+  user          User              @relation(fields: [userId], references: [id])
+  comments      ActivityComment[]
+  insight       ActivityInsight? // 1:1 com AI insights
   opportunities Opportunity[]
 
   @@index([userId])
@@ -315,28 +317,28 @@ model VerificationToken {
 }
 
 model NotificationPreferences {
-  id                  String   @id @default(cuid())
-  userId              String   @unique
-  notificationEmail   String?  // Email alternativo para notificacoes (null = usa email de login)
-  emailEnabled        Boolean  @default(true) // Master toggle para notificacoes
-  activityAssigned    Boolean  @default(true)
-  deadlineApproaching Boolean  @default(true)
-  statusChanged       Boolean  @default(true)
-  activityDeleted     Boolean  @default(true)
-  dailyDigest         Boolean  @default(false)
-  weeklyReport        Boolean  @default(false)
+  id                  String  @id @default(cuid())
+  userId              String  @unique
+  notificationEmail   String? // Email alternativo para notificacoes (null = usa email de login)
+  emailEnabled        Boolean @default(true) // Master toggle para notificacoes
+  activityAssigned    Boolean @default(true)
+  deadlineApproaching Boolean @default(true)
+  statusChanged       Boolean @default(true)
+  activityDeleted     Boolean @default(true)
+  dailyDigest         Boolean @default(false)
+  weeklyReport        Boolean @default(false)
 
   // CRM Notifications
-  opportunityWon      Boolean  @default(true)
-  opportunityLost     Boolean  @default(true)
-  newLead             Boolean  @default(true)
-  interactionLogged   Boolean  @default(true)
+  opportunityWon    Boolean @default(true)
+  opportunityLost   Boolean @default(true)
+  newLead           Boolean @default(true)
+  interactionLogged Boolean @default(true)
 
-  quietHoursStart     String? // e.g., "22:00"
-  quietHoursEnd       String? // e.g., "08:00"
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quietHoursStart String? // e.g., "22:00"
+  quietHoursEnd   String? // e.g., "08:00"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -352,7 +354,7 @@ model MarketingList {
   meetingsCount     Int       @default(0)
   proposalsCount    Int       @default(0)
   leadsGenerated    Int       @default(0)
-  conversionRate    String?   // Ex: "10%"
+  conversionRate    String? // Ex: "10%"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -410,19 +412,19 @@ model ActivityComment {
 // Exemplos: Tempo de Resposta, Produtividade, Taxa de Conversão, etc.
 model BusinessMetric {
   id     String   @id @default(cuid())
-  period DateTime  // Mês de referência
+  period DateTime // Mês de referência
 
   // ========== CATEGORIA DA MÉTRICA ==========
   category String // "operational", "sales", "customer_service", "productivity", "quality"
 
   // ========== MÉTRICAS OPERACIONAIS ==========
   metricName  String // Nome da métrica (ex: "Tempo Médio de Resposta")
-  metricValue Decimal  // Valor da métrica
+  metricValue Decimal // Valor da métrica
   metricUnit  String // Unidade (ex: "minutos", "horas", "%", "unidades")
-  target      Decimal?  // Meta desejada
+  target      Decimal? // Meta desejada
 
   // ========== CONTEXTO ==========
-  description String?  // Descrição do que mede
+  description String? // Descrição do que mede
   area        String // Marketing, Vendas, Gestão, Estratégico, Back office
 
   // ========== METADATA ==========
@@ -450,8 +452,8 @@ model BusinessMetric {
 // Insights gerados por IA (Google Gemini) para análise de impacto
 // Conecta atividades com Business Metrics (operacionais) E M&A Metrics (valorização)
 model ActivityInsight {
-  id         String   @id @default(cuid())
-  activityId String   @unique // 1:1 com Activity
+  id         String @id @default(cuid())
+  activityId String @unique // 1:1 com Activity
 
   // ========== BUSINESS METRICS (Operacionais) ==========
   // Métricas de NEGÓCIO identificadas pela IA
@@ -472,13 +474,13 @@ model ActivityInsight {
 
   // ========== AI METADATA ==========
   aiModel        String // "gemini-1.5-flash", "gemini-1.5-pro", etc.
-  aiConfidence   Decimal  // 0.000-1.000
+  aiConfidence   Decimal // 0.000-1.000
   processingTime Int // Milissegundos para processar
   tokenCount     Int? // Tokens consumidos (custo tracking)
 
   // ========== ANALYSIS CONTEXT ==========
-  analysisPrompt  String  // Prompt enviado à IA
-  rawResponse     String  // Resposta bruta JSON da IA
+  analysisPrompt  String // Prompt enviado à IA
+  rawResponse     String // Resposta bruta JSON da IA
   analysisVersion String @default("1.0") // Versão do algoritmo de análise
 
   // ========== AUDIT TRAIL ==========
@@ -508,45 +510,45 @@ model ActivityInsight {
 // Métricas Financeiras Principais (snapshot mensal)
 model FinancialMetric {
   id     String   @id @default(cuid())
-  period DateTime  // Mês de referência (primeiro dia do mês)
+  period DateTime // Mês de referência (primeiro dia do mês)
 
   // ARR (Annual Recurring Revenue) - Métrica #1 para SaaS
-  mrr            Decimal  // Monthly Recurring Revenue
-  arr            Decimal  // ARR = MRR * 12
-  newMrr         Decimal  // Novos contratos no mês
-  expansionMrr   Decimal  // Upsells/cross-sells
-  contractionMrr Decimal  // Downgrades
-  churnedMrr     Decimal  // Cancelamentos
-  netNewMrr      Decimal  // new + expansion - contraction - churn
+  mrr            Decimal // Monthly Recurring Revenue
+  arr            Decimal // ARR = MRR * 12
+  newMrr         Decimal // Novos contratos no mês
+  expansionMrr   Decimal // Upsells/cross-sells
+  contractionMrr Decimal // Downgrades
+  churnedMrr     Decimal // Cancelamentos
+  netNewMrr      Decimal // new + expansion - contraction - churn
 
   // Growth Metrics
-  mrrGrowthRate Decimal  // % crescimento MoM
-  arrGrowthRate Decimal  // % crescimento YoY
+  mrrGrowthRate Decimal // % crescimento MoM
+  arrGrowthRate Decimal // % crescimento YoY
 
   // EBITDA (Earnings Before Interest, Taxes, Depreciation, Amortization)
-  revenue           Decimal  // Receita total do mês
-  cogs              Decimal  // Cost of Goods Sold
-  operatingExpenses Decimal  // Despesas operacionais
-  ebitda            Decimal  // revenue - cogs - opex
-  ebitdaMargin      Decimal  // EBITDA / revenue * 100
+  revenue           Decimal // Receita total do mês
+  cogs              Decimal // Cost of Goods Sold
+  operatingExpenses Decimal // Despesas operacionais
+  ebitda            Decimal // revenue - cogs - opex
+  ebitdaMargin      Decimal // EBITDA / revenue * 100
 
   // Gross Margin
-  grossProfit Decimal  // revenue - cogs
-  grossMargin Decimal  // gross profit / revenue * 100
+  grossProfit Decimal // revenue - cogs
+  grossMargin Decimal // gross profit / revenue * 100
 
   // Burn Rate & Runway
-  burnRate    Decimal  // Cash queimado por mês
-  cashBalance Decimal  // Saldo em caixa
+  burnRate    Decimal // Cash queimado por mês
+  cashBalance Decimal // Saldo em caixa
   runway      Int // Meses de runway restantes
 
   // Rule of 40 (Growth Rate + Profit Margin >= 40%)
-  ruleOf40Score Decimal  // arrGrowthRate + ebitdaMargin
+  ruleOf40Score Decimal // arrGrowthRate + ebitdaMargin
 
   // Audit Trail
   userId  String // Quem inseriu os dados
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String?  // Contexto/observações
+  notes   String? // Contexto/observações
   version Int     @default(1) // Versão dos dados (permite correções)
 
   createdAt DateTime @default(now())
@@ -560,7 +562,7 @@ model FinancialMetric {
 // Métricas de Clientes (Churn, LTV, CAC)
 model CustomerMetric {
   id     String   @id @default(cuid())
-  period DateTime  // Mês de referência
+  period DateTime // Mês de referência
 
   // Customer Counts
   activeCustomers  Int // Total de clientes ativos
@@ -569,33 +571,33 @@ model CustomerMetric {
   netNewCustomers  Int // new - churned
 
   // Churn Metrics (métrica crítica #2)
-  customerChurnRate   Decimal  // % de clientes perdidos
-  revenueChurnRate    Decimal  // % de MRR perdido (gross churn)
-  netRevenueRetention Decimal  // NRR: (MRR start + expansion - churn) / MRR start * 100
+  customerChurnRate   Decimal // % de clientes perdidos
+  revenueChurnRate    Decimal // % de MRR perdido (gross churn)
+  netRevenueRetention Decimal // NRR: (MRR start + expansion - churn) / MRR start * 100
 
   // LTV:CAC Ratio (métrica crítica #3)
-  averageLtv       Decimal  // Lifetime Value médio
-  averageCac       Decimal  // Customer Acquisition Cost médio
-  ltvCacRatio      Decimal  // LTV / CAC (ideal > 3.0)
+  averageLtv       Decimal // Lifetime Value médio
+  averageCac       Decimal // Customer Acquisition Cost médio
+  ltvCacRatio      Decimal // LTV / CAC (ideal > 3.0)
   cacPaybackMonths Int // Meses para recuperar CAC
 
   // ARPU (Average Revenue Per User)
-  arpu       Decimal  // MRR / activeCustomers
-  arpuGrowth Decimal  // % crescimento MoM
+  arpu       Decimal // MRR / activeCustomers
+  arpuGrowth Decimal // % crescimento MoM
 
   // Cohort Analysis
-  cohortMonth         DateTime?  // Mês de aquisição (para análise de cohort)
+  cohortMonth         DateTime? // Mês de aquisição (para análise de cohort)
   cohortSize          Int? // Tamanho do cohort
-  cohortRetentionRate Decimal?   // % ainda ativo desde cohortMonth
+  cohortRetentionRate Decimal? // % ainda ativo desde cohortMonth
 
   // Customer Growth
-  customerGrowthRate Decimal  // % crescimento de clientes MoM
+  customerGrowthRate Decimal // % crescimento de clientes MoM
 
   // Audit Trail
   userId  String // Quem inseriu os dados
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String?  // Contexto/observações
+  notes   String? // Contexto/observações
   version Int     @default(1) // Versão dos dados (permite correções)
 
   createdAt DateTime @default(now())
@@ -610,37 +612,37 @@ model CustomerMetric {
 // Métricas de Engajamento (Product-Market Fit)
 model EngagementMetric {
   id     String   @id @default(cuid())
-  period DateTime  // Mês de referência
+  period DateTime // Mês de referência
 
   // Activation & Usage
   dau         Int // Daily Active Users (média do mês)
   mau         Int // Monthly Active Users
   wau         Int // Weekly Active Users
-  dauMauRatio Decimal  // Stickiness (ideal > 0.2) - precisa 4 decimais
+  dauMauRatio Decimal // Stickiness (ideal > 0.2) - precisa 4 decimais
 
   // Engagement Depth
-  avgSessionsPerUser   Decimal  // Média de sessões por usuário/mês
+  avgSessionsPerUser   Decimal // Média de sessões por usuário/mês
   avgSessionDuration   Int // Minutos médios por sessão
-  avgActivitiesPerUser Decimal  // Atividades criadas por usuário
+  avgActivitiesPerUser Decimal // Atividades criadas por usuário
 
   // Time to Value
   avgTimeToFirstValue Int // Dias até primeira atividade concluída
-  activationRate      Decimal  // % de usuários que atingiram value
+  activationRate      Decimal // % de usuários que atingiram value
 
   // Retention
-  weeklyRetention    Decimal  // % ativos 1 semana após signup
-  monthlyRetention   Decimal  // % ativos 1 mês após signup
-  quarterlyRetention Decimal  // % ativos 3 meses após signup
+  weeklyRetention    Decimal // % ativos 1 semana após signup
+  monthlyRetention   Decimal // % ativos 1 mês após signup
+  quarterlyRetention Decimal // % ativos 3 meses após signup
 
   // Feature Adoption
-  featureAdoptionRates Json?    // { "feature_name": adoption_rate } - jsonb para queries
-  powerUserPercentage  Decimal  // % usando >3x por semana
+  featureAdoptionRates Json? // { "feature_name": adoption_rate } - jsonb para queries
+  powerUserPercentage  Decimal // % usando >3x por semana
 
   // Audit Trail
   userId  String // Quem inseriu os dados
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String?  // Contexto/observações
+  notes   String? // Contexto/observações
   version Int     @default(1) // Versão dos dados (permite correções)
 
   createdAt DateTime @default(now())
@@ -654,12 +656,12 @@ model EngagementMetric {
 // Métricas de Saúde do Produto (NPS, CSAT, Quality)
 model ProductHealthMetric {
   id     String   @id @default(cuid())
-  period DateTime  // Mês de referência
+  period DateTime // Mês de referência
 
   // Customer Satisfaction
-  nps  Decimal  // Net Promoter Score (-100 a 100)
-  csat Decimal  // Customer Satisfaction (0-100)
-  ces  Decimal  // Customer Effort Score (1-7)
+  nps  Decimal // Net Promoter Score (-100 a 100)
+  csat Decimal // Customer Satisfaction (0-100)
+  ces  Decimal // Customer Effort Score (1-7)
 
   // Product Quality
   bugCount             Int // Bugs reportados no mês
@@ -672,21 +674,21 @@ model ProductHealthMetric {
   featureRequestBacklog Int // Requests acumulados
 
   // Technical Health
-  uptime             Decimal  // % uptime (target 99.9900%)
+  uptime             Decimal // % uptime (target 99.9900%)
   avgApiResponseTime Int // Milissegundos
-  errorRate          Decimal  // % de erros (precisa precisão)
+  errorRate          Decimal // % de erros (precisa precisão)
 
   // Support Quality
   avgSupportResponseTime   Int // Minutos para primeira resposta
   avgSupportResolutionTime Int // Horas para resolução
   supportTicketCount       Int // Total de tickets no mês
-  firstContactResolution   Decimal  // % resolvido no primeiro contato
+  firstContactResolution   Decimal // % resolvido no primeiro contato
 
   // Audit Trail
   userId  String // Quem inseriu os dados
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String?  // Contexto/observações
+  notes   String? // Contexto/observações
   version Int     @default(1) // Versão dos dados (permite correções)
 
   createdAt DateTime @default(now())
@@ -700,7 +702,7 @@ model ProductHealthMetric {
 // Métricas de Vendas & Marketing (CAC, Funnel)
 model SalesMetric {
   id     String   @id @default(cuid())
-  period DateTime  // Mês de referência
+  period DateTime // Mês de referência
 
   // Sales Performance
   leads          Int // Leads gerados
@@ -710,31 +712,31 @@ model SalesMetric {
   closedLost     Int // Deals perdidos
 
   // Conversion Rates
-  leadToSqlRate         Decimal  // % conversão lead -> SQL
-  sqlToOpportunityRate  Decimal  // % conversão SQL -> Opp
-  opportunityToWinRate  Decimal  // % conversão Opp -> Win
-  overallConversionRate Decimal  // % conversão lead -> Win
+  leadToSqlRate         Decimal // % conversão lead -> SQL
+  sqlToOpportunityRate  Decimal // % conversão SQL -> Opp
+  opportunityToWinRate  Decimal // % conversão Opp -> Win
+  overallConversionRate Decimal // % conversão lead -> Win
 
   // CAC Breakdown
-  marketingSpend Decimal  // Gasto com marketing
-  salesSpend     Decimal  // Gasto com vendas
-  totalCacSpend  Decimal  // marketing + sales
-  blendedCac     Decimal  // CAC total / newCustomers
+  marketingSpend Decimal // Gasto com marketing
+  salesSpend     Decimal // Gasto com vendas
+  totalCacSpend  Decimal // marketing + sales
+  blendedCac     Decimal // CAC total / newCustomers
 
   // Sales Cycle
   avgSalesCycleLength Int // Dias médios do ciclo de vendas
-  avgDealSize         Decimal  // Tamanho médio do contrato
+  avgDealSize         Decimal // Tamanho médio do contrato
 
   // Pipeline Health
-  pipelineValue    Decimal  // Valor total do pipeline
-  pipelineCoverage Decimal  // Pipeline / quota ratio
-  leadVelocityRate Decimal  // % crescimento de leads MoM
+  pipelineValue    Decimal // Valor total do pipeline
+  pipelineCoverage Decimal // Pipeline / quota ratio
+  leadVelocityRate Decimal // % crescimento de leads MoM
 
   // Audit Trail
   userId  String // Quem inseriu os dados
   user    User    @relation(fields: [userId], references: [id])
   source  String  @default("manual") // manual, api, import, calculated
-  notes   String?  // Contexto/observações
+  notes   String? // Contexto/observações
   version Int     @default(1) // Versão dos dados (permite correções)
 
   createdAt DateTime @default(now())
@@ -774,9 +776,9 @@ model DailyActivityLog {
   updatedAt DateTime @updatedAt
 
   // Relações
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  marketingList MarketingList?  @relation(fields: [marketingListId], references: [id], onDelete: SetNull)
-  opportunity   Opportunity?    @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  marketingList MarketingList? @relation(fields: [marketingListId], references: [id], onDelete: SetNull)
+  opportunity   Opportunity?   @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
 
   // Indexes para performance
   @@index([userId, date(sort: Desc)]) // Buscar atividades por usuário e data
@@ -791,41 +793,41 @@ model DailyActivityLog {
 // ============================================================
 
 model Demanda {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  origin      String    @default("outra") // fernando, securisoft, autogerada, outra
-  status      String    @default("solicitada") // solicitada, em_andamento, concluida, bloqueada
-  priority    String    @default("media") // alta, media, baixa
-  assignee       String?   // DEPRECATED — denormalized display cache (auto-populated from User.name when assignedToId is set). Mantido durante janela de compat até feature-assignee-fk-migration concluir backfill em prod.
-  assignedToId   String?   // FK para User responsável (fonte de verdade desde feature-assignee-fk-migration)
+  id             String    @id @default(cuid())
+  title          String
+  description    String?
+  origin         String    @default("outra") // fernando, securisoft, autogerada, outra
+  status         String    @default("solicitada") // solicitada, em_andamento, concluida, bloqueada
+  priority       String    @default("media") // alta, media, baixa
+  assignee       String? // DEPRECATED — denormalized display cache (auto-populated from User.name when assignedToId is set). Mantido durante janela de compat até feature-assignee-fk-migration concluir backfill em prod.
+  assignedToId   String? // FK para User responsável (fonte de verdade desde feature-assignee-fk-migration)
   assignedTo     User?     @relation("DemandaAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
-  previousStatus String?   // Status anterior quando bloqueada (para lane horizontal)
+  previousStatus String? // Status anterior quando bloqueada (para lane horizontal)
   dateIn         DateTime  @default(now())
   dateStarted    DateTime?
-  deadline    DateTime?
-  dateDone    DateTime?
-  version     Int       @default(1) // Optimistic locking
+  deadline       DateTime?
+  dateDone       DateTime?
+  version        Int       @default(1) // Optimistic locking
 
-  classification String?   // marketing, administrativo, vendas, financeiro, operacional, tecnologia, juridico, rh, estrategico
-  client         String?   // Cliente atendido (texto livre) — eixo do relatório de horas; ≠ Empresa-tenant. Ver feature-time-entries.
+  classification String? // marketing, administrativo, vendas, financeiro, operacional, tecnologia, juridico, rh, estrategico
+  client         String? // Cliente atendido (texto livre) — eixo do relatório de horas; ≠ Empresa-tenant. Ver feature-time-entries.
 
-  reminderDate  DateTime?            // Data do lembrete
-  reminderSent  Boolean   @default(false) // Ja enviou email de lembrete?
+  reminderDate DateTime? // Data do lembrete
+  reminderSent Boolean   @default(false) // Ja enviou email de lembrete?
 
-  userId    String
-  user      User     @relation("DemandaCreator", fields: [userId], references: [id])
-  companyId String?
-  company   Company? @relation(fields: [companyId], references: [id])
-  teamId    String?
-  team      Team?    @relation(fields: [teamId], references: [id])
-  subtasks  Subtask[]
-  links     DemandaLink[]
+  userId      String
+  user        User          @relation("DemandaCreator", fields: [userId], references: [id])
+  companyId   String?
+  company     Company?      @relation(fields: [companyId], references: [id])
+  teamId      String?
+  team        Team?         @relation(fields: [teamId], references: [id])
+  subtasks    Subtask[]
+  links       DemandaLink[]
   timeEntries TimeEntry[]
-  ticket    Ticket?   // service desk: vínculo 1:1 opcional (lado inverso de Ticket.demandaId)
-  dependsOn String    @default("[]") // JSON array de IDs de Demanda que esta depende
+  ticket      Ticket? // service desk: vínculo 1:1 opcional (lado inverso de Ticket.demandaId)
+  dependsOn   String        @default("[]") // JSON array de IDs de Demanda que esta depende
 
-  estimatedMinutes Int?           // Horas estimadas (opcional), armazenadas em minutos
+  estimatedMinutes Int? // Horas estimadas (opcional), armazenadas em minutos
   spentMinutes     Int  @default(0) // Horas gastas no card, em minutos
 
   createdAt DateTime @default(now())
@@ -845,16 +847,16 @@ model Demanda {
 }
 
 model Subtask {
-  id        String   @id @default(cuid())
-  title     String
-  completed Boolean  @default(false)
-  position  Int      @default(0)
-  estimatedMinutes Int?            // Horas estimadas (opcional), em minutos
-  spentMinutes     Int  @default(0) // Horas gastas na subtarefa, em minutos
-  demandaId String
-  demanda   Demanda  @relation(fields: [demandaId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  title            String
+  completed        Boolean  @default(false)
+  position         Int      @default(0)
+  estimatedMinutes Int? // Horas estimadas (opcional), em minutos
+  spentMinutes     Int      @default(0) // Horas gastas na subtarefa, em minutos
+  demandaId        String
+  demanda          Demanda  @relation(fields: [demandaId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([demandaId, position])
   @@map("subtasks")
@@ -881,12 +883,12 @@ model DemandaLink {
 model InviteToken {
   id         String    @id @default(cuid())
   token      String    @unique
-  email      String?   // Email pre-definido (opcional)
+  email      String? // Email pre-definido (opcional)
   role       String    @default("user")
-  companyId  String?   // Empresa do convite — novo usuario herda
+  companyId  String? // Empresa do convite — novo usuario herda
   company    Company?  @relation(fields: [companyId], references: [id])
-  teamIds    String[]  // IDs das equipes para vincular (pode ser multiplas)
-  department String?   // Departamento do convite — novo usuario herda
+  teamIds    String[] // IDs das equipes para vincular (pode ser multiplas)
+  department String? // Departamento do convite — novo usuario herda
   usedAt     DateTime? // null = nao usado
   expiresAt  DateTime
   createdBy  String
@@ -908,15 +910,15 @@ model InviteToken {
 // Ver feature-api-service-token.
 model ApiToken {
   id          String    @id @default(cuid())
-  name        String    // rótulo legível (ex: "admin-cli", "marcos-mcp")
+  name        String // rótulo legível (ex: "admin-cli", "marcos-mcp")
   tokenHash   String    @unique // SHA-256(plaintext) — lookup O(1)
-  tokenPrefix String    // primeiros chars do plaintext, p/ identificação visual
+  tokenPrefix String // primeiros chars do plaintext, p/ identificação visual
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt   DateTime? // null = nunca expira
   revokedAt   DateTime? // null = ativo
   lastUsedAt  DateTime? // auditoria de uso (fire-and-forget)
-  createdBy   String?   // userId de quem gerou (opcional)
+  createdBy   String? // userId de quem gerou (opcional)
   createdAt   DateTime  @default(now())
 
   @@index([userId])
@@ -936,17 +938,17 @@ model TimeEntry {
   id          String   @id @default(cuid())
   demandaId   String
   demanda     Demanda  @relation(fields: [demandaId], references: [id], onDelete: Cascade)
-  userId      String?  // Responsável do card (quem atuou); null se o usuário for removido
+  userId      String? // Responsável do card (quem atuou); null se o usuário for removido
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  userName    String   // Snapshot do nome (resiliente a exclusão de usuário)
-  minutes     Int      // Delta em minutos (pode ser negativo numa correção)
-  client      String?  // Snapshot do cliente atendido no momento do Salvar
-  source      String   // "card" | "subtask" | "seed"
+  userName    String // Snapshot do nome (resiliente a exclusão de usuário)
+  minutes     Int // Delta em minutos (pode ser negativo numa correção)
+  client      String? // Snapshot do cliente atendido no momento do Salvar
+  source      String // "card" | "subtask" | "seed"
   // Rastreio da subtarefa (quando source="subtask"). SEM FK de propósito: é um traço
   // write-once — a exclusão da subtarefa grava um delta negativo e o histórico deve
   // sobreviver (não cascatear/anular). Ver feature-time-entries.
   subtaskId   String?
-  createdById String?  // Editor que salvou (ator), p/ auditoria
+  createdById String? // Editor que salvou (ator), p/ auditoria
   createdAt   DateTime @default(now())
 
   @@index([demandaId])
@@ -965,42 +967,42 @@ model TimeEntry {
 // num único service-layer (src/lib/tickets-server.ts). Interações = COUNT(TicketMessage
 // kind='reply'), sem contador materializado.
 model Ticket {
-  id             String    @id @default(cuid())
+  id             String  @id @default(cuid())
   subject        String
   description    String?
-  status         String    @default("solicitado") // solicitado | em_atendimento | concluido
-  priority       String    @default("media")      // alta | media | baixa
-  channel        String?                           // email | whatsapp | telefone | chat | outro
-  requester      String?                           // solicitante (texto livre)
-  client         String?                           // NOVO v2: cliente atendido (≠ empresa-tenant; espelha Demanda.client)
-  requesterEmail String?                           // e-mail do solicitante (portal)
-  source         String    @default("interno")    // interno | portal
-  protocol       String?   @unique                // SD-<ano>-<seq>, só p/ exibição ao cliente
+  status         String  @default("solicitado") // solicitado | em_atendimento | concluido
+  priority       String  @default("media") // alta | media | baixa
+  channel        String? // email | whatsapp | telefone | chat | outro
+  requester      String? // solicitante (texto livre)
+  client         String? // NOVO v2: cliente atendido (≠ empresa-tenant; espelha Demanda.client)
+  requesterEmail String? // e-mail do solicitante (portal)
+  source         String  @default("interno") // interno | portal
+  protocol       String? @unique // SD-<ano>-<seq>, só p/ exibição ao cliente
 
   // --- escalonamento p/ Nível 2 EXTERNO ---
-  escalatedAt  DateTime?                          // setado SÓ na ação de encaminhar; null = nunca foi ao N2
-  escalatedTo  String?                            // parceiro destino (ex.: "SecuriSoft", "Bitdefender N2")
+  escalatedAt DateTime? // setado SÓ na ação de encaminhar; null = nunca foi ao N2
+  escalatedTo String? // parceiro destino (ex.: "SecuriSoft", "Bitdefender N2")
 
   // --- relógio (calendar time) ---
-  firstReplyAt    DateTime?                       // 1ª resposta de agente (kind='reply')
-  resolvedAt      DateTime?                       // fecha o relógio do ticket
-  columnChangedAt DateTime?                       // NOVO v2: quando entrou na coluna atual (motor do aging)
+  firstReplyAt    DateTime? // 1ª resposta de agente (kind='reply')
+  resolvedAt      DateTime? // fecha o relógio do ticket
+  columnChangedAt DateTime? // NOVO v2: quando entrou na coluna atual (motor do aging)
 
   // --- atribuição & multi-tenant ---
   assignedToId String?
-  assignedTo   User?     @relation("TicketAgent", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedTo   User?   @relation("TicketAgent", fields: [assignedToId], references: [id], onDelete: SetNull)
   companyId    String
-  company      Company   @relation(fields: [companyId], references: [id])
+  company      Company @relation(fields: [companyId], references: [id])
 
   // --- vínculo 1:1 OPCIONAL com o Kanban ---
-  demandaId    String?   @unique
-  demanda      Demanda?  @relation(fields: [demandaId], references: [id], onDelete: SetNull)
+  demandaId String?  @unique
+  demanda   Demanda? @relation(fields: [demandaId], references: [id], onDelete: SetNull)
 
-  createdById  String
-  createdBy    User      @relation("TicketCreator", fields: [createdById], references: [id])
-  messages     TicketMessage[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdById String
+  createdBy   User            @relation("TicketCreator", fields: [createdById], references: [id])
+  messages    TicketMessage[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   @@index([companyId, status])
   @@index([companyId, createdAt])
@@ -1015,7 +1017,7 @@ model TicketMessage {
   id        String   @id @default(cuid())
   ticketId  String
   ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  kind      String   @default("reply")        // reply (conta como interação) | note (interna)
+  kind      String   @default("reply") // reply (conta como interação) | note (interna)
   authorId  String?
   author    User?    @relation("TicketMessageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   body      String
@@ -1034,15 +1036,15 @@ model TicketMessage {
 // Sincronizado do Zoho (F4); na fase atual, seed manual.
 model AuthorizedClient {
   id          String    @id @default(cuid())
-  companyId   String                              // Sempre Defenz (SD-ADR-001)
+  companyId   String // Sempre Defenz (SD-ADR-001)
   company     Company   @relation(fields: [companyId], references: [id])
-  cnpj        String                              // normalizado (só dígitos, 14 chars)
-  email       String                              // lowercase
-  clientName  String                              // empresa atendida → vira Ticket.client
-  contactName String?                             // nome do contato (opcional)
+  cnpj        String // normalizado (só dígitos, 14 chars)
+  email       String // lowercase
+  clientName  String // empresa atendida → vira Ticket.client
+  contactName String? // nome do contato (opcional)
   active      Boolean   @default(true)
-  zohoId      String?                             // ID no Zoho CRM (sync futuro F4)
-  syncedAt    DateTime?                           // última sincronização com Zoho
+  zohoId      String? // ID no Zoho CRM (sync futuro F4)
+  syncedAt    DateTime? // última sincronização com Zoho
   createdAt   DateTime  @default(now())
 
   @@unique([cnpj, email])
@@ -1181,7 +1183,7 @@ model Apresentacao {
   /// Os fatos de mercado que EFETIVAMENTE entraram, congelados. Mesma razao do
   /// precoSnapshot da Proposta: sem isto, "o que a gente afirmou ao cliente X"
   /// vira memoria assim que o catalogo mudar.
-  fatosSnapshot Json
+  fatosSnapshot  Json
   /// Versao do texto fixo com que nasceu (mesma licao do templateVersao da Proposta).
   templateVersao String @default("2026-08-22")
 
@@ -1197,6 +1199,40 @@ model Apresentacao {
   @@index([companyId, createdAt])
   @@index([empresaNome])
   @@map("apresentacoes")
+}
+
+/**
+ * Uma linha por pesquisa de apresentação DISPARADA — inclusive a que falhou.
+ * ⚠️ É o cap de custo do §6.8, e ele é contado AQUI, no banco, de propósito: o
+ * `checkRateLimit` da Ana roda em memória do lambda e não segura custo nenhum
+ * (R5 do Portal). Latência, modelo e número de fontes ficam gravados para o
+ * custo ser medido, não estimado.
+ */
+model ApresentacaoPesquisa {
+  id String @id @default(cuid())
+
+  empresaNome String
+  setor       String?
+
+  /// `false` quando a busca voltou sem grounding ou o modelo falhou. Conta para o cap
+  /// do mesmo jeito: a chamada foi paga.
+  sucesso     Boolean @default(true)
+  erro        String?
+  latenciaMs  Int?
+  modelo      String?
+  qtdFontes   Int?
+  qtdCasos    Int?
+  qtdBarrados Int?
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  criadoPorId String?
+  criadoPor   User?    @relation("ApresentacaoPesquisaCriador", fields: [criadoPorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([companyId, createdAt])
+  @@map("apresentacao_pesquisas")
 }
 
 model PropostaSequence {

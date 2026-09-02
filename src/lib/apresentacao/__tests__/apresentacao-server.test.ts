@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatarDataSP, nomeArquivoApresentacao } from '../apresentacao-server'
+import { formatarDataSP, nomeArquivoApresentacao, inicioDoDiaSP } from '../apresentacao-server'
 import { createApresentacaoSchema } from '@/lib/validations/apresentacao'
 
 describe('nome do arquivo', () => {
@@ -75,5 +75,20 @@ describe('re-download reimprime o que foi afirmado, não o catálogo de hoje', (
     expect(html).toContain('Instituto Fictício')
     // e o número de hoje NÃO aparece
     expect(html).not.toContain('R$ 11,43 milhões')
+  })
+})
+
+describe('inicioDoDiaSP — o cap diário é do dia do vendedor, não do servidor', () => {
+  // ⚠️ Na Vercel o servidor é UTC. `setHours(0,0,0,0)` faria o dia começar às 21h
+  // de ontem em São Paulo, dando três horas de pesquisa de brinde toda noite.
+  it('vira o dia à meia-noite de São Paulo, não à do UTC', () => {
+    // 02/09 às 01:00 UTC = 01/09 às 22:00 em SP: ainda é dia 01 lá.
+    expect(inicioDoDiaSP(new Date('2026-09-02T01:00:00Z')).toISOString()).toBe(
+      '2026-09-01T03:00:00.000Z'
+    )
+    // 02/09 às 12:00 UTC = 02/09 às 09:00 em SP.
+    expect(inicioDoDiaSP(new Date('2026-09-02T12:00:00Z')).toISOString()).toBe(
+      '2026-09-02T03:00:00.000Z'
+    )
   })
 })
