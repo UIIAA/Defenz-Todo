@@ -1,3 +1,26 @@
+> # ✅ RESOLVIDO em 02/09, fim do dia — pode construir
+>
+> **O link NÃO precisa ser público.** Decisão do Marcos, com estas palavras: *"O cliente vai
+> receber via PDF. O link tem que ser alcançável pelo time interno mesmo, porque vai estar dentro
+> do Zoho."*
+>
+> Isso mata o bloqueio inteiro. Não precisa mexer na política do tenant, não precisa link anônimo,
+> e some o risco de proposta com preço ficar pública. O escopo do link virou **`organization`**:
+> quem está logado com a conta Defenz abre; quem não está, cai no login — que é o comportamento
+> desejado.
+>
+> **Histórico do erro, para não se perder:** eu havia afirmado que o tenant permitia link anônimo.
+> Estava errado — testei a criação do link, não o acesso. O `createLink` volta 201 com
+> `scope: anonymous`, mas abrir o endereço de fora dá 403 e redireciona para o login da Microsoft.
+> A decisão do Marcos tornou a questão irrelevante, mas o fato fica registrado.
+>
+> **Podem construir `linkPublico` (melhor chamar de `linkArquivo`), `linkPermissionId` e
+> `linkCriadoEm`, e o botão Copiar link.** O público dele é o time, não o cliente.
+
+---
+
+---
+
 # Pedido · Proposta e apresentação precisam gerar link clicável
 
 **De:** sessão Chief (`Defenz_Chief`) · **Para:** sessão `Defenz - To-Do`
@@ -38,6 +61,14 @@ baixar nada e sem fazer login.**
 ---
 
 ## O caminho técnico, e quem faz cada pedaço
+
+**0. FEITO em 02/09 — o workflow existe e está no ar.** `defenz-proposta-arquivo`, no contrato que
+o `arquivamento.ts` já espera. Salva em `Defenz - Propostas/<EMPRESA>/<codigo>__<AAAA-MM-DD_HHMM>__<arquivo>.pdf`
+e responde `itemId`, `webUrl`, `permissionId`, `linkCriadoEm` e `caminho`. Token errado dá 401,
+testado. **Decisão do Marcos já implementada: cada emissão vira um arquivo NOVO, nunca sobrescreve** —
+o histórico fica no diretório do cliente e o Zoho guarda sempre a última. Testado com duas emissões
+do mesmo código: dois arquivos, dois itemId. O token está no n8n; peçam ao Marcos para pôr no
+`.env.local` de vocês.
 
 **1. n8n devolver o link — é meu, não de vocês.** O workflow que hoje sobe o arquivo passa a
 chamar o Graph logo depois do upload:
@@ -92,3 +123,36 @@ poder expirar depois se um dia quiserem.
 Meu lado do item 8 já está medido: a venda **PLASDURAN** (R$ 5.600, 70 licenças) **está** no CRM
 como Fechado Ganho com data de fechamento **25/08**, e **aparece** na janela de 8 semanas do
 dashboard. Ela não aparecia no dia 31/08 porque virou ganho depois da coleta daquela manhã.
+
+---
+
+# Adendo · dá para o Zoho ser atualizado sozinho? (pergunta do Marcos, 02/09)
+
+**Sim, e o caminho é curto.** Mas faltam três coisas, e uma delas é de vocês.
+
+**1. O campo não existe no Zoho.** Conferi os 40 campos de `Deals`: **não há nenhum do tipo URL**,
+nem nada com "link" ou "proposta" no nome. Precisa ser criado. É item 9 da f-039 e é meu.
+
+**2. O workflow precisa saber QUAL negócio atualizar.** Hoje vocês mandam `X-Proposta-Codigo` e
+`X-Proposta-Empresa`. Casar por **nome de empresa é frágil** — a busca do Zoho casa por prefixo, e
+hoje mesmo apareceram dois casos de negócio recriado com id novo depois de merge.
+
+**O que eu peço a vocês: mandem o CNPJ num header novo, `X-Proposta-CNPJ`.** O model `Proposta` já
+tem o campo `cnpj`, e o `Deals` do Zoho tem `CNPJ` e `CNPJ1`. Chave numérica, sem grafia, sem
+acento, sem prefixo. É de longe o casamento mais confiável.
+
+Se quiserem ir além e guardar o **id do negócio no Zoho** junto da proposta, melhor ainda — aí não
+há busca nenhuma, é escrita direta. Mas o CNPJ já resolve.
+
+**3. Falta uma regra para o caso de mais de um negócio aberto no mesmo CNPJ.** Minha proposta: o
+mais recente entre os abertos; se houver empate ou nenhum, **não escreve e registra**, em vez de
+chutar. Link colado no negócio errado é pior que link ausente.
+
+## Como fica o fluxo, se vocês mandarem o CNPJ
+
+1. vocês geram a proposta e mandam o PDF como já mandam, com o header novo
+2. o workflow salva no OneDrive, cria o link e **procura o negócio pelo CNPJ**
+3. achou um: grava o link no campo do Deal e devolve a vocês `zohoDealId` e `zohoAtualizado: true`
+4. achou zero ou vários: devolve `zohoAtualizado: false` com o motivo, e o vendedor cola à mão
+
+O vendedor deixa de colar link, e o CRM passa a ter a proposta sem depender de disciplina.

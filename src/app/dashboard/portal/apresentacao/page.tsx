@@ -8,6 +8,7 @@ import { PortalTabs } from '@/components/portal/portal-tabs'
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Presentation } from 'lucide-react'
 import { NIVEIS, NIVEL_NOME, type NivelId } from '@/lib/apresentacao/comparativo'
 import { fatosParaSetor } from '@/lib/apresentacao/mercado-fatos'
+import { mensagemDeErroApi } from '@/lib/api-erro-legivel'
 
 interface Formulario {
   clienteNome: string
@@ -15,6 +16,9 @@ interface Formulario {
   setor: string
   nivelDestaque: NivelId
 }
+
+/** Mesmo limite do `createApresentacaoSchema`. Se mudar lá, muda aqui. */
+const SETOR_MAX = 80
 
 const INICIAL: Formulario = {
   clienteNome: '',
@@ -53,10 +57,12 @@ export default function NovaApresentacaoPage() {
 
       if (!res.ok) {
         // Sem erro silencioso (I4): a tela diz por que o backend recusou.
+        // ⚠️ O `handleApiError` manda `error` como STRING e o motivo real em
+        // `details[]`. Ler `j.error.message` devolvia undefined e escondia
+        // justamente o campo que estourou (400 do Gustavo, 02/09).
         let motivo = `Falha ao gerar a apresentação (HTTP ${res.status})`
         try {
-          const j = await res.json()
-          motivo = j?.error?.message || j?.message || motivo
+          motivo = mensagemDeErroApi(await res.json(), res.status, 'Falha ao gerar a apresentação')
         } catch {
           /* resposta sem JSON — fica a mensagem com o status */
         }
@@ -136,8 +142,12 @@ export default function NovaApresentacaoPage() {
           </span>
           <Input
             value={form.setor}
-            onChange={(e) => setForm({ ...form, setor: e.target.value })}
-            placeholder="Saúde, Financeiro, Serviços…"
+            // ⚠️ O limite é do schema (80). Cortar aqui é o que evita o 400 que
+            // chegou ao vendedor sem dizer o motivo: é campo de NICHO, não de
+            // descrição da empresa — alguém colou o texto institucional inteiro.
+            maxLength={SETOR_MAX}
+            onChange={(e) => setForm({ ...form, setor: e.target.value.slice(0, SETOR_MAX) })}
+            placeholder="Saúde, Financeiro, Setor público…"
           />
           <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
             {especificos.length > 0 ? (
