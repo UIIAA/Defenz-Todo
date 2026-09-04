@@ -23,6 +23,7 @@ import {
   MANROPE_LATIN_WOFF2,
 } from '../assets/embedded'
 import { formatarBRL, type BlocoPlano, type Investimento } from '../calculo'
+import type { BlocoComplemento, Consolidado } from '../calculo-complementos'
 
 // Paleta do brandbook. ~70% papel, ~22% tinta, ~8% crimson.
 const C = {
@@ -56,6 +57,10 @@ export interface PropostaDocumento {
   ano: number
   vendedor: VendedorDoc
   investimento: Investimento
+  /** Complementos escolhidos. Vazio = proposta idêntica à de antes desta feature. */
+  complementos?: BlocoComplemento[]
+  /** A soma de tudo. Só existe quando há complemento. */
+  consolidado?: Consolidado
 }
 
 /** Escapa tudo que vem do formulário. Nome de cliente com `<` não pode virar markup. */
@@ -82,8 +87,20 @@ export function escapeHtml(valor: string): string {
 export const PAGINAS_FIXAS = 8
 /** Páginas que vêm ANTES do investimento: capa, confidencialidade, 01…05. */
 export const PAGINAS_ANTES_DO_INVESTIMENTO = 7
-export function totalPaginas(qtdPlanos: number): number {
-  return PAGINAS_FIXAS + qtdPlanos
+/** Cabem 2 complementos por página sem espremer descrição. */
+export const COMPLEMENTOS_POR_PAGINA = 2
+
+export function paginasDeComplementos(qtdComplementos: number): number {
+  return Math.ceil(qtdComplementos / COMPLEMENTOS_POR_PAGINA)
+}
+
+/**
+ * ⚠️ A assinatura antiga (só `qtdPlanos`) continua valendo: proposta sem
+ * complemento tem exatamente as mesmas páginas de antes.
+ */
+export function totalPaginas(qtdPlanos: number, qtdComplementos = 0): number {
+  const extras = qtdComplementos > 0 ? paginasDeComplementos(qtdComplementos) + 1 : 0
+  return PAGINAS_FIXAS + qtdPlanos + extras
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
@@ -165,6 +182,8 @@ export const SECOES = {
   PARCERIA: '04.',
   GOVERNANCA: '05.',
   INVESTIMENTO: '06.',
+  COMPLEMENTOS: '07.',
+  RESUMO: '08.',
 } as const
 
 /**
@@ -325,11 +344,210 @@ function paginaInvestimento(
 ${rodape(numeroPagina, total, doc.ano, '24px')}`)
 }
 
+
+// ─── complementos ────────────────────────────────────────────────────────────
+
+/**
+ * Um complemento: a tabela dele e a descrição do que ele faz.
+ *
+ * A descrição vem do catálogo (`complementos.ts`), resumida do material oficial
+ * da Bitdefender e com a fonte impressa ao lado. Não é texto gerado.
+ */
+function tabelaComplemento(c: BlocoComplemento, quantidade: number): string {
+  const vs = c.vigencias
+
+  const linhasDesconto = c.temDesconto
+    ? `
+            ${linhaGrid(
+              'Desconto competitivo',
+              vs.map(() => formatarPercent(c.descontoPercent)),
+              { destaqueUltimo: false, corValor: `color:${C.accent}; font-weight:700;` }
+            )}
+
+            ${linhaGrid(
+              'Unitário com desconto',
+              vs.map((v) => formatarBRL(v.precoLicencaFinal)),
+              { corRotulo: C.ink, peso: ' font-weight:800;' }
+            )}
+`
+    : ''
+
+  const totais = vs
+    .map((v, i) => {
+      const ultimo = i === vs.length - 1
+      const fundo = ultimo ? C.accent : C.ink
+      const raio = ultimo ? 'border-radius:0 8px 8px 0;' : ''
+      return `<div style="padding:10px 4px; text-align:center; background:${fundo}; color:${ultimo ? '#fff' : '#F5F2EC'}; font-weight:${ultimo ? 800 : 700}; margin-top:8px; ${raio}">${formatarBRL(v.valorTotalFinal)}</div>`
+    })
+    .join('\n            ')
+
+  return `
+        <div style="margin-bottom:26px;">
+          <div style="font-size:17px; font-weight:800; letter-spacing:-0.02em; margin-bottom:8px;">${escapeHtml(c.nome)}</div>
+          <p style="font-size:12.5px; line-height:1.7; color:${C.body}; margin:0 0 12px; text-align:justify;">${escapeHtml(c.descricao)}</p>
+          <div style="display:grid; grid-template-columns:1.9fr 1fr 1fr 1fr; font-size:12.5px;">
+            <div style="padding:8px 6px; color:${C.faint}; font-weight:700; font-size:11.5px;">${quantidade} licenças</div>
+            ${vs
+              .map(
+                (v, i) =>
+                  `<div style="padding:8px 6px; text-align:center; font-weight:800;${i === vs.length - 1 ? ` color:${C.accent};` : ''}">${escapeHtml(v.rotulo)}</div>`
+              )
+              .join('\n            ')}
+
+            ${linhaGrid(
+              'Valor unitário / mês',
+              vs.map((v) => formatarBRL(v.valorUnitarioMesFinal))
+            )}
+
+            ${linhaGrid(
+              'Valor unitário',
+              vs.map((v) => formatarBRL(v.precoLicenca)),
+              { destaqueUltimo: !c.temDesconto }
+            )}
+${linhasDesconto}
+            <div style="padding:10px 14px; color:#fff; font-weight:800; background:${C.ink}; border-radius:8px 0 0 8px; margin-top:8px;">Total</div>
+            ${totais}
+          </div>
+          <div style="margin-top:8px; font-size:10px; color:${C.faint}; font-weight:600;">${escapeHtml(c.fonte)}</div>
+        </div>`
+}
+
+function paginaComplementos(
+  grupo: BlocoComplemento[],
+  indice: number,
+  doc: PropostaDocumento,
+  numeroPagina: number,
+  total: number
+): string {
+  const quantidade = doc.investimento.quantidade
+  const continuacao = indice > 0
+
+  return pagina(`${cabecalhoCorrido(doc.empresaNome)}
+      <div style="margin-top:56px;">${tituloSecao(
+        SECOES.COMPLEMENTOS,
+        'Complementos',
+        continuacao
+          ? ` &nbsp;<span style="font-size:22px; color:${C.faint}; font-weight:700;">continuação</span>`
+          : ''
+      )}
+        ${
+          continuacao
+            ? ''
+            : `<p style="font-size:15px; line-height:1.8; color:${C.body}; margin:0 0 8px; max-width:600px; text-align:justify;">Módulos que somam ao GravityZone contratado. Cada um é cobrado à parte, pelas mesmas ${quantidade} licenças, e pode entrar ou sair sem alterar o restante da proposta.</p>`
+        }
+      </div>
+
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">${grupo
+        .map((c) => tabelaComplemento(c, quantidade))
+        .join('\n')}
+      </div>
+
+      <div style="font-size:12px; color:${C.faint}; font-weight:600; text-align:center;">Valores em reais, por licença, pelo período contratado &middot; ${quantidade} licenças.</div>
+${rodape(numeroPagina, total, doc.ano, '18px')}`)
+}
+
+/**
+ * A última página do investimento: tudo somado.
+ *
+ * ⚠️ Quando o principal e os complementos não cobrem o mesmo tempo, a página é
+ * OBRIGADA a dizer — e diz, a partir de `coberturasDivergem`, não de texto fixo.
+ * Um total de 36+12 somado com complemento de 36 meses, sem essa frase, promete
+ * uma cobertura que o preço não sustenta.
+ */
+function paginaResumo(
+  consolidado: Consolidado,
+  doc: PropostaDocumento,
+  numeroPagina: number,
+  total: number
+): string {
+  const ls = consolidado.linhas
+  const quantidade = doc.investimento.quantidade
+
+  const cabecalhos = ls
+    .map(
+      (l, i) =>
+        `<div style="padding:8px 6px; text-align:center; font-weight:800;${i === ls.length - 1 ? ` color:${C.accent};` : ''}">${escapeHtml(l.rotulo)}</div>`
+    )
+    .join('\n            ')
+
+  const totais = ls
+    .map((l, i) => {
+      const ultimo = i === ls.length - 1
+      const fundo = ultimo ? C.accent : C.ink
+      const raio = ultimo ? 'border-radius:0 8px 8px 0;' : ''
+      return `<div style="padding:14px 4px; text-align:center; background:${fundo}; color:${ultimo ? '#fff' : '#F5F2EC'}; font-weight:800; font-size:15px; margin-top:8px; ${raio}">${formatarBRL(l.total)}</div>`
+    })
+    .join('\n            ')
+
+  const notaCobertura = consolidado.coberturasDivergem
+    ? `<div style="margin-top:18px; padding:14px 16px; background:${C.surface}; border-left:4px solid ${C.accent}; font-size:12.5px; line-height:1.7; color:${C.body};">
+             <strong>Sobre a coluna de 36 meses:</strong> o ${escapeHtml(consolidado.planoLabel)} é contratado na condição <strong>36+12</strong> — paga-se 36 meses e a proteção vale por 48. Os complementos acima <strong>cobrem 36 meses</strong>, sem o bônus. A soma desta página junta as duas coisas, e é por isso que a cobertura de cada linha vem escrita ao lado.
+           </div>`
+    : ''
+
+  const itens = consolidado.itens
+    .map(
+      (i) =>
+        `<li style="margin-bottom:6px; font-size:13.5px; color:${C.body};">${escapeHtml(i)}</li>`
+    )
+    .join('\n              ')
+
+  return pagina(`${cabecalhoCorrido(doc.empresaNome)}
+      <div style="margin-top:56px;">${tituloSecao(SECOES.RESUMO, 'Resumo do investimento')}
+        <p style="font-size:15px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">A solução completa para <strong>${quantidade} licenças</strong>, com tudo o que foi selecionado nesta proposta.</p>
+      </div>
+
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:10px;">O que está incluído</div>
+          <ul style="margin:0 0 22px; padding-left:20px;">
+              ${itens}
+          </ul>
+
+          <div style="display:grid; grid-template-columns:1.9fr 1fr 1fr 1fr; font-size:13px;">
+            <div style="padding:8px 6px; color:${C.faint}; font-weight:700; font-size:11.5px;">Período</div>
+            ${cabecalhos}
+
+            ${linhaGrid(
+              'Cobertura do GravityZone',
+              ls.map((l) => `${l.mesesPrincipal} meses`),
+              { destaqueUltimo: false, corValor: `color:${C.muted};` }
+            )}
+
+            ${linhaGrid(
+              'Cobertura dos complementos',
+              ls.map((l) => (l.totalComplementos > 0 ? `${l.mesesComplementos} meses` : '—')),
+              { destaqueUltimo: false, corValor: `color:${C.muted};` }
+            )}
+
+            ${linhaGrid(
+              `${escapeHtml(consolidado.planoLabel)} (${quantidade} licenças)`,
+              ls.map((l) => formatarBRL(l.totalPrincipal))
+            )}
+
+            ${linhaGrid(
+              'Complementos',
+              ls.map((l) => formatarBRL(l.totalComplementos))
+            )}
+
+            <div style="padding:14px; color:#fff; font-weight:800; background:${C.ink}; border-radius:8px 0 0 8px; margin-top:8px; font-size:15px;">Investimento total</div>
+            ${totais}
+          </div>
+
+          ${notaCobertura}
+        </div>
+      </div>
+
+      <div style="font-size:12px; color:${C.faint}; font-weight:600; text-align:center;">Valores em reais &middot; ${quantidade} licenças &middot; faixa ${doc.investimento.faixa} da tabela vigente.</div>
+${rodape(numeroPagina, total, doc.ano, '18px')}`)
+}
+
 // ─── documento ───────────────────────────────────────────────────────────────
+
 
 export function renderPropostaHtml(doc: PropostaDocumento): string {
   const planos = doc.investimento.planos
-  const total = totalPaginas(planos.length)
+  const total = totalPaginas(planos.length, (doc.complementos ?? []).length)
   const empresa = escapeHtml(doc.empresaNome)
   const cliente = escapeHtml(doc.clienteNome)
   const vend = doc.vendedor
@@ -340,6 +558,24 @@ export function renderPropostaHtml(doc: PropostaDocumento): string {
       paginaInvestimento(bloco, i, doc, PAGINAS_ANTES_DO_INVESTIMENTO + 1 + i, total)
     )
     .join('\n')
+
+  // Complementos e resumo entram DEPOIS do investimento e só existem se houver
+  // complemento escolhido — sem eles o documento é byte a byte o de antes.
+  const comps = doc.complementos ?? []
+  const grupos: BlocoComplemento[][] = []
+  for (let i = 0; i < comps.length; i += COMPLEMENTOS_POR_PAGINA) {
+    grupos.push(comps.slice(i, i + COMPLEMENTOS_POR_PAGINA))
+  }
+  const primeiraComplemento = PAGINAS_ANTES_DO_INVESTIMENTO + 1 + planos.length
+
+  const paginasComplementos = grupos
+    .map((g, i) => paginaComplementos(g, i, doc, primeiraComplemento + i, total))
+    .join('\n')
+
+  const paginaDoResumo =
+    comps.length > 0 && doc.consolidado
+      ? paginaResumo(doc.consolidado, doc, primeiraComplemento + grupos.length, total)
+      : ''
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -585,6 +821,8 @@ ${rodape(7, total, doc.ano)}`)}
 
   <!-- ===================== INVESTIMENTO (uma página por plano) ===================== -->
 ${paginasInvestimento}
+${paginasComplementos}
+${paginaDoResumo}
 
   <!-- ===================== ENCERRAMENTO ===================== -->
   <section class="page">

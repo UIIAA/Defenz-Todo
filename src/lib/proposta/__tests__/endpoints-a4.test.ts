@@ -9,6 +9,7 @@ import {
   type PropostaDocumento,
 } from '../templates/endpoints-a4'
 import { calcularInvestimento } from '../calculo'
+import { calcularComplementos, consolidar } from '../calculo-complementos'
 import type { PlanoId } from '../tabela-precos'
 import {
   UNICODE_RANGES_EMBUTIDAS,
@@ -319,5 +320,70 @@ describe('a proposta não depende de fonte do sistema', () => {
     for (const faixa of UNICODE_RANGES_EMBUTIDAS) {
       expect(html).toContain(`unicode-range: ${faixa};`)
     }
+  })
+})
+
+describe('complementos no documento', () => {
+  const comps = calcularComplementos(['PATCH_MANAGEMENT', 'CRIPTOGRAFIA_DISCO', 'PHASR'], 30)
+  const base = doc({}, ['PREMIUM'])
+  const comComplementos = {
+    ...base,
+    complementos: comps,
+    consolidado: consolidar(base.investimento, 0, comps),
+  }
+
+  it('proposta SEM complemento continua idêntica à de antes', () => {
+    expect(totalPaginas(1)).toBe(9)
+    expect(renderPropostaHtml(doc({}, ['PREMIUM']))).not.toContain('Resumo do investimento')
+  })
+
+  it('as páginas passam a contar complementos e resumo, e a numeração fecha', () => {
+    // 3 complementos = 2 páginas (2 por página) + 1 de resumo.
+    expect(totalPaginas(1, 3)).toBe(12)
+    const html = renderPropostaHtml(comComplementos)
+    const rs = [...html.matchAll(/Página (\d{2}) de (\d{2})/g)]
+    const total = Number(rs[0][2])
+    expect(total).toBe(12)
+    expect(new Set(rs.map((r) => Number(r[2])))).toEqual(new Set([total]))
+    expect(rs.map((r) => Number(r[1]))).toEqual(
+      Array.from({ length: total - 2 }, (_, i) => i + 2)
+    )
+  })
+
+  it('as seções seguem contíguas: investimento, complementos, resumo', () => {
+    expect(secoesNoHtml(renderPropostaHtml(comComplementos))).toEqual([
+      '01.', '02.', '03.', '04.', '05.', '06.', '07.', '08.',
+    ])
+  })
+
+  it('imprime o valor de cada complemento e a fonte da descrição', () => {
+    const html = renderPropostaHtml(comComplementos)
+    expect(html).toContain('Patch Management')
+    expect(html).toContain('R$ 29,95') // 59,90 com os 50%
+    expect(html).toContain('R$ 126,00') // PHASR, já líquido
+    expect(html).toMatch(/Bitdefender · página oficial/)
+  })
+
+  // ⚠️ O ponto mais perigoso da feature: somar 36+12 (48 meses de cobertura) com
+  // complemento de 36 sem dizer nada seria prometer cobertura que o preço não dá.
+  it('a página de resumo DIZ que as coberturas divergem, e mostra as duas', () => {
+    const html = renderPropostaHtml(comComplementos)
+    expect(html).toContain('Resumo do investimento')
+    expect(html).toContain('Investimento total')
+    expect(html).toContain('Cobertura dos complementos')
+    expect(html).toContain('cobrem 36 meses')
+    expect(html).toContain('48')
+  })
+
+  it('o total consolidado é a soma do principal com os complementos', () => {
+    const c = comComplementos.consolidado
+    for (const l of c.linhas) {
+      expect(l.total).toBeCloseTo(l.totalPrincipal + l.totalComplementos, 6)
+    }
+  })
+
+  // A trava de fonte do documento com preço vale para o conteúdo NOVO também.
+  it('nenhum caractere dos complementos está fora da fonte embutida', () => {
+    expect(caracteresForaDaFonte(renderPropostaHtml(comComplementos))).toEqual([])
   })
 })
