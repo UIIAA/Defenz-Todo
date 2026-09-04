@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { PLANOS, QUANTIDADE_MAX, QUANTIDADE_MIN } from '@/lib/proposta/tabela-precos'
+import { COMPLEMENTO_IDS } from '@/lib/proposta/complementos'
 
 export const PROPOSTA_TIPOS = ['ENDPOINTS'] as const
 
@@ -41,8 +42,22 @@ export const createPropostaSchema = z
     /** Sempre positivo no formulário; o sinal vem de `basePreco`. */
     percentual: z.number().min(0).max(AJUSTE_MAX_PERCENT).nullable().optional(),
 
+    /** Complementos marcados. Vazio = proposta idêntica à de antes (I-C5). */
+    complementos: z.array(z.enum(COMPLEMENTO_IDS)).max(COMPLEMENTO_IDS.length).default([]),
+    /**
+     * Qual plano entra no resumo somado. Índice dentro de `planos`.
+     *
+     * "Quanto custa a solução que eu escolhi" tem UMA resposta; com três planos
+     * marcados haveria três. Quem escolhe é o vendedor.
+     */
+    planoConsolidado: z.number().int().min(0).max(PLANOS.length - 1).default(0),
+
     /** Só admin escolhe; os demais gravam na própria empresa. */
     companyId: z.string().nullable().optional(),
+  })
+  .refine((d) => d.complementos.length === 0 || d.planoConsolidado < d.planos.length, {
+    message: 'O plano escolhido para o resumo não está entre os planos marcados',
+    path: ['planoConsolidado'],
   })
   .refine((d) => d.basePreco === 'tabela' || (d.percentual ?? 0) > 0, {
     message: 'Informe o percentual quando o preço não for o de tabela',

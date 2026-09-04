@@ -6,6 +6,7 @@
 import { formatDate } from '@/lib/date'
 import { ApiError } from '@/lib/api-helpers'
 import type { Investimento } from './calculo'
+import type { BlocoComplemento, Consolidado } from './calculo-complementos'
 import { nextPropostaCodigo } from './numeracao'
 import {
   renderPropostaHtml,
@@ -33,6 +34,12 @@ export function nomeArquivo(codigo: string, empresaNome: string): string {
   return `Proposta Defenz ${codigo}${limpo ? ` - ${limpo}` : ''}.pdf`
 }
 
+/** O que é congelado em `complementosSnapshot`. */
+export interface ComplementosSnapshot {
+  complementos: BlocoComplemento[]
+  consolidado: Consolidado
+}
+
 export interface MontarDocumentoInput {
   codigo: string
   clienteNome: string
@@ -40,6 +47,8 @@ export interface MontarDocumentoInput {
   investimento: Investimento
   vendedor: VendedorDoc
   agora?: Date
+  complementos?: BlocoComplemento[]
+  consolidado?: Consolidado
 }
 
 export function montarDocumento(input: MontarDocumentoInput): PropostaDocumento {
@@ -52,6 +61,8 @@ export function montarDocumento(input: MontarDocumentoInput): PropostaDocumento 
     ano: anoEmSaoPaulo(agora),
     vendedor: input.vendedor,
     investimento: input.investimento,
+    complementos: input.complementos,
+    consolidado: input.consolidado,
   }
 }
 
@@ -68,6 +79,7 @@ export function reconstruirDocumento(registro: {
   clienteNome: string
   empresaNome: string
   precoSnapshot: unknown
+  complementosSnapshot?: unknown
   createdAt: Date
   criadoPor?: { name: string | null; email: string } | null
 }): PropostaDocumento {
@@ -90,7 +102,21 @@ export function reconstruirDocumento(registro: {
       email: registro.criadoPor?.email || 'contato@defenz.com.br',
     },
     investimento,
+    // ⚠️ Sem ler isto aqui, a reimpressão sairia SEM as páginas de complemento e
+    // com o valor menor, no mesmo código de proposta (crítica C1). `null` é o
+    // caso legítimo da proposta anterior à feature.
+    ...lerComplementos(registro.complementosSnapshot),
   }
+}
+
+function lerComplementos(bruto: unknown): {
+  complementos?: BlocoComplemento[]
+  consolidado?: Consolidado
+} {
+  if (!bruto || typeof bruto !== 'object') return {}
+  const s = bruto as Partial<ComplementosSnapshot>
+  if (!Array.isArray(s.complementos) || s.complementos.length === 0) return {}
+  return { complementos: s.complementos, consolidado: s.consolidado }
 }
 
 export { nextPropostaCodigo, renderPropostaHtml }

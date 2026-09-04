@@ -242,3 +242,30 @@ mesma classe de bug, no documento que leva preço impresso.
   próximo ícone que alguém colar.
 
 876 testes.
+
+## 2026-09-02 — complementos na proposta e na apresentação
+
+Sete módulos (Patch Management, Criptografia de Disco, PHASR e os quatro sensores
+XDR) passam a entrar nos documentos. Spec e crítica em
+`docs/features/feature-complementos.md`.
+
+- Catálogo `complementos.ts` com procedência carimbada; desconto POR PRODUTO
+  (Patch e Criptografia levam 50%, PHASR e sensores já são líquidos).
+- Proposta: um bloco por complemento, com preço separado, e página de resumo
+  somando principal + complementos coluna a coluna.
+- Apresentação: os mesmos módulos CITADOS, sem valor nenhum.
+- Descrições resumidas do material oficial da Bitdefender, com fonte impressa.
+
+A crítica da spec achou cinco coisas; duas mudaram o schema antes de ir a prod:
+
+- 🔴 **C1** — o `/arquivo` reimprime do snapshot, e os complementos não estavam
+  lá: a mesma proposta seria rebaixada de R$ 21.455,10 para R$ 6.069,60 no
+  re-download, com o mesmo código. Colunas `complementosSnapshot` nas duas
+  tabelas, com teste de ida e volta.
+- 🟠 **C2** — o desconto comercial do GravityZone não incide sobre complemento, e
+  o documento não dizia. Agora diz, e só quando há ajuste.
+- 🟠 **C3** — os complementos e o total entram no AuditLog.
+- 🟡 **C4** — PHASR custa 1,5× o Premium. Impresso como o Marcos confirmou, e
+  registrado como ponto a conferir com a SecuriSoft.
+
+937 testes.

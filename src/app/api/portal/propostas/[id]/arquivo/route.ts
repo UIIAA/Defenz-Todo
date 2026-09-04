@@ -41,6 +41,7 @@ export async function GET(
         clienteNome: true,
         empresaNome: true,
         precoSnapshot: true,
+        complementosSnapshot: true,
         arquivoNome: true,
         templateVersao: true,
         createdAt: true,

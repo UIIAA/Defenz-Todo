@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { getCurrentUser, companyScopeWhere } from '@/lib/auth'
 import { handleApiError, ApiError } from '@/lib/api-helpers'
 import { renderPdf } from '@/lib/proposta/pdf'
+import type { ComplementoId } from '@/lib/proposta/complementos'
 import {
   renderApresentacaoHtml,
   TEMPLATE_VERSAO,
@@ -44,6 +45,7 @@ export async function GET(
         setor: true,
         nivelDestaque: true,
         fatosSnapshot: true,
+        complementosSnapshot: true,
         templateVersao: true,
         arquivoNome: true,
         createdAt: true,
@@ -75,6 +77,8 @@ export async function GET(
       fatos,
       casos: [],
       nivelDestaque: registro.nivelDestaque as NivelId,
+      // Sem isto a reimpressão perderia a página dos complementos citados.
+      complementos: (registro.complementosSnapshot as ComplementoId[] | null) ?? undefined,
     })
 
     const pdf = await renderPdf(html)

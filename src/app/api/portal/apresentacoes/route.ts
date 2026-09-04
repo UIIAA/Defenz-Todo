@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       fatos,
       casos: [], // F2 é sem IA; a pesquisa de casos entra na F3
       nivelDestaque: dados.nivelDestaque,
+      complementos: dados.complementos,
     })
 
     const pdf = await renderPdf(html)
@@ -74,6 +75,9 @@ export async function POST(request: NextRequest) {
           fonte: f.fonte,
           ano: f.ano,
         })),
+        // Congelado pela mesma razão do fatosSnapshot: a descrição do módulo
+        // vem do catálogo, e catálogo muda (crítica C1).
+        complementosSnapshot: dados.complementos.length ? dados.complementos : undefined,
         templateVersao: TEMPLATE_VERSAO,
         arquivoNome,
         companyId,

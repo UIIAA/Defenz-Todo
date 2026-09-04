@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { NIVEIS } from '@/lib/apresentacao/comparativo'
+import { COMPLEMENTO_IDS } from '@/lib/proposta/complementos'
 
 /**
  * Emissão da apresentação institucional (feature-portal-apresentacao.md §5).
@@ -14,6 +15,8 @@ export const createApresentacaoSchema = z.object({
   /** Nicho. Vazio é legítimo: o documento sai institucional, sem número de setor. */
   setor: z.string().trim().max(80).nullable().optional(),
   nivelDestaque: z.enum(NIVEIS).default('PREMIUM'),
+  /** Complementos a CITAR. Sem preço — ver I-C1 da feature-complementos. */
+  complementos: z.array(z.enum(COMPLEMENTO_IDS)).max(COMPLEMENTO_IDS.length).default([]),
   companyId: z.string().cuid().nullable().optional(),
 })
 

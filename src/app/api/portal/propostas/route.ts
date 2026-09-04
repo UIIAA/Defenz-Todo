@@ -6,6 +6,7 @@ import { TEMPLATE_VERSAO } from '@/lib/proposta/templates/endpoints-a4'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { createAuditLog } from '@/lib/audit'
 import { calcularInvestimento } from '@/lib/proposta/calculo'
+import { calcularComplementos, consolidar } from '@/lib/proposta/calculo-complementos'
 import { renderPdf } from '@/lib/proposta/pdf'
 import { arquivarNoOneDrive } from '@/lib/proposta/arquivamento'
 import {
@@ -61,6 +62,12 @@ export async function POST(request: NextRequest) {
       ajustePercent,
     })
 
+    const complementos = calcularComplementos(dados.complementos, dados.quantidade)
+    const consolidado =
+      complementos.length > 0
+        ? consolidar(investimento, dados.planoConsolidado, complementos)
+        : undefined
+
     // 2. reserva o número (atômico)
     const agora = new Date()
     const codigo = await nextPropostaCodigo(
@@ -83,6 +90,8 @@ export async function POST(request: NextRequest) {
         email: user.email || 'contato@defenz.com.br',
       },
       agora,
+      complementos,
+      consolidado,
     })
     const pdf = await renderPdf(renderPropostaHtml(documento))
     const arquivo = nomeArquivo(codigo, dados.empresaNome)
@@ -100,6 +109,12 @@ export async function POST(request: NextRequest) {
         planos: dados.planos,
         ajustePercent,
         precoSnapshot: investimento as unknown as Prisma.InputJsonValue,
+        // ⚠️ Congelado JUNTO do preço: sem isto o /arquivo reimprimiria a mesma
+        // proposta sem os complementos e com valor menor (crítica C1).
+        complementosSnapshot:
+          consolidado
+            ? ({ complementos, consolidado } as unknown as Prisma.InputJsonValue)
+            : undefined,
         tabelaVigencia: investimento.tabelaVigencia,
         arquivoNome: arquivo,
         companyId,
@@ -121,6 +136,15 @@ export async function POST(request: NextRequest) {
         quantidade: { from: null, to: dados.quantidade },
         planos: { from: null, to: dados.planos.join(', ') },
         ajustePercent: { from: null, to: ajustePercent },
+        // Crítica C3: sem isto o log responde "que proposta foi emitida" pela metade.
+        complementos: {
+          from: null,
+          to: complementos.length ? complementos.map((c) => c.nome).join(', ') : '—',
+        },
+        totalConsolidado: {
+          from: null,
+          to: consolidado ? consolidado.linhas.map((l) => l.total.toFixed(2)).join(' / ') : '—',
+        },
       },
     })
 

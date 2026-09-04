@@ -1135,6 +1135,13 @@ model Proposta {
   // agosto" vira adivinhacao assim que a tabela mudar — e o re-download
   // reimprimiria o documento com preco de hoje. Ver spec §9.
   precoSnapshot  Json
+  /// Complementos e o consolidado, congelados JUNTO do preco.
+  ///
+  /// ⚠️ Sem isto o /arquivo reimprimiria a proposta SEM os complementos: mesmo
+  /// codigo, valor menor, dois documentos divergentes na mao do cliente. E a
+  /// mesma classe de bug que o precoSnapshot existe para impedir (critica C1).
+  /// null = proposta anterior a esta feature, reimprime como antes.
+  complementosSnapshot Json?
   tabelaVigencia String // '2024-11-29'
 
   // Versao do TEXTO FIXO com que a proposta nasceu. Default = a versao anterior
@@ -1186,6 +1193,10 @@ model Apresentacao {
   fatosSnapshot  Json
   /// Versao do texto fixo com que nasceu (mesma licao do templateVersao da Proposta).
   templateVersao String @default("2026-08-22")
+
+  /// Complementos CITADOS (sem preço). Congelado pela mesma razão do fatosSnapshot:
+  /// a descrição vem do catálogo, e catálogo muda.
+  complementosSnapshot Json?
 
   arquivoNome String
 

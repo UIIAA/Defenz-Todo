@@ -387,3 +387,27 @@ describe('complementos no documento', () => {
     expect(caracteresForaDaFonte(renderPropostaHtml(comComplementos))).toEqual([])
   })
 })
+
+describe('C2 — o desconto da proposta não vale para o complemento, e o documento diz', () => {
+  const comps = calcularComplementos(['PATCH_MANAGEMENT'], 30)
+
+  it('avisa quando há ajuste comercial no principal', () => {
+    const base = doc({}, ['PREMIUM'], -10)
+    const html = renderPropostaHtml({
+      ...base,
+      complementos: comps,
+      consolidado: consolidar(base.investimento, 0, comps),
+    })
+    expect(html).toContain('não incide sobre os complementos')
+  })
+
+  it('não polui a página quando o preço é de tabela cheia', () => {
+    const base = doc({}, ['PREMIUM'])
+    const html = renderPropostaHtml({
+      ...base,
+      complementos: comps,
+      consolidado: consolidar(base.investimento, 0, comps),
+    })
+    expect(html).not.toContain('não incide sobre os complementos')
+  })
+})

@@ -9,12 +9,14 @@ import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Presentation } from 'luc
 import { NIVEIS, NIVEL_NOME, type NivelId } from '@/lib/apresentacao/comparativo'
 import { fatosParaSetor } from '@/lib/apresentacao/mercado-fatos'
 import { mensagemDeErroApi } from '@/lib/api-erro-legivel'
+import { COMPLEMENTOS, type ComplementoId } from '@/lib/proposta/complementos'
 
 interface Formulario {
   clienteNome: string
   empresaNome: string
   setor: string
   nivelDestaque: NivelId
+  complementos: ComplementoId[]
 }
 
 /** Mesmo limite do `createApresentacaoSchema`. Se mudar lá, muda aqui. */
@@ -25,6 +27,7 @@ const INICIAL: Formulario = {
   empresaNome: '',
   setor: '',
   nivelDestaque: 'PREMIUM',
+  complementos: [],
 }
 
 export default function NovaApresentacaoPage() {
@@ -52,6 +55,7 @@ export default function NovaApresentacaoPage() {
           empresaNome: form.empresaNome.trim(),
           setor: form.setor.trim() || null,
           nivelDestaque: form.nivelDestaque,
+          complementos: form.complementos,
         }),
       })
 
@@ -185,6 +189,39 @@ export default function NovaApresentacaoPage() {
             Marca a coluna recomendada na tabela dos três níveis.
           </span>
         </label>
+
+        <div>
+          <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
+            Complementos a citar
+          </span>
+          <div className="space-y-1.5">
+            {COMPLEMENTOS.map((c) => (
+              <label
+                key={c.id}
+                className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"
+              >
+                <input
+                  type="checkbox"
+                  checked={form.complementos.includes(c.id)}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      complementos: e.target.checked
+                        ? [...form.complementos, c.id]
+                        : form.complementos.filter((x) => x !== c.id),
+                    })
+                  }
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                />
+                <span>{c.nome.replace('Bitdefender ', '')}</span>
+              </label>
+            ))}
+          </div>
+          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+            A apresentação diz o que cada módulo <strong>faz</strong>, e não mostra
+            valor nenhum — quem faz preço é a proposta.
+          </span>
+        </div>
 
         {erro && (
           <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">

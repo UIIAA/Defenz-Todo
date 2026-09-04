@@ -8,6 +8,12 @@ import { PortalTabs } from '@/components/portal/portal-tabs'
 import { AlertCircle, ArrowLeft, CheckCircle2, FileText, Loader2 } from 'lucide-react'
 import { calcularInvestimento, formatarBRL, type Investimento } from '@/lib/proposta/calculo'
 import { PLANOS, PLANO_LABEL, QUANTIDADE_MAX, QUANTIDADE_MIN, type PlanoId } from '@/lib/proposta/tabela-precos'
+import { COMPLEMENTOS, type ComplementoId } from '@/lib/proposta/complementos'
+import {
+  calcularComplementos,
+  consolidar,
+  type Consolidado,
+} from '@/lib/proposta/calculo-complementos'
 import { AJUSTE_MAX_PERCENT, type BasePreco } from '@/lib/validations/proposta'
 
 type Etapa = 'formulario' | 'confirmacao' | 'pronto'
@@ -19,6 +25,8 @@ interface Formulario {
   oQueFaz: string
   quantidade: string
   planos: PlanoId[]
+  complementos: ComplementoId[]
+  planoConsolidado: number
   basePreco: BasePreco
   percentual: string
 }
@@ -32,6 +40,8 @@ const INICIAL: Formulario = {
   // Os três marcados por padrão (decisão P7): o cliente compara lado a lado,
   // e o vendedor desmarca o que não fizer sentido.
   planos: [...PLANOS],
+  complementos: [],
+  planoConsolidado: 0,
   basePreco: 'tabela',
   percentual: '',
 }
@@ -56,20 +66,30 @@ export default function NovaPropostaPage() {
    * duas não podem divergir; se a entrada for inválida, mostramos o erro em
    * vez de um preço inventado.
    */
-  const previa = useMemo((): { investimento: Investimento } | { erro: string } => {
+  const previa = useMemo(():
+    | { investimento: Investimento; consolidado?: Consolidado }
+    | { erro: string } => {
     const qtd = Number(form.quantidade)
     try {
+      const investimento = calcularInvestimento({
+        quantidade: qtd,
+        planos: form.planos,
+        ajustePercent: ajuste,
+      })
+      // A prévia usa as MESMAS funções do servidor: a tela não pode prometer um
+      // total que o PDF não vai trazer.
+      const comps = calcularComplementos(form.complementos, qtd)
       return {
-        investimento: calcularInvestimento({
-          quantidade: qtd,
-          planos: form.planos,
-          ajustePercent: ajuste,
-        }),
+        investimento,
+        consolidado:
+          comps.length > 0 && form.planoConsolidado < investimento.planos.length
+            ? consolidar(investimento, form.planoConsolidado, comps)
+            : undefined,
       }
     } catch (e) {
       return { erro: e instanceof Error ? e.message : 'Dados inválidos' }
     }
-  }, [form.quantidade, form.planos, ajuste])
+  }, [form.quantidade, form.planos, form.complementos, form.planoConsolidado, ajuste])
 
   function validarEAvancar() {
     setErro(null)
@@ -110,6 +130,8 @@ export default function NovaPropostaPage() {
           oQueFaz: form.oQueFaz.trim() || null,
           quantidade: Number(form.quantidade),
           planos: form.planos,
+          complementos: form.complementos,
+          planoConsolidado: form.planoConsolidado,
           basePreco: form.basePreco,
           percentual:
             form.basePreco === 'tabela'
@@ -263,6 +285,71 @@ export default function NovaPropostaPage() {
             </p>
           </Campo>
 
+          <Campo label="Complementos (opcional)">
+            <div className="space-y-3">
+              {(['GRAVITYZONE', 'XDR'] as const).map((familia) => (
+                <div key={familia}>
+                  <div className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    {familia === 'GRAVITYZONE' ? 'GravityZone' : 'Sensores XDR'}
+                  </div>
+                  <div className="space-y-1.5">
+                    {COMPLEMENTOS.filter((c) => c.familia === familia).map((c) => (
+                      <label
+                        key={c.id}
+                        className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.complementos.includes(c.id)}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              complementos: e.target.checked
+                                ? [...form.complementos, c.id]
+                                : form.complementos.filter((x) => x !== c.id),
+                            })
+                          }
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                        />
+                        <span>{c.nome.replace('Bitdefender ', '')}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Cada um sai em bloco próprio, com o preço separado, e entra na soma da
+              última página. Seguem a mesma quantidade de licenças da proposta.
+            </p>
+          </Campo>
+
+          {form.complementos.length > 0 && form.planos.length > 1 && (
+            <Campo label="Qual plano entra no resumo somado? *">
+              <div className="space-y-2">
+                {form.planos.map((p, i) => (
+                  <label
+                    key={p}
+                    className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"
+                  >
+                    <input
+                      type="radio"
+                      name="planoConsolidado"
+                      checked={form.planoConsolidado === i}
+                      onChange={() => setForm({ ...form, planoConsolidado: i })}
+                      className="h-4 w-4 border-slate-300"
+                    />
+                    {PLANO_LABEL[p]}
+                  </label>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                &ldquo;Quanto custa a solução que eu escolhi&rdquo; tem uma resposta só.
+                Os outros planos continuam na proposta, para comparação.
+              </p>
+            </Campo>
+          )}
+
           <Campo label="Valor de tabela? *">
             <div className="flex flex-wrap gap-4">
               {(
@@ -330,7 +417,37 @@ export default function NovaPropostaPage() {
                     : `${previa.investimento.rotuloAjuste} de ${Math.abs(ajuste)}%`
                 }
               />
+              {form.complementos.length > 0 && (
+                <Linha
+                  rotulo="Complementos"
+                  valor={COMPLEMENTOS.filter((c) => form.complementos.includes(c.id))
+                    .map((c) => c.nome.replace('Bitdefender GravityZone ', '').replace('Bitdefender ', ''))
+                    .join(' · ')}
+                />
+              )}
             </dl>
+
+            {'consolidado' in previa && previa.consolidado && (
+              <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-700 dark:bg-slate-800/50">
+                <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Resumo somado · {previa.consolidado.planoLabel} + complementos
+                </div>
+                {previa.consolidado.linhas.map((l) => (
+                  <div key={l.rotulo} className="flex justify-between py-0.5">
+                    <span className="text-slate-600 dark:text-slate-300">{l.rotulo}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {formatarBRL(l.total)}
+                    </span>
+                  </div>
+                ))}
+                {previa.consolidado.coberturasDivergem && (
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    Na coluna 36+12 o GravityZone cobre 48 meses e os complementos cobrem
+                    36. O documento explica a diferença ao cliente.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* O preço aparece ANTES de o documento existir: é aqui que se pega

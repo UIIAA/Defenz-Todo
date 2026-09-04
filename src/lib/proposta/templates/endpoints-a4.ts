@@ -433,7 +433,14 @@ function paginaComplementos(
         ${
           continuacao
             ? ''
-            : `<p style="font-size:15px; line-height:1.8; color:${C.body}; margin:0 0 8px; max-width:600px; text-align:justify;">Módulos que somam ao GravityZone contratado. Cada um é cobrado à parte, pelas mesmas ${quantidade} licenças, e pode entrar ou sair sem alterar o restante da proposta.</p>`
+            : `<p style="font-size:15px; line-height:1.8; color:${C.body}; margin:0 0 8px; max-width:600px; text-align:justify;">Módulos que somam ao GravityZone contratado. Cada um é cobrado à parte, pelas mesmas ${quantidade} licenças, e pode entrar ou sair sem alterar o restante da proposta.${
+                // ⚠️ Crítica C2: a página anterior diz "os valores já contemplam
+                // o desconto de X%". Sem esta frase, o cliente lê as duas em
+                // sequência e conclui que o desconto vale aqui também.
+                doc.investimento.temAjuste
+                  ? ` O ${(doc.investimento.rotuloAjuste ?? '').toLowerCase()} de ${formatarPercent(doc.investimento.ajustePercent)} aplicado ao GravityZone <strong>não incide sobre os complementos</strong>: os valores abaixo são os da tabela deles.`
+                  : ''
+              }</p>`
         }
       </div>
 
