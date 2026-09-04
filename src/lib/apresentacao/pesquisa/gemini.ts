@@ -66,14 +66,34 @@ export function fontesDoGrounding(resposta: GenerateContentResponse): FonteBruta
     const web = c.web
     if (!web) continue
     const titulo = (web.title ?? '').trim()
-    const dominio = (web.domain ?? dominioDaUri(web.uri) ?? '').trim()
+    const dominio = (web.domain ?? dominioReal(web.uri, titulo) ?? '').trim()
     if (!titulo && !dominio) continue
     fontes.push({ titulo: titulo || dominio, dominio })
   }
   return fontes
 }
 
-function dominioDaUri(uri?: string): string | undefined {
+/**
+ * O domínio que vai IMPRESSO no documento do cliente.
+ *
+ * ⚠️ Achado com a pesquisa real de 02/09: o `uri` que o grounding devolve é um
+ * REDIRECT do Google (`vertexaisearch.cloud.google.com/grounding-api-redirect/…`),
+ * e o domínio de verdade vem no `title`. Sem tratar isso, a página de casos
+ * citaria "vertexaisearch.cloud.google.com" como fonte de todas as matérias —
+ * um endereço interno do Google impresso como se fosse o veículo.
+ */
+const REDIRECT_GROUNDING = 'vertexaisearch.cloud.google.com'
+
+function dominioReal(uri: string | undefined, titulo: string): string | undefined {
+  const host = hostDaUri(uri)
+  if (host && !host.endsWith(REDIRECT_GROUNDING)) return host
+  // No redirect, o `title` É o domínio ("canaltech.com.br").
+  const doTitulo = titulo.trim().toLowerCase()
+  if (/^[a-z0-9.-]+\.[a-z]{2,}$/.test(doTitulo)) return doTitulo.replace(/^www\./, '')
+  return host
+}
+
+function hostDaUri(uri?: string): string | undefined {
   if (!uri) return undefined
   try {
     return new URL(uri).hostname.replace(/^www\./, '')
@@ -136,6 +156,9 @@ export function promptB(textoA: string): string {
     '   na ordem em que as fontes aparecem no texto.',
     '5. Se o texto disser que não há incidente documentado, devolva `casos: []`. NÃO invente',
     '   casos para não voltar vazio.',
+    '6. LIMITES DE TAMANHO, respeite-os: `oQueAconteceu` até 400 caracteres,',
+    '   `necessidade` até 300, `panoramaSetor` até 600. São limites de diagramação —',
+    '   o texto maior é CORTADO, então prefira escrever curto a ser cortado.',
     '',
     '--- TEXTO DA PESQUISA ---',
     textoA,

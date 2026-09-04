@@ -50,6 +50,34 @@ describe('fontesDoGrounding — lê os nomes que a API usa, não os do SDK legad
     ])
   })
 
+  // ⚠️ O que a API devolve DE VERDADE (visto na primeira pesquisa real, 02/09):
+  // o uri é um redirect do Google e o domínio verdadeiro vem no title. Sem isto,
+  // o PDF do cliente citaria "vertexaisearch.cloud.google.com" como fonte de
+  // todas as matérias.
+  it('não deixa o redirect do Google virar a fonte impressa', () => {
+    const resposta = {
+      text: 'x',
+      candidates: [
+        {
+          groundingMetadata: {
+            groundingChunks: [
+              {
+                web: {
+                  title: 'canaltech.com.br',
+                  uri: 'https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc123',
+                },
+              },
+            ],
+          },
+        },
+      ],
+    } as unknown as GenerateContentResponse
+
+    expect(fontesDoGrounding(resposta)).toEqual([
+      { titulo: 'canaltech.com.br', dominio: 'canaltech.com.br' },
+    ])
+  })
+
   it('devolve vazio quando não há grounding — e não explode', () => {
     expect(fontesDoGrounding({ text: 'oi' } as unknown as GenerateContentResponse)).toEqual([])
   })

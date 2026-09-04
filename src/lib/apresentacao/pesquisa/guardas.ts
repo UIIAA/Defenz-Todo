@@ -102,6 +102,9 @@ const ARTIGOS = new Set(['a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas', 'no',
  */
 export function nomesPropriosSuspeitos(texto: string): string[] {
   const achados: string[] = []
+  // ⚠️ "US$ 50 milhões" fazia o detector acusar "US" como nome próprio. Símbolo
+  // de moeda não é nome de empresa; sai antes da varredura.
+  texto = texto.replace(/\b(?:US|R)\$/g, ' ')
   // Cada frase reinicia a contagem: a primeira palavra é capitalizada por regra
   // de escrita, não por ser nome.
   for (const frase of texto.split(/(?<=[.!?:;])\s+|\n+/)) {
@@ -129,10 +132,21 @@ export function nomesPropriosSuspeitos(texto: string): string[] {
  */
 const PROIBIDOS: Array<{ re: RegExp; nome: string }> = [
   { re: /\d+(?:[.,]\d+)?\s*%/g, nome: 'percentual' },
-  { re: /(?:R\$|US\$|USD|€)\s*\d/gi, nome: 'moeda' },
   { re: /\d+\s+em\s+cada\s+\d+/gi, nome: 'proporção "N em cada M"' },
   { re: /\d+(?:[.,]\d+)?\s*(?:vezes|x)\s+(?:mais|menos|maior|menor)/gi, nome: 'multiplicador' },
 ]
+
+// ⚠️ MOEDA SAIU DAQUI em 02/09, e a razão importa. A13 (§6.5) bloqueia número de
+// LLM; A13b (§6.5.1) afrouxou DENTRO do caso — o Marcos foi explícito: "pode
+// afrouxar, eu preciso do número", e o exemplo dele na spec é "prejuízo estimado
+// em R$ 40 milhões". Com moeda nesta lista as duas regras se contradiziam: a
+// primeira pesquisa real voltou com TODO caso que citava prejuízo barrado, e o
+// vendedor aprenderia a liberar no automático — que é como uma guarda morre.
+//
+// Valor em dinheiro agora é governado por `digitosNaoConferidos`: passa se
+// estiver literalmente na matéria, barra se o modelo inventou. O que continua
+// bloqueado aqui é o AGREGADO (percentual, proporção, multiplicador), que é
+// estatística de mercado e sai do catálogo curado, não da pesquisa.
 
 export function numerosProibidos(texto: string): string[] {
   return PROIBIDOS.flatMap(({ re, nome }) =>

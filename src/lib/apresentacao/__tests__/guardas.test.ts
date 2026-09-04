@@ -76,13 +76,28 @@ describe('numerosProibidos — estreita de propósito (crítica M1)', () => {
     }
   })
 
-  it('bloqueia percentual, moeda e proporção', () => {
+  it('bloqueia o AGREGADO: percentual, proporção e multiplicador', () => {
     expect(numerosProibidos('37% do setor')).toHaveLength(1)
-    expect(numerosProibidos('prejuízo de R$ 40 milhões')).toHaveLength(1)
-    expect(numerosProibidos('US$ 2,3 bilhões')).toHaveLength(1)
     expect(numerosProibidos('1 em cada 4 empresas')).toHaveLength(1)
     expect(numerosProibidos('3 vezes mais ataques')).toHaveLength(1)
     expect(numerosProibidos('5x mais caro')).toHaveLength(1)
+  })
+
+  // ⚠️ Moeda NÃO está aqui de propósito (02/09). A13b afrouxou dentro do caso —
+  // "prejuízo estimado em R$ 40 milhões" é o exemplo da própria spec. Quem julga
+  // valor em dinheiro é `digitosNaoConferidos`: passa se estiver na matéria.
+  it('deixa a moeda passar por aqui — quem julga é a conferência do dígito', () => {
+    expect(numerosProibidos('prejuízo de R$ 40 milhões')).toEqual([])
+    expect(numerosProibidos('resgate de US$ 50 milhões')).toEqual([])
+  })
+
+  it('o símbolo de moeda não vira nome próprio', () => {
+    expect(nomesPropriosSuspeitos('O grupo exigiu resgate de US$ 50 milhões.')).toEqual([])
+  })
+
+  it('mas a moeda inventada continua barrada, pela outra guarda', () => {
+    const c = caso({ oQueAconteceu: 'O prejuízo foi de R$ 90 milhões.' })
+    expect(digitosNaoConferidos(c, 'O prejuízo foi de R$ 40 milhões.')).toContain('90')
   })
 })
 
