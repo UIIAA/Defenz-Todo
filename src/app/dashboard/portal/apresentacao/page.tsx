@@ -48,6 +48,7 @@ export default function NovaApresentacaoPage() {
   const [pesquisaId, setPesquisaId] = useState<string | null>(null)
   const [casos, setCasos] = useState<CasoEmRevisao[] | null>(null)
   const [fontes, setFontes] = useState<{ titulo: string; dominio: string }[]>([])
+  const [descartados, setDescartados] = useState<{ indice: number; motivo: string }[]>([])
   const [aceite, setAceite] = useState(false)
 
   async function pesquisar() {
@@ -67,6 +68,7 @@ export default function NovaApresentacaoPage() {
 
       setPesquisaId(j.data.pesquisaId ?? null)
       setFontes(j.data.fontes ?? [])
+      setDescartados(j.data.descartados ?? [])
       setAceite(false)
       setCasos(
         (j.data.casos ?? []).map((v: { caso: CasoEmRevisao; bandeiras: Bandeira[]; bloqueado: boolean }) => ({
@@ -285,6 +287,7 @@ export default function NovaApresentacaoPage() {
                 casos={casos}
                 fontes={fontes}
                 aceite={aceite}
+                descartados={descartados}
                 onChange={setCasos}
                 onAceite={setAceite}
               />

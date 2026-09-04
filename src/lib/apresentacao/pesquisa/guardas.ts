@@ -30,6 +30,8 @@ export type TipoBandeira =
   | 'numero_nao_conferido'
   | 'fonte_invalida'
   | 'funcionalidade_invalida'
+  /** Texto maior do que cabe na página, cortado antes de chegar aqui. */
+  | 'texto_truncado'
 
 export interface Bandeira {
   tipo: TipoBandeira

@@ -22,7 +22,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { GoogleGenAI, type GenerateContentResponse } from '@google/genai'
-import { PesquisaSchema, RESPONSE_SCHEMA_B, type Pesquisa } from './schema'
+import { normalizarPesquisa, RESPONSE_SCHEMA_B, type PesquisaNormalizada } from './schema'
 import { COMPARATIVO } from '../comparativo'
 import { avaliarCaso, type VeredictoCaso } from './guardas'
 
@@ -175,7 +175,7 @@ export async function chamadaA(
 export async function chamadaB(
   textoA: string,
   gerar: GerarConteudo = clientePadrao()
-): Promise<Pesquisa> {
+): Promise<PesquisaNormalizada> {
   const resposta = await gerar({
     model: MODELO_PESQUISA,
     contents: promptB(textoA),
@@ -192,8 +192,9 @@ export async function chamadaB(
   } catch {
     throw new Error(`A chamada B não devolveu JSON válido (${cru.slice(0, 120)}…).`)
   }
-  // `fontes` não vem do modelo: vem do grounding da A, e é anexada por quem orquestra.
-  return PesquisaSchema.parse({ fontes: [], ...(objeto as object) })
+  // ⚠️ Normaliza ANTES de validar: um caso comprido demais não pode derrubar a
+  // pesquisa inteira (cicatriz de 02/09 — ver `normalizarPesquisa`).
+  return normalizarPesquisa(objeto)
 }
 
 // ── A orquestração ───────────────────────────────────────────────────────────
@@ -202,8 +203,10 @@ export interface ResultadoPesquisa {
   panoramaSetor: string
   /** Cada caso com suas bandeiras. Bloqueado chega desmarcado na revisão (§6.6). */
   casos: VeredictoCaso[]
-  planoSugerido: Pesquisa['planoSugerido']
+  planoSugerido: PesquisaNormalizada['pesquisa']['planoSugerido']
   planoPorque: string
+  /** Casos que nem depois do corte passaram no contrato. A tela avisa. */
+  descartados: { indice: number; motivo: string }[]
   fontes: FonteBruta[]
   /** Guardado por pesquisa: custo medido, não estimado (§6.8). */
   telemetria: { latenciaMs: number; modelo: string; qtdFontes: number }
@@ -223,11 +226,24 @@ export async function pesquisar(
 ): Promise<ResultadoPesquisa> {
   const t0 = Date.now()
   const a = await chamadaA(entrada, gerar)
-  const b = await chamadaB(a.texto, gerar)
+  const { pesquisa: b, truncados, descartados } = await chamadaB(a.texto, gerar)
 
   return {
     panoramaSetor: b.panoramaSetor,
-    casos: b.casos.map((c) => avaliarCaso(c, a.texto, a.fontes.length)),
+    casos: b.casos.map((c, i) => {
+      const v = avaliarCaso(c, a.texto, a.fontes.length)
+      // Texto cortado chega BARRADO: cortar é decisão de diagramação, e quem
+      // confere se o corte não mudou o sentido é gente.
+      if (truncados.includes(i)) {
+        v.bandeiras.push({
+          tipo: 'texto_truncado',
+          detalhe: 'o texto veio maior do que cabe na página e foi cortado — confira o corte',
+        })
+        v.bloqueado = true
+      }
+      return v
+    }),
+    descartados,
     planoSugerido: b.planoSugerido,
     planoPorque: b.planoPorque,
     fontes: a.fontes,

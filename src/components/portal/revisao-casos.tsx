@@ -36,6 +36,7 @@ export interface CasoEmRevisao {
 }
 
 const ROTULO_BANDEIRA: Record<string, string> = {
+  texto_truncado: 'Texto cortado para caber na página',
   entidade_vazou: 'Nome que deveria ter sido removido continua no texto',
   nome_proprio: 'Possível nome próprio no texto',
   numero_proibido: 'Número que não pode sair de IA',
@@ -48,12 +49,15 @@ export function RevisaoCasos({
   casos,
   fontes,
   aceite,
+  descartados = [],
   onChange,
   onAceite,
 }: {
   casos: CasoEmRevisao[]
   fontes: { titulo: string; dominio: string }[]
   aceite: boolean
+  /** Casos que a pesquisa não conseguiu aproveitar. A tela DIZ — não some. */
+  descartados?: { indice: number; motivo: string }[]
   onChange: (casos: CasoEmRevisao[]) => void
   onAceite: (v: boolean) => void
 }) {
@@ -71,6 +75,13 @@ export function RevisaoCasos({
 
   return (
     <div className="space-y-4">
+      {descartados.length > 0 && (
+        <div className="rounded-md border border-slate-300 bg-slate-50 p-3 text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+          {descartados.length} caso(s) vieram fora do formato e não puderam ser
+          aproveitados ({descartados.map((d) => d.motivo).join('; ')}). Os demais estão
+          abaixo — se precisar de mais, pesquise de novo.
+        </div>
+      )}
       {casos.map((c, i) => (
         <div
           key={i}

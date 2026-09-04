@@ -88,15 +88,35 @@ describe('chamadaB — sem ferramenta, JSON validado', () => {
     expect(req.config.responseMimeType).toBe('application/json')
   })
 
-  it('recusa funcionalidade fora do enum fechado', async () => {
+  // ⚠️ Contrato MUDADO em 02/09, depois de o defeito aparecer com o vendedor na
+  // tela: antes, um caso fora do contrato derrubava a pesquisa inteira. Agora ele
+  // é descartado sozinho e os bons sobrevivem — a chamada foi paga.
+  it('descarta o caso fora do enum e mantém os bons', async () => {
     const gerar = (async () =>
       respostaB({
         panoramaSetor: 'p',
-        casos: [{ ...CASO_OK, funcionalidade: 'ANTIVIRUS_MAGICO' }],
+        casos: [CASO_OK, { ...CASO_OK, funcionalidade: 'ANTIVIRUS_MAGICO' }],
         planoSugerido: 'PREMIUM',
         planoPorque: 'x',
       })) as unknown as GerarConteudo
-    await expect(chamadaB('t', gerar)).rejects.toThrow()
+
+    const r = await chamadaB('t', gerar)
+    expect(r.pesquisa.casos).toHaveLength(1)
+    expect(r.descartados).toHaveLength(1)
+  })
+
+  it('o caso comprido é cortado, não descartado', async () => {
+    const gerar = (async () =>
+      respostaB({
+        panoramaSetor: 'p',
+        casos: [{ ...CASO_OK, oQueAconteceu: 'Frase longa. '.repeat(60) }],
+        planoSugerido: 'PREMIUM',
+        planoPorque: 'x',
+      })) as unknown as GerarConteudo
+
+    const r = await chamadaB('t', gerar)
+    expect(r.pesquisa.casos).toHaveLength(1)
+    expect(r.truncados).toEqual([0])
   })
 
   it('o prompt proíbe acrescentar fato e manda devolver vazio', () => {
