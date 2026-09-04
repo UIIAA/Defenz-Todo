@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import type { Prisma } from '@prisma/client'
 import { getCurrentUser, resolveActiveCompany } from '@/lib/auth'
 import { handleApiError, ApiError } from '@/lib/api-helpers'
 import { exigirEmissorDefenz } from '@/lib/emissao-documento'
@@ -46,11 +47,15 @@ export async function POST(request: NextRequest) {
         desde: dados.desde,
       })
 
-      await db.apresentacaoPesquisa.create({
+      const registro = await db.apresentacaoPesquisa.create({
         data: {
           empresaNome: dados.empresaNome,
           setor: dados.setor,
           sucesso: true,
+          // Guardados para a GERAÇÃO reconferir os dígitos contra o texto do
+          // servidor, e não contra o que o navegador devolver.
+          textoPesquisa: r.textoPesquisa,
+          fontes: r.fontes as unknown as Prisma.InputJsonValue,
           latenciaMs: r.telemetria.latenciaMs,
           modelo: r.telemetria.modelo,
           qtdFontes: r.telemetria.qtdFontes,
@@ -61,7 +66,7 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      return NextResponse.json({ success: true, data: r })
+      return NextResponse.json({ success: true, data: { ...r, pesquisaId: registro.id } })
     } catch (erro) {
       // A chamada foi paga mesmo tendo falhado: conta para o cap.
       await db.apresentacaoPesquisa.create({

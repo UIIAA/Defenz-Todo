@@ -746,7 +746,7 @@ documento com o logo da Defenz.
 |---|---|---|
 | **F1** ✅ | `comparativo.ts` (Anexo A) · `institucional-fatos.ts` · `mercado-fatos.ts` (Anexo C) · `recomendarNivel()` puro | **FEITA em 21/08.** 13 testes. XEDR → Enterprise ✓ · necessidade do básico não empurra plano ✓ · pesquisa vazia recomenda a entrada ✓ · fato do setor vem antes do nacional ✓ · **teste que varre os catálogos e falha se aparecer nome de concorrente ou superlativo de comparação** (A15 virou regra executável) |
 | **F2** ✅ | Template **A4** + render + POST que gera **sem IA** + entrada no Portal | **FEITA em 22/08.** A4 210×297mm, sem box-shadow, numeração derivada, adapta ao nicho pelo catálogo. `POST /api/portal/apresentacoes` gera e devolve o PDF; registro em `Apresentacao` com `fatosSnapshot`. Formulário em `/dashboard/portal/apresentacao` e **caixa de emissão** nas abas (§11.1) |
-| **F3** | Passo zero (BrasilAPI + confirmação) + pesquisa em duas chamadas + guardas (anonimato, número, fonte, enum, faixa) | Padaria → `casos: []`. Hospital → casos anônimos com veículo e ano. **Antes de codar: confirmar na doc oficial como o SDK expõe a busca (R8)** |
+| **F3** | ✅ **ENTREGUE 02/09/2026.** Passo zero (BrasilAPI + confirmação) + pesquisa em duas chamadas + guardas + revisão + aceite | Padaria → `casos: []`. Hospital → casos anônimos com veículo e ano |
 | **F4** | Formulário, revisão com liberação do que foi barrado, aceite, confirmação | Marcos gera a primeira apresentação em localhost |
 | **F5** 🟡 | Log buscável + re-download + arquivamento no OneDrive | **Log e re-download FEITOS em 22/08**: aba "Apresentações", busca por empresa/pessoa/setor + período, cap 200, e re-download que reimprime do `fatosSnapshot`. **Falta o arquivamento no OneDrive**, que depende do mesmo webhook n8n que a Proposta espera desde 09/08 e ainda não existe |
 | **F6** | Deploy | `.nft.json` conferido **antes** do push (§7.2) |
@@ -1120,3 +1120,41 @@ O texto institucional fixo ainda vem do código — por isso o `templateVersao` 
 
 **Arquivamento no OneDrive** (resto da F5): depende do mesmo fluxo n8n que a Proposta espera
 desde 09/08 e que **ainda não existe**.
+
+---
+
+## 15. F3 — como ficou (02/09/2026)
+
+Entregue em cinco passos, cada um com o projeto rodável no fim.
+
+| Passo | O que entrou |
+|---|---|
+| F3.1 | As cinco guardas, antes de qualquer chamada de IA |
+| F3.2 | Migração para `@google/genai` e as duas chamadas |
+| F3.3 | Passo zero: CNPJ → CNAE → setor sugerido |
+| F3.4 | Rotas `/setor` e `/pesquisa`, cap de custo contado no banco |
+| F3.5 | Tela de revisão, aceite e revalidação no servidor |
+
+### ⚠️ Dois desvios declarados
+
+**1. A revalidação usa o texto do BANCO, não o do navegador.** A spec §6.6 dizia
+que o servidor revalida o que volta da tela. Implementado assim, a conferência do
+A13b usaria o texto da chamada A que o navegador devolvesse — e quem controla o
+navegador controlaria a guarda. Agora a pesquisa grava `textoPesquisa` e
+`fontes`, a geração recebe só o `pesquisaId`, e os dígitos são conferidos contra
+o que está no servidor.
+
+**2. Editar NÃO isenta da guarda de número.** A spec (§6.6, crítica C2) dizia que
+campo editado vira `humano` e sai da guarda. Implementado ao contrário: as
+guardas rodam de novo sobre o texto novo, e o que continuar com bandeira precisa
+de "conferi e libero mesmo assim". A razão é prática — um campo editado pode
+ganhar um número novo, e a isenção automática deixaria passar exatamente o caso
+em que alguém digitou o número de cabeça. Custa um clique a mais no caso raro.
+
+### O que o servidor recusa
+
+- Caso com bandeira e sem liberação → **400 dizendo quantos ficaram de fora**, em
+  vez de gerar o PDF sem eles (a ausência silenciosa seria pior).
+- Caso sem `pesquisaId` → 400. Caso não nasce do nada.
+- Casos sem aceite → 400.
+- `casosSnapshot` congela o que entrou: a reimpressão não perde a página.

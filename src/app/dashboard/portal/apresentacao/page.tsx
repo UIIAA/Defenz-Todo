@@ -10,6 +10,11 @@ import { NIVEIS, NIVEL_NOME, type NivelId } from '@/lib/apresentacao/comparativo
 import { fatosParaSetor } from '@/lib/apresentacao/mercado-fatos'
 import { mensagemDeErroApi } from '@/lib/api-erro-legivel'
 import { COMPLEMENTOS, type ComplementoId } from '@/lib/proposta/complementos'
+import {
+  RevisaoCasos,
+  type Bandeira,
+  type CasoEmRevisao,
+} from '@/components/portal/revisao-casos'
 
 interface Formulario {
   clienteNome: string
@@ -36,12 +41,61 @@ export default function NovaApresentacaoPage() {
   const [gerando, setGerando] = useState(false)
   const [pronta, setPronta] = useState(false)
 
+  // ── pesquisa de nicho (F3). É passo separado da geração de propósito: o
+  // vendedor precisa ver o resultado ANTES de existir arquivo, e refazer não
+  // pode custar um documento gravado (spec §4).
+  const [pesquisando, setPesquisando] = useState(false)
+  const [pesquisaId, setPesquisaId] = useState<string | null>(null)
+  const [casos, setCasos] = useState<CasoEmRevisao[] | null>(null)
+  const [fontes, setFontes] = useState<{ titulo: string; dominio: string }[]>([])
+  const [aceite, setAceite] = useState(false)
+
+  async function pesquisar() {
+    setErro(null)
+    setPesquisando(true)
+    try {
+      const res = await fetch('/api/portal/apresentacoes/pesquisa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          empresaNome: form.empresaNome.trim(),
+          setor: form.setor.trim(),
+        }),
+      })
+      const j = await res.json()
+      if (!res.ok) throw new Error(mensagemDeErroApi(j, res.status, 'Falha na pesquisa'))
+
+      setPesquisaId(j.data.pesquisaId ?? null)
+      setFontes(j.data.fontes ?? [])
+      setAceite(false)
+      setCasos(
+        (j.data.casos ?? []).map((v: { caso: CasoEmRevisao; bandeiras: Bandeira[]; bloqueado: boolean }) => ({
+          ...v.caso,
+          bandeiras: v.bandeiras,
+          liberado: false,
+          // ⚠️ Barrado chega DESMARCADO. Entra só por decisão de gente.
+          incluido: !v.bloqueado,
+        }))
+      )
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Falha na pesquisa')
+    } finally {
+      setPesquisando(false)
+    }
+  }
+
   // Prévia do que o nicho muda: a mesma função pura que o servidor usa, então
   // a tela não pode prometer um número que o documento não vai trazer.
   const fatos = fatosParaSetor(form.setor.trim() || undefined)
   const especificos = fatos.filter((f) => f.setores?.length)
 
-  const podeGerar = form.clienteNome.trim() && form.empresaNome.trim() && !gerando
+  const casosIncluidos = (casos ?? []).filter((c) => c.incluido)
+  // ⚠️ O aceite trava o botão. Nunca pré-marcado, e sem ele o documento não sai.
+  const podeGerar =
+    !!form.clienteNome.trim() &&
+    !!form.empresaNome.trim() &&
+    !gerando &&
+    (casosIncluidos.length === 0 || aceite)
 
   async function gerar() {
     setErro(null)
@@ -56,6 +110,11 @@ export default function NovaApresentacaoPage() {
           setor: form.setor.trim() || null,
           nivelDestaque: form.nivelDestaque,
           complementos: form.complementos,
+          pesquisaId,
+          aceite,
+          casos: (casos ?? [])
+            .filter((c) => c.incluido)
+            .map(({ bandeiras: _b, incluido: _i, ...c }) => c),
         }),
       })
 
@@ -189,6 +248,49 @@ export default function NovaApresentacaoPage() {
             Marca a coluna recomendada na tabela dos três níveis.
           </span>
         </label>
+
+        <div className="rounded-md border border-slate-200 p-4 dark:border-slate-700">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                Casos reais do setor
+              </span>
+              <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
+                Busca incidentes noticiados no setor informado. Você revisa antes de
+                virar documento — nada entra sem passar por você.
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={pesquisar}
+              disabled={!form.setor.trim() || !form.empresaNome.trim() || pesquisando}
+            >
+              {pesquisando ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Pesquisando…
+                </>
+              ) : casos ? (
+                'Pesquisar de novo'
+              ) : (
+                'Pesquisar'
+              )}
+            </Button>
+          </div>
+
+          {casos && (
+            <div className="mt-4">
+              <RevisaoCasos
+                casos={casos}
+                fontes={fontes}
+                aceite={aceite}
+                onChange={setCasos}
+                onAceite={setAceite}
+              />
+            </div>
+          )}
+        </div>
 
         <div>
           <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">

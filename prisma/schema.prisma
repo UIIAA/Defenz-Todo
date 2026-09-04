@@ -1198,6 +1198,15 @@ model Apresentacao {
   /// a descrição vem do catálogo, e catálogo muda.
   complementosSnapshot Json?
 
+  /// Os casos que EFETIVAMENTE entraram, ja revisados e liberados.
+  ///
+  /// ⚠️ Mesma licao do complementosSnapshot (critica C1): sem isto a reimpressao
+  /// devolveria a apresentacao SEM a pagina de casos -- o cliente com um
+  /// documento e o vendedor com outro, ambos "a mesma apresentacao".
+  casosSnapshot Json?
+  /// De qual pesquisa vieram, para auditoria.
+  pesquisaId    String?
+
   arquivoNome String
 
   companyId String?
@@ -1234,6 +1243,15 @@ model ApresentacaoPesquisa {
   qtdFontes   Int?
   qtdCasos    Int?
   qtdBarrados Int?
+
+  /// O texto BRUTO da chamada A e o resultado das guardas.
+  ///
+  /// ⚠️ Guardado no servidor de proposito: e contra este texto que o A13b confere
+  /// cada digito na hora de GERAR. Se a conferencia usasse o texto que o
+  /// navegador devolve, quem controla o navegador controlaria a guarda -- e a
+  /// guarda existe justamente porque prompt e pedido, nao regra.
+  textoPesquisa String?
+  fontes        Json?
 
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)

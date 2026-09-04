@@ -133,12 +133,15 @@ diz que ele não se aplica a eles.
 `CREATE Proposta` grava quantidade, planos e ajuste. Sem os complementos, o log
 responde "que proposta foi emitida" pela metade. **Correção:** entram no log.
 
-### 🟡 C4 — PHASR custa 1,5× o Premium (risco aberto, não bug)
+### ✅ C4 — PHASR custa 1,5× o Premium (levantado e ENCERRADO em 02/09)
 
-R$ 126/licença/12m contra R$ 80,93 do Premium. Está impresso assim porque o
-Marcos confirmou que 126 é valor final. **Fica registrado como ponto a conferir
-com a SecuriSoft**: se for tabela com 50%, vira R$ 63 e toda proposta emitida
-até lá terá cobrado a mais.
+R$ 126/licença/12m contra R$ 80,93 do Premium. Levantei porque um add-on valer
+mais que o produto principal costuma ser sinal de preço de tabela lido como
+líquido. **O Marcos confirmou e encerrou:** *"O preço que vamos informar é o 126,
+esqueça essa tabela e 50% de desconto."* Vale para o PHASR e para os quatro
+sensores. O código já estava assim (`descontoPadrao: 0`); a confirmação fecha a
+dúvida, não muda linha nenhuma. Os 50% do Patch e da Criptografia seguem — esses
+vieram das tabelas da SecuriSoft com a linha de desconto explícita.
 
 ### 🟡 C5 — Com os sete complementos a proposta vai a 14 páginas
 

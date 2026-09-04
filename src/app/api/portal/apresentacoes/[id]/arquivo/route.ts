@@ -4,6 +4,7 @@ import { getCurrentUser, companyScopeWhere } from '@/lib/auth'
 import { handleApiError, ApiError } from '@/lib/api-helpers'
 import { renderPdf } from '@/lib/proposta/pdf'
 import type { ComplementoId } from '@/lib/proposta/complementos'
+import type { CasoApresentado } from '@/lib/apresentacao/templates/institucional-a4'
 import {
   renderApresentacaoHtml,
   TEMPLATE_VERSAO,
@@ -46,6 +47,7 @@ export async function GET(
         nivelDestaque: true,
         fatosSnapshot: true,
         complementosSnapshot: true,
+        casosSnapshot: true,
         templateVersao: true,
         arquivoNome: true,
         createdAt: true,
@@ -75,7 +77,7 @@ export async function GET(
         email: registro.criadoPor?.email || 'contato@defenz.com.br',
       },
       fatos,
-      casos: [],
+      casos: (registro.casosSnapshot as CasoApresentado[] | null) ?? [],
       nivelDestaque: registro.nivelDestaque as NivelId,
       // Sem isto a reimpressão perderia a página dos complementos citados.
       complementos: (registro.complementosSnapshot as ComplementoId[] | null) ?? undefined,

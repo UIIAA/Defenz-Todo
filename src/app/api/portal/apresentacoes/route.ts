@@ -11,6 +11,8 @@ import {
   TEMPLATE_VERSAO,
 } from '@/lib/apresentacao/templates/institucional-a4'
 import { fatosParaSetor } from '@/lib/apresentacao/mercado-fatos'
+import { revisarCasos, exigirAceite } from '@/lib/apresentacao/pesquisa/revisao'
+import type { CasoApresentado } from '@/lib/apresentacao/templates/institucional-a4'
 import { formatarDataSP } from '@/lib/apresentacao/apresentacao-server'
 import { nomeArquivoApresentacao } from '@/lib/apresentacao/apresentacao-server'
 
@@ -30,6 +32,43 @@ export async function POST(request: NextRequest) {
 
     const dados = createApresentacaoSchema.parse(await request.json())
     const companyId = resolveActiveCompany(user, dados.companyId ?? undefined)
+
+    // ⚠️ Os casos NÃO são aceitos como vieram: as guardas rodam de novo contra o
+    // texto da pesquisa GUARDADO NO BANCO. O que o navegador manda é proposta de
+    // conteúdo, não veredito.
+    let casos: CasoApresentado[] = []
+    let recusados = 0
+    if (dados.casos.length > 0 && dados.pesquisaId) {
+      const pesquisa = await db.apresentacaoPesquisa.findFirst({
+        where: { id: dados.pesquisaId, ...companyScopeWhere(user) },
+        select: { textoPesquisa: true, fontes: true },
+      })
+      if (!pesquisa?.textoPesquisa) {
+        throw new ApiError('Pesquisa não encontrada — refaça a pesquisa antes de gerar.', 400)
+      }
+      exigirAceite(dados.aceite, dados.casos.length)
+
+      const qtdFontes = Array.isArray(pesquisa.fontes) ? pesquisa.fontes.length : 0
+      const revisao = revisarCasos(dados.casos, pesquisa.textoPesquisa, qtdFontes)
+      recusados = revisao.recusados.length
+      casos = revisao.aprovados.map((v) => ({
+        oQueAconteceu: v.caso.oQueAconteceu,
+        necessidade: v.caso.necessidade,
+        funcionalidade: v.caso.funcionalidade,
+        veiculo: v.caso.veiculo,
+        ano: v.caso.ano,
+      }))
+
+      // Nada de erro silencioso: se algo ficou de fora, o vendedor precisa saber
+      // ANTES de mandar o PDF ao cliente — não descobrir pela ausência.
+      if (recusados > 0) {
+        throw new ApiError(
+          `${recusados} caso(s) continuam barrados pelas guardas e não podem entrar. ` +
+            'Edite o texto ou marque "liberar mesmo assim" na revisão.',
+          400
+        )
+      }
+    }
 
     const setor = dados.setor?.trim() || undefined
     // Os fatos que EFETIVAMENTE entram — congelados no registro logo abaixo.
@@ -52,7 +91,7 @@ export async function POST(request: NextRequest) {
         email: user.email || 'contato@defenz.com.br',
       },
       fatos,
-      casos: [], // F2 é sem IA; a pesquisa de casos entra na F3
+      casos,
       nivelDestaque: dados.nivelDestaque,
       complementos: dados.complementos,
     })
@@ -78,6 +117,9 @@ export async function POST(request: NextRequest) {
         // Congelado pela mesma razão do fatosSnapshot: a descrição do módulo
         // vem do catálogo, e catálogo muda (crítica C1).
         complementosSnapshot: dados.complementos.length ? dados.complementos : undefined,
+        // Congelados: sem isto a reimpressão perderia a página de casos.
+        casosSnapshot: casos.length ? (casos as unknown as Prisma.InputJsonValue) : undefined,
+        pesquisaId: dados.pesquisaId ?? undefined,
         templateVersao: TEMPLATE_VERSAO,
         arquivoNome,
         companyId,
