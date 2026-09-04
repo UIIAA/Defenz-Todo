@@ -172,3 +172,35 @@ describe('o documento não depende de fonte do sistema', () => {
     expect(cobertoPelaFonte('ç'.codePointAt(0)!)).toBe(true)
   })
 })
+
+describe('complementos citados, nunca precificados', () => {
+  const comp = doc({ complementos: ['PATCH_MANAGEMENT', 'PHASR'] })
+
+  it('a página só existe quando há complemento escolhido', () => {
+    expect(renderApresentacaoHtml(doc())).not.toContain('O que mais pode entrar')
+    expect(renderApresentacaoHtml(comp)).toContain('O que mais pode entrar')
+  })
+
+  it('diz o que o módulo faz, e manda o preço para a proposta', () => {
+    const html = renderApresentacaoHtml(comp)
+    expect(html).toContain('Patch Management')
+    expect(html).toContain('PHASR')
+    expect(html).toContain('valores estão na proposta comercial')
+  })
+
+  // ⚠️ A regra que separa os dois documentos. Se cair, some a razão de existirem
+  // dois: a apresentação vai por e-mail para quem ainda não conhece a marca.
+  it('NENHUM valor em reais entra na apresentação', () => {
+    const html = renderApresentacaoHtml(comp)
+      .replace(/<style[\s\S]*?<\/style>/g, '')
+      .replace(/<[^>]*>/g, ' ')
+    // O catálogo de fatos tem "R$ 7,19 milhões" (custo de violação) — esse é fato
+    // de mercado com fonte, não preço de produto. O que não pode é preço nosso.
+    expect(html).not.toMatch(/R\$\s?(29,95|59,90|126,00|15,00|378,00)/)
+  })
+
+  it('a numeração continua contígua com a página nova no meio', () => {
+    const s = secoes(renderApresentacaoHtml(comp))
+    expect(s).toEqual(s.map((_, i) => String(i + 1).padStart(2, '0') + '.'))
+  })
+})

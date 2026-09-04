@@ -15,6 +15,7 @@
 // como acontecer: quem numera é o índice do array.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { complemento, type ComplementoId } from '@/lib/proposta/complementos'
 import {
   UNICODE_RANGES_EMBUTIDAS,
   cobertoPelaFonte,
@@ -72,6 +73,14 @@ export interface ApresentacaoDocumento {
   /** Vazio na F2 (sem IA) e sempre que a pesquisa não achar nada (spec §6.7). */
   casos: CasoApresentado[]
   nivelDestaque: NivelId
+  /**
+   * Complementos a citar — **sem preço**.
+   *
+   * ⚠️ Decisão do Marcos, 02/09: a apresentação continua sem valor nenhum. Ela
+   * diz o que cada módulo FAZ; quem faz preço é a proposta. Se um dia um número
+   * em reais aparecer aqui, a regra que separa os dois documentos caiu.
+   */
+  complementos?: ComplementoId[]
 }
 
 export function escapeHtml(valor: string): string {
@@ -324,6 +333,25 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
         </div>
         <div style="font-size:13.2px; color:${C.faint}; font-weight:600; text-align:center; padding-top:10px;">BS = Business Security. O detalhamento técnico de cada recurso é apresentado na reunião.</div>`,
   })
+
+  const complementos = (doc.complementos ?? []).map(complemento)
+  if (complementos.length > 0) {
+    secoes.push({
+      titulo: 'O que mais pode entrar',
+      corpo: (n) => `${tituloSecao(n, 'O que mais pode entrar')}
+        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 24px; max-width:620px; text-align:justify;">Módulos que somam ao GravityZone e são contratados à parte. Entram ou saem sem mexer no restante — <strong>os valores estão na proposta comercial</strong>.</p>
+        <div style="flex:1; display:flex; flex-direction:column; gap:18px; max-width:640px;">
+          ${complementos
+            .map(
+              (c) => `<div style="border-top:1px solid ${C.line}; padding-top:12px;">
+            <div style="font-size:15.8px; font-weight:800; color:${C.ink}; margin-bottom:5px;">${escapeHtml(c.nome)}</div>
+            <p style="font-size:14.2px; line-height:1.6; color:${C.muted}; margin:0; text-align:justify;">${escapeHtml(c.descricao)}</p>
+          </div>`
+            )
+            .join('\n          ')}
+        </div>`,
+    })
+  }
 
   secoes.push({
     titulo: 'O que dizem os testes independentes',
