@@ -1,10 +1,40 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-09-14
 **Version:** 0.4.0
 **Branch:** main
 
-## 🎯 RETOMAR AQUI — apresentação de soluções Bitdefender + Defenz
+## 🎯 RETOMAR AQUI — 14/09
+
+> **TUDO EM PRODUÇÃO, working tree limpo.** Último commit relevante `e82574e`. 960 testes.
+>
+> **Entregue entre 30/08 e 11/09:**
+> - **F3 da apresentação FECHADA** — guardas, `@google/genai`, passo zero CNPJ→CNAE, rotas
+>   `/setor` e `/pesquisa` (cap no banco), tela de revisão + aceite. Spec §15 registra 2 desvios:
+>   revalidação contra o texto GUARDADO NO BANCO (não o do navegador) e editar NÃO isenta da guarda.
+> - **Complementos** (Patch, Criptografia, PHASR, 4 sensores XDR) na proposta com preço separado +
+>   página de resumo somado; na apresentação só citados, sem preço. Spec `feature-complementos.md`
+>   com crítica (C1: re-download perderia os complementos → `complementosSnapshot`).
+>   **PHASR/sensores = R$ 126 final, confirmado pelo Marcos.**
+> - **Primeira pesquisa real** (setor Consultoria) mostrou 4 defeitos, todos corrigidos: fonte
+>   impressa era o redirect `vertexaisearch.cloud.google.com`; moeda bloqueada contradizia o A13b;
+>   "US$" virava nome próprio; modelo não sabia do limite de 400.
+> - **Token do agente de suporte**: identidade própria `agente-suporte@defenz.com.br` (user, só
+>   Defenz). Token entregue ao Marcos; não guardado em lugar nenhum.
+>
+> **Próximos passos / pendências:**
+> 1. **Rodar a pesquisa de novo** e ver se os casos vêm sem bandeira. Se vierem genéricos ("uma
+>    consultoria"), apertar o prompt da chamada A (exigir data e efeito operacional).
+> 2. **DECISÃO do Marcos:** travar `DELETE /api/tickets/[id]` para admin/gerência (hoje qualquer
+>    user da Defenz — inclusive o agente — apaga ticket para sempre).
+> 3. `/api/tickets/clients` devolve nomes JÁ USADOS, não a lista `AuthorizedClient`. Se o agente
+>    precisar validar cliente autorizado, falta criar a rota.
+> 4. **Link público da proposta** (frente da sessão Chief): decidido VALE PARA SEMPRE; falta o
+>    workflow n8n (arquivamento no OneDrive está INERTE) e decidir reemissão substitui vs cria.
+>    Só então campos `linkPublico` + `linkPermissionId` + `linkCriadoEm` e botão "Copiar link".
+> 5. Calculadora de TCO: adiada pelo Marcos.
+
+## Histórico — apresentação de soluções (25/08)
 
 > **25/08 · TUDO DEPLOYADO.** Os 4 commits de 23/08 + a extensão da trava de fonte
 > foram para produção (`9ad3bd1` e `cd0d6f0`, duas builds Ready no Vercel). 876 testes.
