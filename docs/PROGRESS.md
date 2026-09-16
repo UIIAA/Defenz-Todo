@@ -4,7 +4,18 @@
 **Version:** 0.4.0
 **Branch:** main
 
-## 🎯 RETOMAR AQUI — 14/09
+## 🎯 RETOMAR AQUI — 16/09
+
+> **Acréscimo oculto na proposta: IMPLEMENTADO LOCAL, NÃO DEPLOYADO.** Com preço acima da tabela, o PDF
+> mostra o valor final como preço (sem linha, frase, percentual ou "tabela vigente"); o acréscimo fica só
+> na tela de revisão. Desconto intocado (HTML idêntico). Spec `feature-proposta-acrescimo-oculto.md`, 961 testes.
+> ⚠️ **02033 (+25%) e 02034 (+20%) foram emitidas HOJE ainda no formato antigo** — se já saíram ao cliente,
+> ele viu o acréscimo. Falta: **deploy** (push main) e decidir se reenvia as duas.
+>
+> Propostas HM Engenharia (14/09): DFZ-2026-02024 (Enterprise −25%) e 02025 (Premium −25%) unificadas com DLP
+> GTB fora do gerador, em `~/Documents/Projetos/Defenz/Propostas/HM Engenharia/`. 02023 (Premium tabela) substituída.
+
+## Histórico — 14/09
 
 > **TUDO EM PRODUÇÃO, working tree limpo.** Último commit relevante `e82574e`. 960 testes.
 >

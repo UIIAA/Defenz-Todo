@@ -3,6 +3,14 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Changed (2026-09-16 — o acréscimo sai do documento do cliente)
+> **961 testes verdes**, `tsc` + `build` limpos. **Não deployado.** Spec `feature-proposta-acrescimo-oculto.md`.
+
+- **Com acréscimo, o PDF imprime o preço final como preço.** Somem as linhas "Acréscimo" e "Unitário com acréscimo", a frase "os valores já contemplam o acréscimo", a menção na página de complementos e o "faixa N da tabela vigente" nos dois rodapés (investimento e resumo). **Desconto não muda:** HTML byte a byte idêntico ao de antes, com −25% e com tabela cheia.
+- ⚠️ **Esconder a linha não bastava (crítica K1):** "Valor unitário" e "Valor total" imprimiam o preço **de tabela**, logo acima do total final. Com acréscimo, os dois passam a ser o valor final. O teste confere os valores de tabela, não só a palavra.
+- Predicado único `mostraAjusteAoCliente()` (só desconto), para nenhum ponto do template usar `temAjuste`, que é verdadeiro nos dois sentidos.
+- Tela de revisão: aviso âmbar *"Acréscimo de X% visível só para você"*. Banco, AuditLog e log de propostas continuam guardando o acréscimo.
+- `TEMPLATE_VERSAO` → `2026-09-16`. **5 propostas já emitidas têm acréscimo** (02002, 02012, 02013 com +5%; 02033 com +25% e 02034 com +20%, as duas de 16/09). Re-download depois do deploy sai no formato novo, com o mesmo preço.
 ### Fixed (2026-08-23 — a tabela dos níveis saía SEM NENHUM TIQUE em produção)
 > **873 testes verdes**, `tsc` + `build` limpos.
 

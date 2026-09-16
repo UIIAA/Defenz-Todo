@@ -173,7 +173,7 @@ function rodape(pagina: number, total: number, ano: number, margemTopo = 'auto')
  *
  * Subir quando o texto fixo mudar: páginas, seções, numeração, promessas.
  */
-export const TEMPLATE_VERSAO = '2026-08-21'
+export const TEMPLATE_VERSAO = '2026-09-16'
 
 export const SECOES = {
   CONHECA_NOS: '01.',
@@ -193,6 +193,24 @@ export const SECOES = {
 export function secoesNoHtml(html: string): string[] {
   const achados = [...html.matchAll(/>(\d{2}\.)<\/span>/g)].map((m) => m[1])
   return achados.filter((n, i) => n !== achados[i - 1])
+}
+
+/**
+ * O cliente só fica sabendo do ajuste quando é DESCONTO.
+ *
+ * ⚠️ feature-proposta-acrescimo-oculto: acréscimo existe só na tela de revisão.
+ * No documento, o preço final sai como preço — sem a palavra, sem o percentual,
+ * sem o valor de tabela ao lado e sem "tabela vigente" no rodapé (que seria
+ * falso). NÃO use `temAjuste` para decidir o que imprimir: ele é verdadeiro nos
+ * dois sentidos, e um ponto esquecido reabre o vazamento (crítica K3).
+ */
+export function mostraAjusteAoCliente(inv: Pick<Investimento, 'ajustePercent'>): boolean {
+  return inv.ajustePercent < 0
+}
+
+/** Acima da tabela: o documento não pode chamar o preço de "tabela vigente". */
+function precoAcimaDaTabela(inv: Pick<Investimento, 'ajustePercent'>): boolean {
+  return inv.ajustePercent > 0
 }
 
 function tituloSecao(numero: string, texto: string, sufixo = ''): string {
@@ -230,21 +248,21 @@ function linhaGrid(
 
 function tabelaPlano(bloco: BlocoPlano, inv: Investimento): string {
   const vs = bloco.vigencias
-  const rotuloFinal =
-    inv.ajustePercent < 0 ? 'Unitário com desconto' : 'Unitário com acréscimo'
+  const mostraAjuste = mostraAjusteAoCliente(inv)
 
-  // As duas linhas de ajuste só existem quando há ajuste. Com preço de tabela,
-  // um rótulo fixo "Desconto competitivo · 0%" mentiria para o cliente.
-  const linhasAjuste = inv.temAjuste
+  // As duas linhas de ajuste só existem com DESCONTO. Com preço de tabela, um
+  // rótulo fixo "Desconto competitivo · 0%" mentiria; com acréscimo, o cliente
+  // não fica sabendo (feature-proposta-acrescimo-oculto).
+  const linhasAjuste = mostraAjuste
     ? `
             ${linhaGrid(
-              inv.rotuloAjuste!,
+              'Desconto competitivo',
               vs.map(() => formatarPercent(inv.ajustePercent)),
               { destaqueUltimo: false, corValor: `color:${C.accent}; font-weight:700;` }
             )}
 
             ${linhaGrid(
-              rotuloFinal,
+              'Unitário com desconto',
               vs.map((v) => formatarBRL(v.precoLicencaFinal)),
               { corRotulo: C.ink, peso: ' font-weight:800;' }
             )}
@@ -285,12 +303,14 @@ function tabelaPlano(bloco: BlocoPlano, inv: Investimento): string {
 
             ${linhaGrid(
               'Valor unitário',
-              vs.map((v) => formatarBRL(v.precoLicenca))
+              // Com acréscimo, o unitário impresso já é o final: o de tabela ao lado do
+              // total final entregaria a diferença (crítica K1).
+              vs.map((v) => formatarBRL(mostraAjuste ? v.precoLicenca : v.precoLicencaFinal))
             )}
 
             ${linhaGrid(
               'Valor total',
-              vs.map((v) => formatarBRL(v.valorTotal)),
+              vs.map((v) => formatarBRL(mostraAjuste ? v.valorTotal : v.valorTotalFinal)),
               { destaqueUltimo: false, corValor: `color:${C.muted};` }
             )}
 ${linhasAjuste}
@@ -322,9 +342,12 @@ function paginaInvestimento(
 ): string {
   const inv = doc.investimento
   const continuacao = indice > 0
-  const nota = inv.temAjuste
-    ? `Os valores já contemplam o ${(inv.rotuloAjuste ?? '').toLowerCase()} de ${formatarPercent(inv.ajustePercent)} aplicado a cada vigência.`
-    : 'Valores conforme tabela vigente, por vigência contratada.'
+  const nota = mostraAjusteAoCliente(inv)
+    ? `Os valores já contemplam o desconto competitivo de ${formatarPercent(inv.ajustePercent)} aplicado a cada vigência.`
+    : precoAcimaDaTabela(inv)
+      ? 'Valores por licença, por vigência contratada.'
+      : 'Valores conforme tabela vigente, por vigência contratada.'
+  const faixa = precoAcimaDaTabela(inv) ? '' : ` · faixa ${inv.faixa} da tabela vigente`
 
   return pagina(`${cabecalhoCorrido(doc.empresaNome)}
       <div style="margin-top:66px;">${tituloSecao(
@@ -340,7 +363,7 @@ function paginaInvestimento(
       <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">${tabelaPlano(bloco, inv)}
       </div>
 
-      <div style="font-size:12.5px; color:${C.faint}; font-weight:600; text-align:center;">${notaBonus(bloco)}Valores em reais. Dimensionamento para ${inv.quantidade} licenças · faixa ${inv.faixa} da tabela vigente.</div>
+      <div style="font-size:12.5px; color:${C.faint}; font-weight:600; text-align:center;">${notaBonus(bloco)}Valores em reais. Dimensionamento para ${inv.quantidade} licenças${faixa}.</div>
 ${rodape(numeroPagina, total, doc.ano, '24px')}`)
 }
 
@@ -437,8 +460,8 @@ function paginaComplementos(
                 // ⚠️ Crítica C2: a página anterior diz "os valores já contemplam
                 // o desconto de X%". Sem esta frase, o cliente lê as duas em
                 // sequência e conclui que o desconto vale aqui também.
-                doc.investimento.temAjuste
-                  ? ` O ${(doc.investimento.rotuloAjuste ?? '').toLowerCase()} de ${formatarPercent(doc.investimento.ajustePercent)} aplicado ao GravityZone <strong>não incide sobre os complementos</strong>: os valores abaixo são os da tabela deles.`
+                mostraAjusteAoCliente(doc.investimento)
+                  ? ` O desconto competitivo de ${formatarPercent(doc.investimento.ajustePercent)} aplicado ao GravityZone <strong>não incide sobre os complementos</strong>: os valores abaixo são os da tabela deles.`
                   : ''
               }</p>`
         }
@@ -545,7 +568,7 @@ function paginaResumo(
         </div>
       </div>
 
-      <div style="font-size:12px; color:${C.faint}; font-weight:600; text-align:center;">Valores em reais &middot; ${quantidade} licenças &middot; faixa ${doc.investimento.faixa} da tabela vigente.</div>
+      <div style="font-size:12px; color:${C.faint}; font-weight:600; text-align:center;">Valores em reais &middot; ${quantidade} licenças${precoAcimaDaTabela(doc.investimento) ? '' : ` &middot; faixa ${doc.investimento.faixa} da tabela vigente`}.</div>
 ${rodape(numeroPagina, total, doc.ano, '18px')}`)
 }
 

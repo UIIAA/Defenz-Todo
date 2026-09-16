@@ -427,6 +427,15 @@ export default function NovaPropostaPage() {
               )}
             </dl>
 
+            {/* O acréscimo existe só aqui: o PDF imprime o preço final como preço
+                (feature-proposta-acrescimo-oculto). Quem gera precisa saber disso. */}
+            {ajuste > 0 && (
+              <p className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+                Acréscimo de {ajuste}% visível só para você. O cliente verá os valores abaixo
+                como preço, sem menção ao acréscimo nem ao valor de tabela.
+              </p>
+            )}
+
             {'consolidado' in previa && previa.consolidado && (
               <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-700 dark:bg-slate-800/50">
                 <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">

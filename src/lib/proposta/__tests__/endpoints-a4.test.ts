@@ -241,11 +241,36 @@ describe('renderPropostaHtml — bloco de investimento', () => {
     expect(html).toContain('R$ 4.643,19') // 171,97 × 30 × 0,9
   })
 
-  it('acréscimo: rótulo "Acréscimo", nunca "Desconto"', () => {
+  // feature-proposta-acrescimo-oculto: o acréscimo existe só na tela de revisão.
+  // O cliente vê o preço final como preço — sem a palavra, sem o percentual e
+  // sem o valor de tabela ao lado, que deixaria a diferença fácil de calcular (K1).
+  it('acréscimo: o documento não menciona o acréscimo nem mostra o preço de tabela', () => {
     const html = renderPropostaHtml(doc({}, ['PREMIUM'], 7.5))
-    expect(html).toContain('Acréscimo')
-    expect(html).toContain('7,5%')
+    expect(html.toLowerCase()).not.toContain('acréscimo')
+    expect(html).not.toContain('7,5%')
     expect(html).not.toContain('Desconto competitivo')
+    expect(html).not.toContain('tabela vigente')
+    // Premium 25-49 de tabela: 80,93 · 129,48 · 202,32 — e os totais × 30.
+    for (const tabela of ['R$ 80,93', 'R$ 129,48', 'R$ 202,32', 'R$ 2.427,90', 'R$ 3.884,40', 'R$ 6.069,60']) {
+      expect(html).not.toContain(tabela)
+    }
+    // O preço final aparece: 80,93 × 1,075 = 87,00 · × 30 = 2.609,99
+    expect(html).toContain('R$ 87,00')
+    expect(html).toContain('R$ 2.609,99')
+  })
+
+  it('acréscimo com complementos: o resumo e os complementos também não contam', () => {
+    const base = doc({}, ['PREMIUM'], 7.5)
+    const comps = calcularComplementos(['PATCH_MANAGEMENT'], 30)
+    const html = renderPropostaHtml({
+      ...base,
+      complementos: comps,
+      consolidado: consolidar(base.investimento, 0, comps),
+    })
+    expect(html.toLowerCase()).not.toContain('acréscimo')
+    expect(html).not.toContain('7,5%')
+    expect(html).not.toContain('não incide sobre os complementos')
+    expect(html).not.toContain('tabela vigente')
   })
 
   it('mostra as três vigências e a faixa aplicada', () => {
