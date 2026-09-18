@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcularComplementos, consolidar } from '../calculo-complementos'
+import { calcularComplementos, consolidar, servicosSobConsulta } from '../calculo-complementos'
 import { calcularInvestimento } from '../calculo'
 import { COMPLEMENTOS } from '../complementos'
 
@@ -40,10 +40,19 @@ describe('calcularComplementos — os números das tabelas do Marcos, sem deriva
     expect(() => calcularComplementos(['PHASR'], 1000)).toThrow()
   })
 
-  it('todo complemento do catálogo tem descrição com fonte declarada', () => {
+  // I-C4: a descrição vem de material oficial, com a fonte impressa ao lado.
+  // O fabricante deixou de ser sempre a Bitdefender em 17/09 (DLP da GTB, MDR da
+  // própria Defenz) — o que a regra exige é procedência declarada, não a marca.
+  it('todo item do catálogo tem descrição com fonte declarada', () => {
+    const fabricanteEsperado: Record<string, RegExp> = {
+      GRAVITYZONE: /Bitdefender/,
+      XDR: /Bitdefender/,
+      DLP: /GTB/,
+      SERVICO: /Defenz/,
+    }
     for (const c of COMPLEMENTOS) {
       expect(c.descricao.length, c.id).toBeGreaterThan(80)
-      expect(c.fonte, c.id).toMatch(/Bitdefender/)
+      expect(c.fonte, c.id).toMatch(fabricanteEsperado[c.familia])
     }
   })
 })
@@ -77,5 +86,93 @@ describe('consolidar — a última página, e a cobertura que não bate', () => 
 
   it('sem complemento não há divergência para explicar', () => {
     expect(consolidar(inv, 0, []).coberturasDivergem).toBe(false)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// feature-catalogo-opcoes — DLP, MDR e desconto por item
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('DLP, MDR e desconto por item', () => {
+  const inv = calcularInvestimento({ quantidade: 400, planos: ['PREMIUM'], ajustePercent: 0 })
+
+  it('DLP: US$ 48 viram R$ 247,30 e o total fecha com o unitário (C1)', () => {
+    const [dlp] = calcularComplementos(['DLP_GTB'], 400)
+    expect(dlp.moeda).toBe('USD')
+    expect(dlp.precoOrigemUSD).toBe(48)
+    expect(dlp.vigencias).toHaveLength(1)
+    expect(dlp.vigencias[0].precoLicencaFinal).toBe(247.3)
+    expect(dlp.vigencias[0].valorTotalFinal).toBe(247.3 * 400)
+  })
+
+  // ⚠️ Decisão D5 (17/09), vinda da crítica: o DLP renova a cada 12 meses. Somá-lo
+  // UMA vez dentro da coluna de 48 meses subestimaria o custo em duas renovações
+  // e chamaria o resultado de "Investimento total" — a mesma família do rótulo
+  // "36 meses" que dividia por 48. Ele sai com preço, fora do total.
+  it('DLP fica FORA do total somado, com o valor e o prazo declarados (D5)', () => {
+    const c = consolidar(inv, 0, calcularComplementos(['DLP_GTB'], 400))
+    for (const l of c.linhas) {
+      expect(l.totalComplementos).toBe(0)
+      expect(l.total).toBe(l.totalPrincipal)
+    }
+    expect(c.foraDoTotal).toEqual([
+      { nome: 'GTB Endpoint Protector (DLP)', meses: 12, valorTotalFinal: 247.3 * 400 },
+    ])
+  })
+
+  it('o que fica no total continua somando normal, com o DLP marcado junto', () => {
+    const comps = calcularComplementos(['PATCH_MANAGEMENT', 'DLP_GTB'], 400)
+    const c = consolidar(inv, 0, comps)
+    // Só o Patch entra: 29,95 × 400 na coluna de 12 meses.
+    expect(c.linhas[0].totalComplementos).toBeCloseTo(29.95 * 400, 6)
+    expect(c.linhas[2].coberturas).toEqual([36])
+    expect(c.foraDoTotal).toHaveLength(1)
+  })
+
+  it('MDR não entra em cálculo nenhum, e vira bloco de escopo (I-N2)', () => {
+    expect(calcularComplementos(['MDR_GERENCIADO'], 400)).toEqual([])
+    const [mdr] = servicosSobConsulta(['MDR_GERENCIADO'])
+    expect(mdr.nome).toContain('MDR')
+    expect(mdr.naoIncluso.length).toBeGreaterThan(0)
+    // Marcado junto com o Patch, só o Patch é precificado.
+    const comps = calcularComplementos(['MDR_GERENCIADO', 'PATCH_MANAGEMENT'], 400)
+    expect(comps.map((c) => c.id)).toEqual(['PATCH_MANAGEMENT'])
+  })
+
+  it('o texto do MDR não promete o que não funciona hoje (I-N6)', () => {
+    const [mdr] = servicosSobConsulta(['MDR_GERENCIADO'])
+    const texto = mdr.descricao.toLowerCase()
+    expect(texto).not.toContain('tempo real')
+    expect(texto).not.toContain('isolamento automático')
+    expect(texto).not.toContain('24x7')
+    expect(texto).not.toContain('24 horas')
+    expect(texto).toContain('das 9h às 18h')
+  })
+
+  it('desconto por item sobrepõe o catálogo, item a item (D4)', () => {
+    const [patch, phasr] = calcularComplementos(
+      ['PATCH_MANAGEMENT', 'PHASR'],
+      30,
+      { PATCH_MANAGEMENT: 0, PHASR: 10 }
+    )
+    // Patch zerado: volta ao valor de tabela, sem os 50% do catálogo.
+    expect(patch.descontoPercent).toBe(0)
+    expect(patch.temDesconto).toBe(false)
+    expect(patch.vigencias[0].precoLicencaFinal).toBe(59.9)
+    // PHASR, que é líquido, recebe o desconto que o vendedor digitou.
+    expect(phasr.descontoPercent).toBe(10)
+    expect(phasr.descontoManual).toBe(true)
+    expect(phasr.vigencias[0].precoLicencaFinal).toBeCloseTo(113.4, 2)
+  })
+
+  it('item sem desconto na tela continua com o do catálogo', () => {
+    const [patch] = calcularComplementos(['PATCH_MANAGEMENT'], 30, { PHASR: 10 })
+    expect(patch.descontoPercent).toBe(50)
+    expect(patch.descontoManual).toBe(false)
+  })
+
+  it('desconto fora de 0..90 é recusado, em vez de virar preço estranho', () => {
+    expect(() => calcularComplementos(['PATCH_MANAGEMENT'], 30, { PATCH_MANAGEMENT: 95 })).toThrow()
+    expect(() => calcularComplementos(['PATCH_MANAGEMENT'], 30, { PATCH_MANAGEMENT: -5 })).toThrow()
   })
 })
