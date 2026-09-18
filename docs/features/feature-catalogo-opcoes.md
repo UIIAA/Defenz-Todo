@@ -162,3 +162,7 @@ Tabela de preço do MDR, geração das propostas antigas de MDR em HTML manual, 
 | **F3** | Template da proposta: bloco DLP com procedência, bloco MDR sem preço, resumo com as duas coberturas | PDF local conferido; I-N2, I-N3, I-N6, I-N7 testadas |
 | **F4** | API + UI da proposta (famílias do catálogo, campo de desconto por item) | payload antigo aceito; snapshot e AuditLog com o desconto efetivo |
 | **F5** | Apresentação: DLP e MDR citados sem preço | teste "nenhum valor em reais" continua verde com os dois marcados |
+
+## 9. Ajuste de 18/09 — PHASR e sensores XDR
+
+Marcos, 18/09: **PHASR e os quatro sensores XDR são comercializados só por 12 meses.** Passam a ter coluna única (R$ 126 por licença) e, pela mesma regra do DLP (D5), **ficam fora do total somado** — renovam todo ano. Patch Management e Criptografia de Disco continuam com 12/24/36 meses. Propostas emitidas antes desta data reimprimem com as colunas do snapshot delas.

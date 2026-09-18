@@ -8,6 +8,10 @@
 //  · PHASR e sensores XDR — valores passados pelo Marcos em 02/09/2026 e por ele
 //    confirmados como **valor final** (não levam o desconto competitivo).
 //
+// ⚠️ COBERTURA, 18/09: PHASR e os quatro sensores XDR passaram a ser vendidos
+// SÓ por 12 MESES (Marcos, 18/09/2026) — como o DLP, renovam todo ano, e por isso
+// saem do total somado. Patch e Criptografia seguem com 12/24/36.
+//
 // ⚠️ COBERTURA: o complemento cobre 12, 24 ou 36 meses — **sem o bônus de 12**
 // que o GravityZone principal tem na coluna 36+12 (decisão do Marcos, 02/09).
 // Isto NÃO é detalhe de conta: numa proposta de 36+12, o produto principal cobre
@@ -145,7 +149,9 @@ export const COMPLEMENTOS_BITDEFENDER: readonly Complemento[] = [
   {
     id: 'PHASR',
     nome: 'Bitdefender GravityZone PHASR',
-    precoTabela: [126, 252, 378],
+    precoTabela: [126],
+    mesesCobertura: [12],
+    foraDoTotal: true,
     descontoPadrao: 0,
     precoLiquido: true,
     descricao:
@@ -156,7 +162,9 @@ export const COMPLEMENTOS_BITDEFENDER: readonly Complemento[] = [
   {
     id: 'XDR_PRODUCTIVITY',
     nome: 'Bitdefender XDR Sensor · Productivity',
-    precoTabela: [126, 252, 378],
+    precoTabela: [126],
+    mesesCobertura: [12],
+    foraDoTotal: true,
     descontoPadrao: 0,
     precoLiquido: true,
     descricao:
@@ -167,7 +175,9 @@ export const COMPLEMENTOS_BITDEFENDER: readonly Complemento[] = [
   {
     id: 'XDR_NETWORK',
     nome: 'Bitdefender XDR Sensor · Network',
-    precoTabela: [126, 252, 378],
+    precoTabela: [126],
+    mesesCobertura: [12],
+    foraDoTotal: true,
     descontoPadrao: 0,
     precoLiquido: true,
     descricao:
@@ -178,7 +188,9 @@ export const COMPLEMENTOS_BITDEFENDER: readonly Complemento[] = [
   {
     id: 'XDR_CLOUD',
     nome: 'Bitdefender XDR Sensor · Cloud',
-    precoTabela: [126, 252, 378],
+    precoTabela: [126],
+    mesesCobertura: [12],
+    foraDoTotal: true,
     descontoPadrao: 0,
     precoLiquido: true,
     descricao:
@@ -189,7 +201,9 @@ export const COMPLEMENTOS_BITDEFENDER: readonly Complemento[] = [
   {
     id: 'XDR_IDENTITY',
     nome: 'Bitdefender XDR Sensor · Identity',
-    precoTabela: [126, 252, 378],
+    precoTabela: [126],
+    mesesCobertura: [12],
+    foraDoTotal: true,
     descontoPadrao: 0,
     precoLiquido: true,
     descricao:

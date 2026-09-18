@@ -3,6 +3,12 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Changed (2026-09-18 — PHASR e sensores XDR passam a 12 meses)
+> **984 testes verdes.** Não deployado (vai junto com o pacote de 17/09).
+
+- **PHASR e os quatro sensores XDR são vendidos só por 12 meses** (Marcos, 18/09). Saem das três colunas e passam à coluna única de R$ 126, como o DLP — e, pela mesma razão dele, **ficam fora do total somado**: renovam a cada ano, e somar um ano dentro da coluna de 48 meses subestimaria o custo. Patch e Criptografia seguem com 12/24/36.
+- Proposta já emitida reimprime pelo snapshot dela, com as colunas que tinha na emissão.
+
 ### Added (2026-09-17 — DLP e MDR viram opção, e o desconto passa a ser por item)
 > **983 testes verdes**, `tsc` + `build` limpos. **Não deployado.** Spec e crítica adversarial em `feature-catalogo-opcoes.md`.
 

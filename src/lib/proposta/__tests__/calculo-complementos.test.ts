@@ -18,11 +18,17 @@ describe('calcularComplementos — os números das tabelas do Marcos, sem deriva
 
   // ⚠️ Decisão do Marcos, 02/09: o valor do PHASR e dos sensores JÁ É o final.
   // Aplicar 50% aqui cortaria o preço pela metade numa proposta real.
-  it('PHASR e sensores NÃO levam desconto: 126 é 126', () => {
+  // ⚠️ 18/09: PHASR e os quatro sensores passaram a ser vendidos SÓ por 12 meses
+  // (Marcos). Antes desta data o catálogo tinha as três colunas — proposta já
+  // emitida reimprime pelo snapshot dela, com as colunas que tinha na emissão.
+  it('PHASR e sensores: 126 é 126, uma coluna só, e nunca com desconto', () => {
     for (const id of ['PHASR', 'XDR_NETWORK', 'XDR_CLOUD', 'XDR_IDENTITY', 'XDR_PRODUCTIVITY'] as const) {
       const [c] = calcularComplementos([id], 5)
       expect(c.temDesconto, id).toBe(false)
-      expect(c.vigencias.map((v) => v.precoLicencaFinal), id).toEqual([126, 252, 378])
+      expect(c.vigencias.map((v) => v.precoLicencaFinal), id).toEqual([126])
+      expect(c.vigencias.map((v) => v.meses), id).toEqual([12])
+      // Renova a cada ano: entra no resumo como linha à parte, não na soma.
+      expect(c.foraDoTotal, id).toBe(true)
     }
   })
 
@@ -78,10 +84,19 @@ describe('consolidar — a última página, e a cobertura que não bate', () => 
   // 48 meses (36+12) e o complemento cobre 36. Somar sem avisar é prometer
   // cobertura que não existe — a mesma família do rótulo que dividia por 48.
   it('acusa a divergência de cobertura na coluna 36+12', () => {
-    const c = consolidar(inv, 0, calcularComplementos(['PHASR'], 30))
+    // Patch: 36 meses contra os 48 do GravityZone na terceira coluna.
+    const c = consolidar(inv, 0, calcularComplementos(['PATCH_MANAGEMENT'], 30))
     expect(c.linhas[2].mesesPrincipal).toBe(48)
     expect(c.linhas[2].mesesComplementos).toBe(36)
     expect(c.coberturasDivergem).toBe(true)
+  })
+
+  it('sensor de 12 meses sai do total e vira linha à parte (18/09)', () => {
+    const c = consolidar(inv, 0, calcularComplementos(['XDR_PRODUCTIVITY'], 30))
+    expect(c.linhas.every((l) => l.totalComplementos === 0)).toBe(true)
+    expect(c.foraDoTotal).toEqual([
+      { nome: 'Bitdefender XDR Sensor · Productivity', meses: 12, valorTotalFinal: 126 * 30 },
+    ])
   })
 
   it('sem complemento não há divergência para explicar', () => {

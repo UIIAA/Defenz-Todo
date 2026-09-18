@@ -4,7 +4,11 @@
 **Version:** 0.4.0
 **Branch:** main
 
-## 🎯 RETOMAR AQUI — 17/09
+## 🎯 RETOMAR AQUI — 18/09
+
+> **18/09:** PHASR e os quatro sensores XDR passaram a **12 meses apenas**, coluna única e fora do total
+> somado (mesma regra do DLP). 984 testes. Continua **não deployado**.
+
 
 > **Catálogo de opções (DLP + MDR + desconto por item): IMPLEMENTADO LOCAL, NÃO DEPLOYADO.**
 > Spec + crítica adversarial (21 achados) em `docs/features/feature-catalogo-opcoes.md`. 983 testes.
