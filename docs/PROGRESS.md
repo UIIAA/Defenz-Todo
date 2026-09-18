@@ -4,7 +4,26 @@
 **Version:** 0.4.0
 **Branch:** main
 
-## 🎯 RETOMAR AQUI — 16/09
+## 🎯 RETOMAR AQUI — 17/09
+
+> **Catálogo de opções (DLP + MDR + desconto por item): IMPLEMENTADO LOCAL, NÃO DEPLOYADO.**
+> Spec + crítica adversarial (21 achados) em `docs/features/feature-catalogo-opcoes.md`. 983 testes.
+> Junto vai o **acréscimo oculto** de 16/09, que também não foi deployado.
+>
+> **Decisões do Marcos (17/09):** MDR sem preço (sob consulta); DLP só 12 meses com renovação anual e
+> **fora do total somado**; câmbio como constante versionada (R$ 5,1521, PTAX 17/09); desconto por item
+> começando no catálogo; item de preço líquido não imprime linha de desconto.
+>
+> **Pendências:**
+> 1. **Deploy** (push main) — leva junto o acréscimo oculto e as 5 propostas com acréscimo passam a
+>    rebaixar no formato novo.
+> 2. **Atualizar o câmbio** antes de emitir proposta com DLP: `src/lib/proposta/cambio.ts` tem data e fonte.
+> 3. **Preço do MDR**: se um dia existir tabela, o item já está no catálogo esperando (`sobConsulta: true`).
+> 4. **Defeito pré-existente achado pela crítica (fora do escopo, não corrigido):** `planoConsolidado` é o
+>    índice da ordem de clique na tela, enquanto o cálculo reordena os planos para a ordem canônica —
+>    marcar Premium e depois Business e escolher "Premium" no resumo consolida o **Business**.
+
+## Histórico — 16/09
 
 > **Acréscimo oculto na proposta: IMPLEMENTADO LOCAL, NÃO DEPLOYADO.** Com preço acima da tabela, o PDF
 > mostra o valor final como preço (sem linha, frase, percentual ou "tabela vigente"); o acréscimo fica só

@@ -204,3 +204,41 @@ describe('complementos citados, nunca precificados', () => {
     expect(s).toEqual(s.map((_, i) => String(i + 1).padStart(2, '0') + '.'))
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// feature-catalogo-opcoes — DLP e MDR citados, sem preço
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('DLP e MDR na apresentação', () => {
+  it('cita os dois sem nenhum valor (I-N1)', () => {
+    const html = renderApresentacaoHtml(doc({ complementos: ['DLP_GTB', 'MDR_GERENCIADO'] }))
+    expect(html).toContain('GTB Endpoint Protector')
+    expect(html).toContain('MDR')
+    // ⚠️ Não dá para proibir todo "R$" no documento: a apresentação cita o custo
+    // médio de uma violação no Brasil, que é dado de mercado com fonte. O que não
+    // pode aparecer é PREÇO NOSSO (I-N1).
+    // O "US$" do TCO (AV-Comparatives) e o "R$" do custo de violação são dados de
+    // mercado com fonte, e já estavam lá. O proibido é PREÇO NOSSO (I-N1).
+    expect(html).not.toContain('247,30')
+    expect(html).not.toContain('US$ 48')
+    expect(html).not.toContain('Investimento total')
+    expect(html).not.toContain('por licença')
+    expect(html).not.toContain('Desconto')
+  })
+
+  // ⚠️ Achado 6 da crítica: a frase fixa prometia que o valor está na proposta.
+  // Com MDR marcado isso é falso — ele não tem preço em lugar nenhum.
+  it('não promete preço que não existe quando há item sob consulta', () => {
+    const soServico = renderApresentacaoHtml(doc({ complementos: ['MDR_GERENCIADO'] }))
+    expect(soServico).toContain('sob consulta')
+    expect(soServico).not.toContain('os valores estão na proposta comercial')
+
+    const misto = renderApresentacaoHtml(doc({ complementos: ['PHASR', 'MDR_GERENCIADO'] }))
+    expect(misto).toContain('proposta comercial')
+    expect(misto).toContain('sob consulta')
+
+    const soModulo = renderApresentacaoHtml(doc({ complementos: ['PHASR'] }))
+    expect(soModulo).toContain('<strong>os valores estão na proposta comercial</strong>')
+    expect(soModulo).not.toContain('sob consulta')
+  })
+})

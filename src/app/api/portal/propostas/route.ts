@@ -6,7 +6,11 @@ import { TEMPLATE_VERSAO } from '@/lib/proposta/templates/endpoints-a4'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { createAuditLog } from '@/lib/audit'
 import { calcularInvestimento } from '@/lib/proposta/calculo'
-import { calcularComplementos, consolidar } from '@/lib/proposta/calculo-complementos'
+import {
+  calcularComplementos,
+  consolidar,
+  servicosSobConsulta,
+} from '@/lib/proposta/calculo-complementos'
 import { renderPdf } from '@/lib/proposta/pdf'
 import { arquivarNoOneDrive } from '@/lib/proposta/arquivamento'
 import {
@@ -62,7 +66,15 @@ export async function POST(request: NextRequest) {
       ajustePercent,
     })
 
-    const complementos = calcularComplementos(dados.complementos, dados.quantidade)
+    const complementos = calcularComplementos(
+      dados.complementos,
+      dados.quantidade,
+      dados.descontosComplemento
+    )
+    // Serviço sob consulta (MDR) não tem preço e não entra em soma: vai por fora,
+    // e precisa viajar junto — sem isto, marcar só o MDR gerava uma proposta sem
+    // nenhuma página de MDR, calada (achado 17 da crítica).
+    const servicos = servicosSobConsulta(dados.complementos)
     const consolidado =
       complementos.length > 0
         ? consolidar(investimento, dados.planoConsolidado, complementos)
@@ -91,6 +103,7 @@ export async function POST(request: NextRequest) {
       },
       agora,
       complementos,
+      servicos,
       consolidado,
     })
     const pdf = await renderPdf(renderPropostaHtml(documento))
@@ -111,9 +124,11 @@ export async function POST(request: NextRequest) {
         precoSnapshot: investimento as unknown as Prisma.InputJsonValue,
         // ⚠️ Congelado JUNTO do preço: sem isto o /arquivo reimprimiria a mesma
         // proposta sem os complementos e com valor menor (crítica C1).
+        // Congela também os serviços: o re-download precisa reimprimir a página
+        // do MDR, que não vem de `consolidado` nenhum.
         complementosSnapshot:
-          consolidado
-            ? ({ complementos, consolidado } as unknown as Prisma.InputJsonValue)
+          consolidado || servicos.length > 0
+            ? ({ complementos, consolidado, servicos } as unknown as Prisma.InputJsonValue)
             : undefined,
         tabelaVigencia: investimento.tabelaVigencia,
         arquivoNome: arquivo,
@@ -139,7 +154,13 @@ export async function POST(request: NextRequest) {
         // Crítica C3: sem isto o log responde "que proposta foi emitida" pela metade.
         complementos: {
           from: null,
-          to: complementos.length ? complementos.map((c) => c.nome).join(', ') : '—',
+          // Com o desconto efetivo ao lado: sem isso o log responde "que proposta
+          // foi emitida" sem dizer por qual preço (I-N4).
+          to:
+            [
+              ...complementos.map((c) => `${c.nome} (${c.descontoPercent}%)`),
+              ...servicos.map((s) => `${s.nome} (sob consulta)`),
+            ].join(', ') || '—',
         },
         totalConsolidado: {
           from: null,

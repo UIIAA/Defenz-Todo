@@ -9,7 +9,7 @@ import {
   type PropostaDocumento,
 } from '../templates/endpoints-a4'
 import { calcularInvestimento } from '../calculo'
-import { calcularComplementos, consolidar } from '../calculo-complementos'
+import { calcularComplementos, consolidar, servicosSobConsulta } from '../calculo-complementos'
 import type { PlanoId } from '../tabela-precos'
 import {
   UNICODE_RANGES_EMBUTIDAS,
@@ -434,5 +434,100 @@ describe('C2 — o desconto da proposta não vale para o complemento, e o docume
       consolidado: consolidar(base.investimento, 0, comps),
     })
     expect(html).not.toContain('não incide sobre os complementos')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// feature-catalogo-opcoes — DLP, MDR e desconto por item, no documento
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('DLP e MDR no documento', () => {
+  const base = doc({}, ['PREMIUM'], 0)
+  const inv = base.investimento
+
+  function comDlp(ids: Parameters<typeof calcularComplementos>[0]) {
+    const comps = calcularComplementos(ids, 30)
+    const servicos = servicosSobConsulta(ids)
+    return renderPropostaHtml({
+      ...base,
+      complementos: comps,
+      servicos,
+      consolidado: comps.length > 0 ? consolidar(inv, 0, comps) : undefined,
+    })
+  }
+
+  it('DLP imprime a cotação e a data ao lado do preço convertido (I-N3)', () => {
+    const html = comDlp(['DLP_GTB'])
+    expect(html).toContain('R$ 247,30')
+    expect(html).toContain('US$ 48,00')
+    expect(html).toContain('R$ 5,1521')
+    expect(html).toContain('17/09/2026')
+  })
+
+  it('DLP sai com UMA coluna, não três iguais (crítica C3)', () => {
+    const html = comDlp(['DLP_GTB'])
+    // O bloco do DLP tem uma coluna de valor; a grade dele nasce com 2 colunas.
+    expect(html).toContain('grid-template-columns:1.9fr 1fr;')
+    expect(html).toContain('renovação anual')
+  })
+
+  it('DLP aparece no resumo FORA do total, com o prazo dito (D5)', () => {
+    const html = comDlp(['PATCH_MANAGEMENT', 'DLP_GTB'])
+    expect(html).toContain('fora do total')
+    expect(html).toContain('Fora do total:')
+    expect(html).toContain('renovação anual')
+  })
+
+  it('item de preço líquido não inventa linha de desconto (D6)', () => {
+    const comps = calcularComplementos(['PHASR'], 30, { PHASR: 20 })
+    const html = renderPropostaHtml({
+      ...base,
+      complementos: comps,
+      consolidado: consolidar(inv, 0, comps),
+    })
+    expect(html).not.toContain('Desconto competitivo')
+    expect(html).toContain('R$ 100,80') // 126 − 20%
+    expect(html).not.toContain('R$ 126,00')
+  })
+
+  it('MDR sai em página própria, sem preço e fora da soma (I-N2)', () => {
+    const html = comDlp(['MDR_GERENCIADO'])
+    expect(html).toContain('Serviços gerenciados')
+    expect(html).toContain('Investimento sob consulta')
+    expect(html).toContain('Não está incluído')
+    expect(html).not.toContain('Resumo do investimento')
+  })
+
+  it('o texto do MDR no PDF não promete o que não funciona (I-N6)', () => {
+    const texto = comDlp(['MDR_GERENCIADO']).toLowerCase()
+    expect(texto).not.toContain('tempo real')
+    expect(texto).not.toContain('isolamento automático')
+    expect(texto).toContain('das 9h às 18h')
+  })
+
+  it('com serviço no meio, a numeração das seções continua contígua (achado 18)', () => {
+    const html = comDlp(['PATCH_MANAGEMENT', 'MDR_GERENCIADO'])
+    expect(secoesNoHtml(html)).toEqual([
+      '01.', '02.', '03.', '04.', '05.', '06.', '07.', '08.', '09.',
+    ])
+    // 8 fixas + 1 plano + 1 de complemento + 1 de serviço + 1 de resumo = 12.
+    // O encerramento não numera, então o último rodapé é o 11.
+    expect(html).toContain('Página 11 de 12')
+    expect(contar(html, '<section class="page">')).toBe(12)
+    expect(html).not.toContain('de 11</div>')
+  })
+
+  it('snapshot ANTIGO, sem `coberturas`, ainda imprime a cobertura (achado 1)', () => {
+    const comps = calcularComplementos(['PATCH_MANAGEMENT'], 30)
+    const consolidado = consolidar(inv, 0, comps)
+    // Como ficou gravado antes de 17/09: número, sem o array.
+    const antigo = {
+      ...consolidado,
+      foraDoTotal: undefined,
+      linhas: consolidado.linhas.map(({ coberturas: _, ...l }) => l),
+    } as unknown as ReturnType<typeof consolidar>
+    const html = renderPropostaHtml({ ...base, complementos: comps, consolidado: antigo })
+    expect(html).toContain('36 meses')
+    expect(html).not.toContain('undefined')
   })
 })

@@ -44,6 +44,19 @@ export const createPropostaSchema = z
 
     /** Complementos marcados. Vazio = proposta idêntica à de antes (I-C5). */
     complementos: z.array(z.enum(COMPLEMENTO_IDS)).max(COMPLEMENTO_IDS.length).default([]),
+
+    /**
+     * Desconto por item, em PERCENTUAL (0 a 90), sobrepondo o do catálogo.
+     *
+     * ⚠️ Percentual, não fração: o catálogo guarda `0.5` e a tela manda `50`. A
+     * conversão acontece numa fronteira só (`calcularComplementos`), senão um
+     * "50" cru viraria `1 - 50` = preço negativo (achado 11 da crítica).
+     *
+     * Opcional: payload antigo, sem o campo, continua válido (I-C5).
+     */
+    descontosComplemento: z
+      .record(z.enum(COMPLEMENTO_IDS), z.number().min(0).max(90))
+      .optional(),
     /**
      * Qual plano entra no resumo somado. Índice dentro de `planos`.
      *
@@ -54,6 +67,23 @@ export const createPropostaSchema = z
 
     /** Só admin escolhe; os demais gravam na própria empresa. */
     companyId: z.string().nullable().optional(),
+  })
+  // Desconto de item que não foi marcado seria descartado em silêncio, e o
+  // vendedor acharia que aplicou (achado 15 da crítica).
+  .refine(
+    (d) =>
+      Object.keys(d.descontosComplemento ?? {}).every((id) =>
+        d.complementos.includes(id as (typeof COMPLEMENTO_IDS)[number])
+      ),
+    {
+      message: 'Há desconto informado para um complemento que não foi marcado',
+      path: ['descontosComplemento'],
+    }
+  )
+  // Item repetido viraria dois blocos iguais, somados duas vezes (achado 16).
+  .refine((d) => new Set(d.complementos).size === d.complementos.length, {
+    message: 'Complemento repetido na lista',
+    path: ['complementos'],
   })
   .refine((d) => d.complementos.length === 0 || d.planoConsolidado < d.planos.length, {
     message: 'O plano escolhido para o resumo não está entre os planos marcados',

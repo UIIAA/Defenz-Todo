@@ -3,6 +3,17 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Added (2026-09-17 — DLP e MDR viram opção, e o desconto passa a ser por item)
+> **983 testes verdes**, `tsc` + `build` limpos. **Não deployado.** Spec e crítica adversarial em `feature-catalogo-opcoes.md`.
+
+- **DLP (GTB Endpoint Protector)** entra no catálogo a **US$ 48/licença/12 meses** → R$ 247,30 pela PTAX de venda de 17/09 (R$ 5,1521), impressa ao lado do preço. Câmbio é **constante versionada** (`cambio.ts`), com data e fonte; nada de consultar o Banco Central na hora de emitir.
+- ⚠️ **A conversão arredonda UMA vez, na entrada.** `48 × 5,1521 = 247,3008`: deixar o arredondamento para a formatação faria o documento imprimir unitário R$ 247,30 e total R$ 98.920,32 para 400 licenças — R$ 0,32 a mais do que `unitário × quantidade`, numa página que o cliente assina. É o primeiro preço da casa que não tem duas casas exatas.
+- **MDR entra SEM PREÇO** (sob consulta), em página própria de escopo, com o que **não** está incluído. Não existe tabela do MDR: os contratos reais são negociados por cliente. O texto é o defensável — monitoramento contínuo da plataforma, resposta humana em dia útil das 9h às 18h — e **teste proíbe** "tempo real", "isolamento automático" e "24x7", que a memória do projeto MDR registra como não funcionando.
+- **Desconto por item**, começando no padrão do catálogo e editável na tela. Item de preço líquido (PHASR, sensores, DLP) aceita desconto mas **não imprime linha de desconto**: mostrar "unitário R$ 126,00 · desconto 20%" inventaria uma tabela cheia que a SecuriSoft não pratica.
+- **O DLP fica FORA do total somado** (decisão do Marcos vinda da crítica): ele cobre 12 meses e renova todo ano; somá-lo uma vez dentro da coluna de 48 meses subestimaria o custo em duas renovações e chamaria o resultado de "Investimento total" — a mesma família do rótulo "36 meses" que dividia por 48. Aparece com preço, em linha à parte, com o motivo escrito.
+- **A apresentação cita os dois sem preço** e deixou de prometer que o preço existe: com item sob consulta, a frase vira "investimento sob consulta" em vez de "os valores estão na proposta comercial".
+- **Crítica adversarial: 21 achados, 18 corrigidos, 3 recusados com motivo.** Os que teriam ido para produção: `coberturas` quebrando o re-download de proposta já emitida; a cotação sendo lida da constante de hoje em vez do snapshot (o valor em reais congelado ao lado de uma cotação nova); proposta com **só** MDR marcado saindo sem nenhuma página de MDR; e o rodapé "Página 12 de 11" por não contar a página de serviço.
+- Regressão conferida byte a byte: proposta sem complemento, com desconto e com acréscimo saem **idênticas** às de antes. `TEMPLATE_VERSAO` da proposta e da apresentação → `2026-09-17`.
 ### Changed (2026-09-16 — o acréscimo sai do documento do cliente)
 > **961 testes verdes**, `tsc` + `build` limpos. **Não deployado.** Spec `feature-proposta-acrescimo-oculto.md`.
 

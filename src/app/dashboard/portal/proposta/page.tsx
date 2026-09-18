@@ -8,7 +8,13 @@ import { PortalTabs } from '@/components/portal/portal-tabs'
 import { AlertCircle, ArrowLeft, CheckCircle2, FileText, Loader2 } from 'lucide-react'
 import { calcularInvestimento, formatarBRL, type Investimento } from '@/lib/proposta/calculo'
 import { PLANOS, PLANO_LABEL, QUANTIDADE_MAX, QUANTIDADE_MIN, type PlanoId } from '@/lib/proposta/tabela-precos'
-import { COMPLEMENTOS, type ComplementoId } from '@/lib/proposta/complementos'
+import {
+  COMPLEMENTOS,
+  FAMILIAS,
+  FAMILIA_LABEL,
+  complemento,
+  type ComplementoId,
+} from '@/lib/proposta/complementos'
 import {
   calcularComplementos,
   consolidar,
@@ -18,6 +24,24 @@ import { AJUSTE_MAX_PERCENT, type BasePreco } from '@/lib/validations/proposta'
 
 type Etapa = 'formulario' | 'confirmacao' | 'pronto'
 
+/**
+ * Os descontos digitados, em percentual, só dos itens marcados.
+ *
+ * ⚠️ Campo vazio significa "o do catálogo", e por isso é OMITIDO — mandar `0`
+ * zeraria o desconto de quem tem 50% por padrão. E desconto de item não marcado
+ * é recusado pelo servidor, então nem sai daqui (achado 15 da crítica).
+ */
+function descontosNumericos(form: Formulario): Partial<Record<ComplementoId, number>> {
+  const saida: Partial<Record<ComplementoId, number>> = {}
+  for (const id of form.complementos) {
+    const bruto = (form.descontos[id] ?? '').trim()
+    if (bruto === '') continue
+    const n = Number(bruto.replace(',', '.'))
+    if (Number.isFinite(n)) saida[id] = n
+  }
+  return saida
+}
+
 interface Formulario {
   clienteNome: string
   empresaNome: string
@@ -26,6 +50,8 @@ interface Formulario {
   quantidade: string
   planos: PlanoId[]
   complementos: ComplementoId[]
+  /** Desconto por item, em percentual, como digitado. Vazio = o do catálogo. */
+  descontos: Partial<Record<ComplementoId, string>>
   planoConsolidado: number
   basePreco: BasePreco
   percentual: string
@@ -41,6 +67,7 @@ const INICIAL: Formulario = {
   // e o vendedor desmarca o que não fizer sentido.
   planos: [...PLANOS],
   complementos: [],
+  descontos: {},
   planoConsolidado: 0,
   basePreco: 'tabela',
   percentual: '',
@@ -71,6 +98,7 @@ export default function NovaPropostaPage() {
     | { erro: string } => {
     const qtd = Number(form.quantidade)
     try {
+      const descontos = descontosNumericos(form)
       const investimento = calcularInvestimento({
         quantidade: qtd,
         planos: form.planos,
@@ -78,7 +106,7 @@ export default function NovaPropostaPage() {
       })
       // A prévia usa as MESMAS funções do servidor: a tela não pode prometer um
       // total que o PDF não vai trazer.
-      const comps = calcularComplementos(form.complementos, qtd)
+      const comps = calcularComplementos(form.complementos, qtd, descontos)
       return {
         investimento,
         consolidado:
@@ -89,7 +117,7 @@ export default function NovaPropostaPage() {
     } catch (e) {
       return { erro: e instanceof Error ? e.message : 'Dados inválidos' }
     }
-  }, [form.quantidade, form.planos, form.complementos, form.planoConsolidado, ajuste])
+  }, [form.quantidade, form.planos, form.complementos, form.descontos, form.planoConsolidado, ajuste])
 
   function validarEAvancar() {
     setErro(null)
@@ -131,6 +159,7 @@ export default function NovaPropostaPage() {
           quantidade: Number(form.quantidade),
           planos: form.planos,
           complementos: form.complementos,
+          descontosComplemento: descontosNumericos(form),
           planoConsolidado: form.planoConsolidado,
           basePreco: form.basePreco,
           percentual:
@@ -287,10 +316,10 @@ export default function NovaPropostaPage() {
 
           <Campo label="Complementos (opcional)">
             <div className="space-y-3">
-              {(['GRAVITYZONE', 'XDR'] as const).map((familia) => (
+              {FAMILIAS.filter((f) => COMPLEMENTOS.some((c) => c.familia === f)).map((familia) => (
                 <div key={familia}>
                   <div className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    {familia === 'GRAVITYZONE' ? 'GravityZone' : 'Sensores XDR'}
+                    {FAMILIA_LABEL[familia]}
                   </div>
                   <div className="space-y-1.5">
                     {COMPLEMENTOS.filter((c) => c.familia === familia).map((c) => (
@@ -311,7 +340,26 @@ export default function NovaPropostaPage() {
                           }
                           className="mt-0.5 h-4 w-4 rounded border-slate-300"
                         />
-                        <span>{c.nome.replace('Bitdefender ', '')}</span>
+                        <span className="flex-1">{c.nome.replace('Bitdefender ', '')}</span>
+                        {form.complementos.includes(c.id) && !c.sobConsulta && (
+                          <span className="flex items-center gap-1 text-xs text-slate-500">
+                            <Input
+                              value={form.descontos[c.id] ?? String(c.descontoPadrao * 100)}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  descontos: { ...form.descontos, [c.id]: e.target.value },
+                                })
+                              }
+                              className="h-7 w-16 text-right"
+                              aria-label={`Desconto de ${c.nome}`}
+                            />
+                            % desc.
+                          </span>
+                        )}
+                        {c.sobConsulta && (
+                          <span className="text-xs text-slate-400">sob consulta</span>
+                        )}
                       </label>
                     ))}
                   </div>
@@ -319,9 +367,20 @@ export default function NovaPropostaPage() {
               ))}
             </div>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Cada um sai em bloco próprio, com o preço separado, e entra na soma da
-              última página. Seguem a mesma quantidade de licenças da proposta.
+              Cada um sai em bloco próprio, com o preço separado. O desconto começa no
+              padrão de cada item e pode ser mudado aqui. O DLP é licenciado por 12
+              meses, com renovação anual, e o serviço gerenciado sai sem preço — os
+              dois aparecem fora do total somado.
             </p>
+            {form.complementos.some(
+              (id) => complemento(id).precoLiquido && (form.descontos[id] ?? '').trim() !== '' &&
+                Number((form.descontos[id] ?? '0').replace(',', '.')) > 0
+            ) && (
+              <p className="mt-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+                Você deu desconto num item cujo preço já é o final. O documento mostra
+                só o valor com desconto, sem linha de desconto — e ele sai do seu bolso.
+              </p>
+            )}
           </Campo>
 
           {form.complementos.length > 0 && form.planos.length > 1 && (

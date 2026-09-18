@@ -6,7 +6,7 @@
 import { formatDate } from '@/lib/date'
 import { ApiError } from '@/lib/api-helpers'
 import type { Investimento } from './calculo'
-import type { BlocoComplemento, Consolidado } from './calculo-complementos'
+import type { BlocoComplemento, BlocoServico, Consolidado } from './calculo-complementos'
 import { nextPropostaCodigo } from './numeracao'
 import {
   renderPropostaHtml,
@@ -37,7 +37,9 @@ export function nomeArquivo(codigo: string, empresaNome: string): string {
 /** O que é congelado em `complementosSnapshot`. */
 export interface ComplementosSnapshot {
   complementos: BlocoComplemento[]
-  consolidado: Consolidado
+  consolidado?: Consolidado
+  /** Serviços sob consulta (MDR). Podem existir sozinhos, sem consolidado. */
+  servicos?: BlocoServico[]
 }
 
 export interface MontarDocumentoInput {
@@ -48,6 +50,7 @@ export interface MontarDocumentoInput {
   vendedor: VendedorDoc
   agora?: Date
   complementos?: BlocoComplemento[]
+  servicos?: BlocoServico[]
   consolidado?: Consolidado
 }
 
@@ -62,6 +65,7 @@ export function montarDocumento(input: MontarDocumentoInput): PropostaDocumento 
     vendedor: input.vendedor,
     investimento: input.investimento,
     complementos: input.complementos,
+    servicos: input.servicos,
     consolidado: input.consolidado,
   }
 }
@@ -111,12 +115,40 @@ export function reconstruirDocumento(registro: {
 
 function lerComplementos(bruto: unknown): {
   complementos?: BlocoComplemento[]
+  servicos?: BlocoServico[]
   consolidado?: Consolidado
 } {
   if (!bruto || typeof bruto !== 'object') return {}
   const s = bruto as Partial<ComplementosSnapshot>
-  if (!Array.isArray(s.complementos) || s.complementos.length === 0) return {}
-  return { complementos: s.complementos, consolidado: s.consolidado }
+  const servicos = Array.isArray(s.servicos) && s.servicos.length > 0 ? s.servicos : undefined
+  // ⚠️ Snapshot ANTES de 17/09 não tem `servicos`, e snapshot só de serviço não
+  // tem `complementos`. Os dois casos são legítimos; nenhum pode virar página
+  // fantasma nem sumir na reimpressão.
+  if (!Array.isArray(s.complementos) || s.complementos.length === 0) {
+    return servicos ? { servicos } : {}
+  }
+  return {
+    complementos: normalizarComplementos(s.complementos),
+    servicos,
+    consolidado: s.consolidado,
+  }
+}
+
+/**
+ * Preenche os campos que o snapshot antigo não tem.
+ *
+ * ⚠️ Achado 4 da crítica: `moeda`, `precoLiquido` e `foraDoTotal` entraram em
+ * 17/09. Espalhar `?? 'BRL'` pelo template deixaria um ramo escrito como
+ * `c.moeda !== 'BRL'` imprimindo procedência de câmbio num complemento antigo.
+ * O default mora aqui, num lugar só.
+ */
+function normalizarComplementos(blocos: BlocoComplemento[]): BlocoComplemento[] {
+  return blocos.map((c) => ({
+    ...c,
+    moeda: c.moeda ?? 'BRL',
+    precoLiquido: c.precoLiquido ?? false,
+    foraDoTotal: c.foraDoTotal ?? false,
+  }))
 }
 
 export { nextPropostaCodigo, renderPropostaHtml }

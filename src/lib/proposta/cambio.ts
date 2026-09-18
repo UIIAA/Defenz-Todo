@@ -37,12 +37,21 @@ export function converterUSD(valorUSD: number, cotacao: number = CAMBIO.usdBrl):
   return Math.round(valorUSD * cotacao * 100) / 100
 }
 
-/** A linha de procedência impressa embaixo do preço convertido. */
-export function notaCambio(valorUSD: number): string {
+/**
+ * A linha de procedência impressa embaixo do preço convertido.
+ *
+ * ⚠️ Recebe a cotação USADA NAQUELA emissão, não a de hoje. Uma proposta de
+ * setembro rebaixada em dezembro tem de imprimir a cotação de setembro, que é a
+ * que explica o valor em reais congelado no snapshot (achado 2 da crítica).
+ */
+export function notaCambio(
+  valorUSD: number,
+  cambio: { usdBrl: number; data: string } = CAMBIO
+): string {
   const usd = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(valorUSD)
   const cotacao = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 4 }).format(
-    CAMBIO.usdBrl
+    cambio.usdBrl
   )
-  const [ano, mes, dia] = CAMBIO.data.split('-')
+  const [ano, mes, dia] = cambio.data.split('-')
   return `Convertido de US$ ${usd} por licença pela PTAX de venda de ${dia}/${mes}/${ano} (US$ 1,00 = R$ ${cotacao}). Por ter origem em dólar, o valor pode ser revisto conforme a variação cambial até a data do faturamento.`
 }

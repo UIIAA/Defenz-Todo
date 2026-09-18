@@ -23,7 +23,8 @@ import {
   MANROPE_LATIN_WOFF2,
 } from '../assets/embedded'
 import { formatarBRL, type BlocoPlano, type Investimento } from '../calculo'
-import type { BlocoComplemento, Consolidado } from '../calculo-complementos'
+import { notaCambio } from '../cambio'
+import type { BlocoComplemento, BlocoServico, Consolidado } from '../calculo-complementos'
 
 // Paleta do brandbook. ~70% papel, ~22% tinta, ~8% crimson.
 const C = {
@@ -59,6 +60,14 @@ export interface PropostaDocumento {
   investimento: Investimento
   /** Complementos escolhidos. Vazio = proposta idêntica à de antes desta feature. */
   complementos?: BlocoComplemento[]
+  /**
+   * Serviços sob consulta (MDR). Página própria, sem preço e fora de toda soma.
+   *
+   * ⚠️ Achado 17 da crítica: sem isto, marcar SÓ o MDR na tela gerava uma
+   * proposta idêntica à sem complemento nenhum — o vendedor entregava ao cliente
+   * um documento sem o escopo que ele tinha marcado, e sem erro na tela.
+   */
+  servicos?: BlocoServico[]
   /** A soma de tudo. Só existe quando há complemento. */
   consolidado?: Consolidado
 }
@@ -98,9 +107,31 @@ export function paginasDeComplementos(qtdComplementos: number): number {
  * ⚠️ A assinatura antiga (só `qtdPlanos`) continua valendo: proposta sem
  * complemento tem exatamente as mesmas páginas de antes.
  */
-export function totalPaginas(qtdPlanos: number, qtdComplementos = 0): number {
+export function totalPaginas(qtdPlanos: number, qtdComplementos = 0, qtdServicos = 0): number {
   const extras = qtdComplementos > 0 ? paginasDeComplementos(qtdComplementos) + 1 : 0
-  return PAGINAS_FIXAS + qtdPlanos + extras
+  // A página de serviço conta (achado 18: sem isto o rodapé dizia "12 de 11").
+  return PAGINAS_FIXAS + qtdPlanos + extras + (qtdServicos > 0 ? 1 : 0)
+}
+
+/**
+ * Os números das seções que só existem às vezes.
+ *
+ * ⚠️ `SECOES` é fixo até `08.` e não sobrevive a uma seção opcional no meio: com
+ * serviço marcado, o resumo passa a ser a nona. Deixar o número escrito à mão foi
+ * exatamente o que fez o documento pular de `05.` para `07.` em 21/08.
+ */
+export function numerosDeSecao(opts: {
+  temComplementos: boolean
+  temServicos: boolean
+  temResumo: boolean
+}): { COMPLEMENTOS: string; SERVICOS: string; RESUMO: string } {
+  let n = Number(SECOES.INVESTIMENTO.replace('.', ''))
+  const proximo = () => `${pad2(++n)}.`
+  return {
+    COMPLEMENTOS: opts.temComplementos ? proximo() : '',
+    SERVICOS: opts.temServicos ? proximo() : '',
+    RESUMO: opts.temResumo ? proximo() : '',
+  }
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
@@ -173,7 +204,7 @@ function rodape(pagina: number, total: number, ano: number, margemTopo = 'auto')
  *
  * Subir quando o texto fixo mudar: páginas, seções, numeração, promessas.
  */
-export const TEMPLATE_VERSAO = '2026-09-16'
+export const TEMPLATE_VERSAO = '2026-09-17'
 
 export const SECOES = {
   CONHECA_NOS: '01.',
@@ -379,7 +410,10 @@ ${rodape(numeroPagina, total, doc.ano, '24px')}`)
 function tabelaComplemento(c: BlocoComplemento, quantidade: number): string {
   const vs = c.vigencias
 
-  const linhasDesconto = c.temDesconto
+  // D6: item de preço líquido (PHASR, sensores, DLP) não imprime linha de
+  // desconto — mostrar "unitário R$ 126,00 · desconto 20%" inventaria uma tabela
+  // cheia que a SecuriSoft não pratica (achado 8 da crítica).
+  const linhasDesconto = c.temDesconto && !c.precoLiquido
     ? `
             ${linhaGrid(
               'Desconto competitivo',
@@ -408,7 +442,7 @@ function tabelaComplemento(c: BlocoComplemento, quantidade: number): string {
         <div style="margin-bottom:26px;">
           <div style="font-size:17px; font-weight:800; letter-spacing:-0.02em; margin-bottom:8px;">${escapeHtml(c.nome)}</div>
           <p style="font-size:12.5px; line-height:1.7; color:${C.body}; margin:0 0 12px; text-align:justify;">${escapeHtml(c.descricao)}</p>
-          <div style="display:grid; grid-template-columns:1.9fr 1fr 1fr 1fr; font-size:12.5px;">
+          <div style="display:grid; grid-template-columns:1.9fr ${vs.map(() => '1fr').join(' ')}; font-size:12.5px;">
             <div style="padding:8px 6px; color:${C.faint}; font-weight:700; font-size:11.5px;">${quantidade} licenças</div>
             ${vs
               .map(
@@ -424,15 +458,41 @@ function tabelaComplemento(c: BlocoComplemento, quantidade: number): string {
 
             ${linhaGrid(
               'Valor unitário',
-              vs.map((v) => formatarBRL(v.precoLicenca)),
-              { destaqueUltimo: !c.temDesconto }
+              // Item líquido imprime o valor FINAL nesta linha: não existe tabela
+              // cheia por trás dele para mostrar (D6).
+              vs.map((v) => formatarBRL(c.precoLiquido ? v.precoLicencaFinal : v.precoLicenca)),
+              { destaqueUltimo: !c.temDesconto || c.precoLiquido }
             )}
 ${linhasDesconto}
             <div style="padding:10px 14px; color:#fff; font-weight:800; background:${C.ink}; border-radius:8px 0 0 8px; margin-top:8px;">Total</div>
             ${totais}
-          </div>
+          </div>${notasDoComplemento(c)}
           <div style="margin-top:8px; font-size:10px; color:${C.faint}; font-weight:600;">${escapeHtml(c.fonte)}</div>
         </div>`
+}
+
+/**
+ * As notas que só alguns itens têm: procedência do câmbio e renovação anual.
+ *
+ * ⚠️ I-N3: preço convertido sem a cotação ao lado não é auditável. E a cotação
+ * vem do BLOCO (congelada na emissão), nunca da constante de hoje — senão o
+ * re-download de uma proposta antiga imprime reais velhos com cotação nova, e o
+ * cliente prova que a conta não fecha (achado 2 da crítica).
+ */
+function notasDoComplemento(c: BlocoComplemento): string {
+  const notas: string[] = []
+  if (c.moeda === 'USD' && c.precoOrigemUSD !== undefined) {
+    notas.push(notaCambio(c.precoOrigemUSD, c.cambio))
+  }
+  if (c.foraDoTotal) {
+    const meses = c.vigencias[0]?.meses ?? 12
+    notas.push(
+      `Licenciado por ${meses} meses, com renovação anual — por isso entra no resumo como linha à parte, fora do total do período.`
+    )
+  }
+  if (notas.length === 0) return ''
+  return `
+          <div style="margin-top:10px; padding:10px 12px; background:${C.surface}; border-left:3px solid ${C.accent}; font-size:11px; line-height:1.6; color:${C.body};">${notas.map(escapeHtml).join('<br>')}</div>`
 }
 
 function paginaComplementos(
@@ -440,14 +500,15 @@ function paginaComplementos(
   indice: number,
   doc: PropostaDocumento,
   numeroPagina: number,
-  total: number
+  total: number,
+  numero: string = SECOES.COMPLEMENTOS
 ): string {
   const quantidade = doc.investimento.quantidade
   const continuacao = indice > 0
 
   return pagina(`${cabecalhoCorrido(doc.empresaNome)}
       <div style="margin-top:56px;">${tituloSecao(
-        SECOES.COMPLEMENTOS,
+        numero,
         'Complementos',
         continuacao
           ? ` &nbsp;<span style="font-size:22px; color:${C.faint}; font-weight:700;">continuação</span>`
@@ -472,7 +533,12 @@ function paginaComplementos(
         .join('\n')}
       </div>
 
-      <div style="font-size:12px; color:${C.faint}; font-weight:600; text-align:center;">Valores em reais, por licença, pelo período contratado &middot; ${quantidade} licenças.</div>
+      <div style="font-size:12px; color:${C.faint}; font-weight:600; text-align:center;">Valores em reais, por licença${
+        // ⚠️ Achado 9: com um item de prazo próprio na página (o DLP, de 12 meses
+        // renováveis), dizer "pelo período contratado" é falso — cada bloco diz o
+        // seu prazo. O texto sai dos itens presentes, não de frase fixa.
+        grupo.some((c) => c.foraDoTotal) ? ', pelo prazo indicado em cada bloco' : ', pelo período contratado'
+      } &middot; ${quantidade} licenças.</div>
 ${rodape(numeroPagina, total, doc.ano, '18px')}`)
 }
 
@@ -484,9 +550,61 @@ ${rodape(numeroPagina, total, doc.ano, '18px')}`)
  * Um total de 36+12 somado com complemento de 36 meses, sem essa frase, promete
  * uma cobertura que o preço não sustenta.
  */
+/**
+ * A página do serviço sob consulta (MDR): escopo, o que fica de fora, e a
+ * afirmação de que o investimento é sob consulta.
+ *
+ * ⚠️ Sem preço DE PROPÓSITO (D1): não existe tabela do MDR. Os contratos reais
+ * são negociados por cliente, e inventar faixa seria preço falso num documento
+ * que o cliente assina.
+ */
+function paginaServicos(
+  servicos: BlocoServico[],
+  doc: PropostaDocumento,
+  numero: string,
+  numeroPagina: number,
+  total: number
+): string {
+  const blocos = servicos
+    .map(
+      (s) => `
+        <div style="margin-bottom:24px;">
+          <div style="font-size:17px; font-weight:800; letter-spacing:-0.02em; margin-bottom:8px;">${escapeHtml(s.nome)}</div>
+          <p style="font-size:12.8px; line-height:1.7; color:${C.body}; margin:0 0 12px; text-align:justify;">${escapeHtml(s.descricao)}</p>
+          ${
+            s.naoIncluso.length > 0
+              ? `<div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:6px;">Não está incluído</div>
+          <ul style="margin:0 0 12px; padding-left:18px;">${s.naoIncluso
+            .map(
+              (n) =>
+                `<li style="font-size:12.2px; line-height:1.6; color:${C.muted}; margin-bottom:4px;">${escapeHtml(n)}</li>`
+            )
+            .join('\n            ')}</ul>`
+              : ''
+          }
+          <div style="display:flex; align-items:center; gap:14px; background:${C.ink}; border-radius:8px; padding:12px 16px;">
+            <div style="color:#fff; font-weight:800; font-size:14px;">Investimento sob consulta</div>
+            <div style="color:#D8D2C6; font-size:11.5px; line-height:1.5;">O valor depende do tamanho e do estado do parque, e é apresentado depois do levantamento do ambiente.</div>
+          </div>
+          <div style="margin-top:8px; font-size:10px; color:${C.faint}; font-weight:600;">${escapeHtml(s.fonte)}</div>
+        </div>`
+    )
+    .join('\n')
+
+  return pagina(`${cabecalhoCorrido(doc.empresaNome)}
+      <div style="margin-top:56px;">${tituloSecao(numero, 'Serviços gerenciados')}
+        <p style="font-size:15px; line-height:1.8; color:${C.body}; margin:0 0 8px; max-width:600px; text-align:justify;">Serviço contratado à parte das licenças, dimensionado pelo ambiente do cliente. Não entra na soma da última página.</p>
+      </div>
+
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">${blocos}
+      </div>
+${rodape(numeroPagina, total, doc.ano, '18px')}`)
+}
+
 function paginaResumo(
   consolidado: Consolidado,
   doc: PropostaDocumento,
+  numero: string,
   numeroPagina: number,
   total: number
 ): string {
@@ -509,6 +627,40 @@ function paginaResumo(
     })
     .join('\n            ')
 
+  // ⚠️ Achado 1 da crítica: snapshot emitido antes de 17/09 tem
+  // `mesesComplementos: 36` e NÃO tem `coberturas`. Ler direto o campo novo faria
+  // o re-download de uma proposta de setembro imprimir "undefined meses" ou
+  // estourar dentro do Chromium, com o mesmo número de proposta.
+  const coberturasDa = (l: Consolidado['linhas'][number]): number[] =>
+    l.coberturas ?? (l.mesesComplementos ? [l.mesesComplementos] : [])
+
+  const foraDoTotal = consolidado.foraDoTotal ?? []
+  const linhasForaDoTotal = foraDoTotal
+    .map(
+      (i) => `
+            <div style="padding:10px 6px; color:${C.muted}; font-weight:600; border-top:1px solid ${C.line};">${escapeHtml(i.nome)} <span style="color:${C.faint}; font-weight:600;">· ${i.meses} meses, fora do total</span></div>
+            <div style="grid-column:span ${ls.length}; padding:10px 6px; text-align:right; border-top:1px solid ${C.line}; color:${C.muted};">${formatarBRL(i.valorTotalFinal)}</div>`
+    )
+    .join('\n')
+
+  const notaForaDoTotal =
+    foraDoTotal.length > 0
+      ? `<div style="margin-top:14px; padding:14px 16px; background:${C.surface}; border-left:4px solid ${C.accent}; font-size:12.5px; line-height:1.7; color:${C.body};">
+             <strong>Fora do total:</strong> ${foraDoTotal
+               .map((i) => `${escapeHtml(i.nome)} é licenciado por ${i.meses} meses, com renovação anual`)
+               .join('; ')}. Por cobrir um período diferente do GravityZone, o valor aparece à parte em vez de ser somado a um total que prometeria mais tempo do que o preço cobre.
+           </div>`
+      : ''
+
+  const notaServico =
+    (doc.servicos ?? []).length > 0
+      ? `<div style="margin-top:14px; padding:14px 16px; background:${C.surface}; border-left:4px solid ${C.accent}; font-size:12.5px; line-height:1.7; color:${C.body};">
+             <strong>Serviço gerenciado:</strong> ${(doc.servicos ?? [])
+               .map((s) => escapeHtml(s.nome))
+               .join(', ')} tem investimento sob consulta e não está somado acima.
+           </div>`
+      : ''
+
   const notaCobertura = consolidado.coberturasDivergem
     ? `<div style="margin-top:18px; padding:14px 16px; background:${C.surface}; border-left:4px solid ${C.accent}; font-size:12.5px; line-height:1.7; color:${C.body};">
              <strong>Sobre a coluna de 36 meses:</strong> o ${escapeHtml(consolidado.planoLabel)} é contratado na condição <strong>36+12</strong> — paga-se 36 meses e a proteção vale por 48. Os complementos acima <strong>cobrem 36 meses</strong>, sem o bônus. A soma desta página junta as duas coisas, e é por isso que a cobertura de cada linha vem escrita ao lado.
@@ -523,7 +675,7 @@ function paginaResumo(
     .join('\n              ')
 
   return pagina(`${cabecalhoCorrido(doc.empresaNome)}
-      <div style="margin-top:56px;">${tituloSecao(SECOES.RESUMO, 'Resumo do investimento')}
+      <div style="margin-top:56px;">${tituloSecao(numero, 'Resumo do investimento')}
         <p style="font-size:15px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">A solução completa para <strong>${quantidade} licenças</strong>, com tudo o que foi selecionado nesta proposta.</p>
       </div>
 
@@ -546,7 +698,9 @@ function paginaResumo(
 
             ${linhaGrid(
               'Cobertura dos complementos',
-              ls.map((l) => (l.totalComplementos > 0 ? `${l.mesesComplementos} meses` : '—')),
+              ls.map((l) =>
+                l.totalComplementos > 0 ? `${coberturasDa(l).join(' e ')} meses` : '—'
+              ),
               { destaqueUltimo: false, corValor: `color:${C.muted};` }
             )}
 
@@ -561,10 +715,10 @@ function paginaResumo(
             )}
 
             <div style="padding:14px; color:#fff; font-weight:800; background:${C.ink}; border-radius:8px 0 0 8px; margin-top:8px; font-size:15px;">Investimento total</div>
-            ${totais}
+            ${totais}${linhasForaDoTotal}
           </div>
 
-          ${notaCobertura}
+          ${notaForaDoTotal}${notaServico}${notaCobertura}
         </div>
       </div>
 
@@ -577,7 +731,8 @@ ${rodape(numeroPagina, total, doc.ano, '18px')}`)
 
 export function renderPropostaHtml(doc: PropostaDocumento): string {
   const planos = doc.investimento.planos
-  const total = totalPaginas(planos.length, (doc.complementos ?? []).length)
+  const servicos = doc.servicos ?? []
+  const total = totalPaginas(planos.length, (doc.complementos ?? []).length, servicos.length)
   const empresa = escapeHtml(doc.empresaNome)
   const cliente = escapeHtml(doc.clienteNome)
   const vend = doc.vendedor
@@ -599,13 +754,44 @@ export function renderPropostaHtml(doc: PropostaDocumento): string {
   const primeiraComplemento = PAGINAS_ANTES_DO_INVESTIMENTO + 1 + planos.length
 
   const paginasComplementos = grupos
-    .map((g, i) => paginaComplementos(g, i, doc, primeiraComplemento + i, total))
+    .map((g, i) =>
+      paginaComplementos(g, i, doc, primeiraComplemento + i, total, numerosDeSecao({
+        temComplementos: true,
+        temServicos: false,
+        temResumo: false,
+      }).COMPLEMENTOS)
+    )
     .join('\n')
 
-  const paginaDoResumo =
-    comps.length > 0 && doc.consolidado
-      ? paginaResumo(doc.consolidado, doc, primeiraComplemento + grupos.length, total)
+  // A numeração das seções opcionais sai daqui, não de constante escrita à mão:
+  // com serviço no meio, o resumo deixa de ser a oitava seção (achado 18).
+  const temResumo = comps.length > 0 && !!doc.consolidado
+  const numeros = numerosDeSecao({
+    temComplementos: comps.length > 0,
+    temServicos: servicos.length > 0,
+    temResumo,
+  })
+
+  const paginaDeServicos =
+    servicos.length > 0
+      ? '\n' + paginaServicos(
+          servicos,
+          doc,
+          numeros.SERVICOS,
+          primeiraComplemento + grupos.length,
+          total
+        )
       : ''
+
+  const paginaDoResumo = temResumo
+    ? paginaResumo(
+        doc.consolidado!,
+        doc,
+        numeros.RESUMO,
+        primeiraComplemento + grupos.length + (servicos.length > 0 ? 1 : 0),
+        total
+      )
+    : ''
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -851,7 +1037,7 @@ ${rodape(7, total, doc.ano)}`)}
 
   <!-- ===================== INVESTIMENTO (uma página por plano) ===================== -->
 ${paginasInvestimento}
-${paginasComplementos}
+${paginasComplementos}${paginaDeServicos}
 ${paginaDoResumo}
 
   <!-- ===================== ENCERRAMENTO ===================== -->

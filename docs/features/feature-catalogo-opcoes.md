@@ -1,6 +1,6 @@
 # feature-catalogo-opcoes — DLP, MDR e desconto por item
 
-**Status:** DRAFT → crítica → implementação (17/09/2026)
+**Status:** DONE local (17/09/2026) — 983 testes, `tsc` e `build` verdes. **Não deployado.**
 **Origem:** Marcos, 17/09. Três pedidos numa feature só: (1) DLP como opção na proposta **e** na apresentação, a US$ 48 por licença; (2) desconto **por item**, não um único percentual; (3) MDR como opção, usando o material do projeto `Defenz_MDR`.
 **Herda:** invariantes da [`SPEC-MAE.md`](../SPEC-MAE.md) §5, da [`feature-complementos.md`](feature-complementos.md) (I-C1…I-C6) e da [`feature-proposta-acrescimo-oculto.md`](feature-proposta-acrescimo-oculto.md).
 

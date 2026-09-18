@@ -50,7 +50,7 @@ const C = {
 } as const
 
 export const TELEFONE_DEFENZ = '(11) 3040-2960'
-export const TEMPLATE_VERSAO = '2026-08-23'
+export const TEMPLATE_VERSAO = '2026-09-17'
 
 export interface CasoApresentado {
   oQueAconteceu: string
@@ -335,11 +335,22 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
   })
 
   const complementos = (doc.complementos ?? []).map(complemento)
+  // ⚠️ Achado 6 da crítica: a frase fixa "os valores estão na proposta comercial"
+  // vira mentira com um item sob consulta marcado — o MDR não tem preço em lugar
+  // nenhum. I-N1 proíbe preço aqui; isto impede prometer que o preço existe.
+  const temSobConsulta = complementos.some((c) => c.sobConsulta)
+  // Sem item sob consulta, a frase é EXATAMENTE a de antes: apresentação
+  // emitida só com módulos continua idêntica (I-C5 estendida).
+  const ondeEstaOPreco = complementos.every((c) => c.sobConsulta)
+    ? 'o <strong>investimento é apresentado sob consulta</strong>, depois do levantamento do ambiente'
+    : temSobConsulta
+      ? 'os valores dos módulos estão na <strong>proposta comercial</strong>, e o serviço gerenciado tem <strong>investimento sob consulta</strong>'
+      : '<strong>os valores estão na proposta comercial</strong>'
   if (complementos.length > 0) {
     secoes.push({
       titulo: 'O que mais pode entrar',
       corpo: (n) => `${tituloSecao(n, 'O que mais pode entrar')}
-        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 24px; max-width:620px; text-align:justify;">Módulos que somam ao GravityZone e são contratados à parte. Entram ou saem sem mexer no restante — <strong>os valores estão na proposta comercial</strong>.</p>
+        <p style="font-size:16.4px; line-height:1.8; color:${C.body}; margin:0 0 24px; max-width:620px; text-align:justify;">Módulos e serviços que somam à proteção contratada, à parte. Entram ou saem sem mexer no restante — ${ondeEstaOPreco}.</p>
         <div style="flex:1; display:flex; flex-direction:column; gap:18px; max-width:640px;">
           ${complementos
             .map(
