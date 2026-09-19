@@ -642,7 +642,8 @@ function paginaResumo(
   const prazos = [...new Set(foraDoTotal.map((i) => i.meses))]
   const blocoForaDoTotal =
     foraDoTotal.length > 0
-      ? `<div style="margin-top:20px; border:1px solid ${C.line}; border-radius:10px; padding:16px 18px; background:${C.surface};">
+      ? `
+          <div style="margin-top:20px; border:1px solid ${C.line}; border-radius:10px; padding:16px 18px; background:${C.surface};">
             <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:10px;">Contratados por ${prazos.join(' e ')} meses, com renovação anual · fora do total acima</div>
             ${foraDoTotal
               .map(
@@ -721,8 +722,7 @@ function paginaResumo(
 
             <div style="padding:14px; color:#fff; font-weight:800; background:${C.ink}; border-radius:8px 0 0 8px; margin-top:8px; font-size:15px;">Investimento total</div>
             ${totais}
-          </div>
-          ${blocoForaDoTotal}
+          </div>${blocoForaDoTotal}
 
           ${notaServico}${notaCobertura}
         </div>
