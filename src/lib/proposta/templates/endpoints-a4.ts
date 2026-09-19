@@ -635,21 +635,26 @@ function paginaResumo(
     l.coberturas ?? (l.mesesComplementos ? [l.mesesComplementos] : [])
 
   const foraDoTotal = consolidado.foraDoTotal ?? []
-  const linhasForaDoTotal = foraDoTotal
-    .map(
-      (i) => `
-            <div style="padding:10px 6px; color:${C.muted}; font-weight:600; border-top:1px solid ${C.line};">${escapeHtml(i.nome)} <span style="color:${C.faint}; font-weight:600;">· ${i.meses} meses, fora do total</span></div>
-            <div style="grid-column:span ${ls.length}; padding:10px 6px; text-align:right; border-top:1px solid ${C.line}; color:${C.muted};">${formatarBRL(i.valorTotalFinal)}</div>`
-    )
-    .join('\n')
-
-  const notaForaDoTotal =
+  // ⚠️ Estes itens saíram de DENTRO da grade (18/09): espremidos na primeira das
+  // quatro colunas, o nome e o prazo quebravam em lugar feio — "GTB Endpoint
+  // Protector (DLP) · 12" numa linha e "meses, fora do total" na outra. Em bloco
+  // próprio, o prazo é dito UMA vez no título e cada linha usa a largura inteira.
+  const prazos = [...new Set(foraDoTotal.map((i) => i.meses))]
+  const blocoForaDoTotal =
     foraDoTotal.length > 0
-      ? `<div style="margin-top:14px; padding:14px 16px; background:${C.surface}; border-left:4px solid ${C.accent}; font-size:12.5px; line-height:1.7; color:${C.body};">
-             <strong>Fora do total:</strong> ${foraDoTotal
-               .map((i) => `${escapeHtml(i.nome)} é licenciado por ${i.meses} meses, com renovação anual`)
-               .join('; ')}. Por cobrir um período diferente do GravityZone, o valor aparece à parte em vez de ser somado a um total que prometeria mais tempo do que o preço cobre.
-           </div>`
+      ? `<div style="margin-top:20px; border:1px solid ${C.line}; border-radius:10px; padding:16px 18px; background:${C.surface};">
+            <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:${C.accent}; font-weight:800; margin-bottom:10px;">Contratados por ${prazos.join(' e ')} meses, com renovação anual · fora do total acima</div>
+            ${foraDoTotal
+              .map(
+                (i, idx) =>
+                  `<div style="display:flex; justify-content:space-between; align-items:baseline; gap:16px; padding:8px 0;${idx > 0 ? ` border-top:1px solid ${C.line};` : ''}">
+              <span style="font-size:13.5px; color:${C.ink}; font-weight:600;">${escapeHtml(i.nome)}</span>
+              <span style="font-size:13.5px; color:${C.ink}; font-weight:800; white-space:nowrap;">${formatarBRL(i.valorTotalFinal)}</span>
+            </div>`
+              )
+              .join('\n            ')}
+            <div style="margin-top:10px; font-size:11.5px; line-height:1.6; color:${C.muted};">Cobrem um período diferente do GravityZone, por isso aparecem à parte: somá-los ao total prometeria mais tempo do que o preço cobre.</div>
+          </div>`
       : ''
 
   const notaServico =
@@ -715,10 +720,11 @@ function paginaResumo(
             )}
 
             <div style="padding:14px; color:#fff; font-weight:800; background:${C.ink}; border-radius:8px 0 0 8px; margin-top:8px; font-size:15px;">Investimento total</div>
-            ${totais}${linhasForaDoTotal}
+            ${totais}
           </div>
+          ${blocoForaDoTotal}
 
-          ${notaForaDoTotal}${notaServico}${notaCobertura}
+          ${notaServico}${notaCobertura}
         </div>
       </div>
 

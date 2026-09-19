@@ -471,11 +471,16 @@ describe('DLP e MDR no documento', () => {
     expect(html).toContain('renovação anual')
   })
 
-  it('DLP aparece no resumo FORA do total, com o prazo dito (D5)', () => {
+  // O bloco próprio veio de um defeito visual (18/09): dentro da grade, o nome e
+  // o prazo quebravam como "GTB Endpoint Protector (DLP) · 12" / "meses, fora do
+  // total". Agora o prazo é dito uma vez no título do bloco.
+  it('DLP aparece no resumo em bloco próprio, fora do total (D5)', () => {
     const html = comDlp(['PATCH_MANAGEMENT', 'DLP_GTB'])
-    expect(html).toContain('fora do total')
-    expect(html).toContain('Fora do total:')
-    expect(html).toContain('renovação anual')
+    expect(html).toContain('Contratados por 12 meses, com renovação anual · fora do total acima')
+    expect(html).toContain('R$ 7.419,00') // DLP: 247,30 × 30 licenças
+    // O nome não carrega mais o prazo colado, que era o que quebrava a linha.
+    expect(html).not.toContain('(DLP) <span')
+    expect(html).not.toContain('meses, fora do total</span>')
   })
 
   it('item de preço líquido não inventa linha de desconto (D6)', () => {
