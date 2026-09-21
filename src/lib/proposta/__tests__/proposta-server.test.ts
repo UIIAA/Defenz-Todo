@@ -152,7 +152,7 @@ describe('validação do formulário', () => {
   it('recusa 4 licenças, aceita 1400 — acima de 999 vai com o preço da faixa topo', () => {
     expect(() => createPropostaSchema.parse({ ...base, quantidade: 4 })).toThrow()
     expect(createPropostaSchema.parse({ ...base, quantidade: 1400 }).quantidade).toBe(1400)
-    expect(() => createPropostaSchema.parse({ ...base, quantidade: 100_001 })).toThrow()
+    expect(() => createPropostaSchema.parse({ ...base, quantidade: 14_000 })).toThrow()
   })
 
   it('recusa lista de planos vazia', () => {

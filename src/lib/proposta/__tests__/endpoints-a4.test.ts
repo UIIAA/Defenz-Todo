@@ -289,14 +289,89 @@ describe('renderPropostaHtml — bloco de investimento', () => {
     })
     expect(html).toContain('1400 licenças')
     expect(html).not.toContain('faixa 500-999')
-    expect(html).not.toContain('faixa 500-999 da tabela vigente')
-    // o preço impresso segue sendo o da faixa topo, com o desconto por cima
-    expect(html).toContain(formatarBRL(120.28 * 0.85))
+    // C3: a frase sem a palavra "faixa" faz a MESMA alegação e sobrevivia.
+    expect(html).not.toContain('conforme tabela vigente')
+    // O preço impresso segue sendo o da faixa topo, com o desconto por cima.
+    // ⚠️ Ancorado no TOTAL, não no unitário: R$ 102,24 (o unitário com desconto
+    // do Premium) é, por coincidência, o preço de tabela 36+12 do Business
+    // Security — o teste passaria pelo motivo errado se alguém acrescentasse
+    // esse plano ao helper (achado 5 da crítica).
+    expect(html).toContain(formatarBRL(120.28 * 1400 * 0.85))
   })
 
   it('dentro da tabela a faixa continua sendo citada', () => {
     const html = renderPropostaHtml(doc({}, ['PREMIUM'], -15))
     expect(html).toContain('faixa 25-49 da tabela vigente')
+  })
+
+  // C3: o caso que escapou. Tabela cheia + acima de 999 não mostra desconto
+  // nenhum, então cai na frase "Valores conforme tabela vigente" — que afirma
+  // cobertura que a tabela não dá. Dentro da tabela ela TEM de continuar saindo.
+  // ⚠️ Achado A7 da crítica: o teste de 1400 licenças acima renderiza só as
+  // páginas de investimento — sem complementos, sem resumo. As páginas que mais
+  // vazavam alegação de tabela eram justamente as que ele não tocava. Este
+  // monta o documento COMPLETO do caso real (MP Paraíba) e varre o HTML inteiro.
+  it('documento completo de 1400 licenças não afirma cobertura de tabela em página nenhuma', () => {
+    const investimento = calcularInvestimento({
+      quantidade: 1400,
+      planos: ['BUSINESS_SECURITY', 'PREMIUM', 'ENTERPRISE'],
+      ajustePercent: -15,
+    })
+    const comps = calcularComplementos(['PATCH_MANAGEMENT'], 1400)
+    const html = renderPropostaHtml({
+      ...doc(),
+      investimento,
+      complementos: comps,
+      consolidado: consolidar(investimento, 0, comps),
+    })
+
+    expect(html).toContain('1400 licenças')
+    expect(html).not.toContain('conforme tabela vigente')
+    expect(html).not.toMatch(/faixa \d/)
+    // A2: a alegação explícita da página de complementos
+    expect(html).not.toContain('os valores abaixo são os da tabela deles')
+    // ...sem perder o ponto comercial que a frase carregava (C2 original)
+    expect(html).toContain('não incide sobre os complementos')
+  })
+
+  it('o mesmo documento dentro da tabela mantém as duas alegações', () => {
+    const investimento = calcularInvestimento({
+      quantidade: 300,
+      planos: ['PREMIUM'],
+      ajustePercent: -15,
+    })
+    const comps = calcularComplementos(['PATCH_MANAGEMENT'], 300)
+    const html = renderPropostaHtml({
+      ...doc(),
+      investimento,
+      complementos: comps,
+      consolidado: consolidar(investimento, 0, comps),
+    })
+    expect(html).toContain('faixa 250-499 da tabela vigente')
+    expect(html).toContain('os valores abaixo são os da tabela deles')
+  })
+
+  // A6: acima da tabela e acréscimo oculto não podem sair com a mesma frase.
+  it('a nota de acima-da-tabela é distinta da do acréscimo oculto', () => {
+    const acima = renderPropostaHtml({
+      ...doc(),
+      investimento: calcularInvestimento({ quantidade: 1400, planos: ['PREMIUM'], ajustePercent: 0 }),
+    })
+    const acrescimo = renderPropostaHtml(doc({}, ['PREMIUM'], 7.5))
+    expect(acima).toContain('dimensionados para este volume')
+    expect(acrescimo).not.toContain('dimensionados para este volume')
+  })
+
+  it('acima de 999 com preço de tabela não afirma "conforme tabela vigente"', () => {
+    const acima = renderPropostaHtml({
+      ...doc(),
+      investimento: calcularInvestimento({ quantidade: 1400, planos: ['PREMIUM'], ajustePercent: 0 }),
+    })
+    expect(acima).not.toContain('conforme tabela vigente')
+    expect(acima).toContain('Valores por licença, por vigência contratada, dimensionados para este volume.')
+
+    const dentro = renderPropostaHtml(doc({}, ['PREMIUM'], 0))
+    expect(dentro).toContain('Valores conforme tabela vigente')
   })
 
   it('mostra as três vigências e a faixa aplicada', () => {

@@ -6,6 +6,7 @@ import { TEMPLATE_VERSAO } from '@/lib/proposta/templates/endpoints-a4'
 import { handleApiError, successResponse, ApiError } from '@/lib/api-helpers'
 import { createAuditLog } from '@/lib/audit'
 import { calcularInvestimento } from '@/lib/proposta/calculo'
+import { QUANTIDADE_MAX } from '@/lib/proposta/tabela-precos'
 import {
   calcularComplementos,
   consolidar,
@@ -149,6 +150,18 @@ export async function POST(request: NextRequest) {
         codigo: { from: null, to: codigo },
         empresaNome: { from: null, to: dados.empresaNome },
         quantidade: { from: null, to: dados.quantidade },
+        // Achado C2 da crítica: "confirme com a SecuriSoft" numa spec é um desejo
+        // que ninguém lê na hora de emitir. Aqui vira registro. A LISTA das
+        // propostas emitidas fora da cobertura é `Proposta.quantidade > 999` —
+        // não precisa de coluna nova, precisa do log dizendo o que foi feito.
+        ...(dados.quantidade > QUANTIDADE_MAX
+          ? {
+              acimaDaTabela: {
+                from: null,
+                to: `${dados.quantidade} licenças · preço da faixa ${investimento.faixa} · preço a confirmar com a SecuriSoft`,
+              },
+            }
+          : {}),
         planos: { from: null, to: dados.planos.join(', ') },
         ajustePercent: { from: null, to: ajustePercent },
         // Crítica C3: sem isto o log responde "que proposta foi emitida" pela metade.

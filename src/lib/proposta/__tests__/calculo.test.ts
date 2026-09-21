@@ -29,12 +29,16 @@ describe('faixaPorQuantidade', () => {
   it('acima de 999 usa a faixa topo (500-999) em vez de recusar', () => {
     expect(faixaPorQuantidade(1000)).toBe('500-999')
     expect(faixaPorQuantidade(1400)).toBe('500-999')
-    expect(faixaPorQuantidade(100_000)).toBe('500-999')
+    expect(faixaPorQuantidade(10_000)).toBe('500-999')
   })
 
-  it('ainda recusa quantidade implausível — o teto de sanidade pega erro de dedo', () => {
-    expect(() => faixaPorQuantidade(100_001)).toThrow(ApiError)
-    expect(() => faixaPorQuantidade(100_001)).toThrow(/implausível/)
+  // O erro de dedo que acontece de verdade é um zero a mais. Com teto de 100.000
+  // (a versão que a crítica derrubou) 1400→14000 passava e saía um PDF de
+  // R$ 1.431.332,00. É ESTE caso que o teto precisa pegar, não um de 6 dígitos.
+  it('recusa o zero a mais: 1400 digitado como 14000 bate no teto', () => {
+    expect(faixaPorQuantidade(1400)).toBe('500-999')
+    expect(() => faixaPorQuantidade(14_000)).toThrow(ApiError)
+    expect(() => faixaPorQuantidade(14_000)).toThrow(/implausível/)
   })
 
   it('não mexe em nenhuma faixa de 5 a 999', () => {

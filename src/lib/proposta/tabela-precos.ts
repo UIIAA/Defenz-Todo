@@ -83,8 +83,15 @@ export const QUANTIDADE_MAX = 999
  *
  * Este teto existe só para barrar erro de dedo (um zero a mais), não regra de
  * negócio.
+ *
+ * ⚠️ Era 100_000 e a crítica derrubou: 100.000 é 71× a maior proposta real da
+ * Defenz, então o erro de dedo que de fato acontece — 1400 virar 14000 — passava
+ * batido e saía um PDF de R$ 1.431.332,00. Com 10.000 o zero a mais bate no
+ * teto, e ainda sobram 7× de folga sobre o maior caso real (1400, MP da Paraíba).
+ * Se um dia existir proposta maior que 10.000, isto vira uma linha de código a
+ * mudar — que é exatamente a conversa que se quer ter antes de emitir.
  */
-export const QUANTIDADE_MAX_PROPOSTA = 100_000
+export const QUANTIDADE_MAX_PROPOSTA = 10_000
 
 /** Última faixa da escada — a que vale para qualquer volume acima dela. */
 export const FAIXA_TOPO: Faixa = '500-999'

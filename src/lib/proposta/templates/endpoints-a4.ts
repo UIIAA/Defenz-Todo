@@ -203,6 +203,14 @@ function rodape(pagina: number, total: number, ano: number, margemTopo = 'auto')
  * documento calado.
  *
  * Subir quando o texto fixo mudar: páginas, seções, numeração, promessas.
+ *
+ * ⚠️ NÃO subiu em 21/09 (acima-da-tabela), de propósito. As frases que mudaram
+ * só aparecem com quantidade > 999, e não existe UMA proposta emitida assim: o
+ * guard antigo era intransponível. Para 100% do acervo o texto sai byte a byte
+ * igual, então subir aqui marcaria as 6 propostas reais como "modelo
+ * divergente" sem divergência nenhuma. Um alarme que dispara sozinho é pior do
+ * que um alarme a menos. Os dois críticos discordaram neste ponto; ganhou o que
+ * trouxe a consequência verificável.
  */
 export const TEMPLATE_VERSAO = '2026-09-17'
 
@@ -386,11 +394,20 @@ function paginaInvestimento(
 ): string {
   const inv = doc.investimento
   const continuacao = indice > 0
+  // ⚠️ Achado C3 da crítica: tirar só o sufixo "· faixa X" não bastava. Esta
+  // frase faz a MESMA alegação sem a palavra "faixa", e saía três vezes (uma por
+  // plano) em toda proposta acima de 999 com preço de tabela cheia. Quem decide
+  // se o documento pode invocar a tabela é `citaFaixa`, um lugar só.
+  // ⚠️ Achado A6: a frase do acréscimo oculto e a de acima-da-tabela não podem
+  // ser a MESMA string — seriam duas situações comerciais distintas
+  // indistinguíveis no papel e em qualquer asserção futura.
   const nota = mostraAjusteAoCliente(inv)
     ? `Os valores já contemplam o desconto competitivo de ${formatarPercent(inv.ajustePercent)} aplicado a cada vigência.`
-    : precoAcimaDaTabela(inv)
-      ? 'Valores por licença, por vigência contratada.'
-      : 'Valores conforme tabela vigente, por vigência contratada.'
+    : citaFaixa(inv)
+      ? 'Valores conforme tabela vigente, por vigência contratada.'
+      : quantidadeAcimaDaTabela(inv)
+        ? 'Valores por licença, por vigência contratada, dimensionados para este volume.'
+        : 'Valores por licença, por vigência contratada.'
   const faixa = citaFaixa(inv) ? ` · faixa ${inv.faixa} da tabela vigente` : ''
 
   return pagina(`${cabecalhoCorrido(doc.empresaNome)}
@@ -534,8 +551,15 @@ function paginaComplementos(
                 // ⚠️ Crítica C2: a página anterior diz "os valores já contemplam
                 // o desconto de X%". Sem esta frase, o cliente lê as duas em
                 // sequência e conclui que o desconto vale aqui também.
+                // ⚠️ Achado A2 da crítica: "os valores abaixo são os da tabela
+                // deles" é alegação EXPLÍCITA de cobertura, e a tabela dos
+                // complementos declara validade 5–999 (complementos.ts). Acima
+                // disso a frase perde a parte que a tabela não sustenta — o
+                // ponto comercial (o desconto não incide aqui) fica de pé.
                 mostraAjusteAoCliente(doc.investimento)
-                  ? ` O desconto competitivo de ${formatarPercent(doc.investimento.ajustePercent)} aplicado ao GravityZone <strong>não incide sobre os complementos</strong>: os valores abaixo são os da tabela deles.`
+                  ? ` O desconto competitivo de ${formatarPercent(doc.investimento.ajustePercent)} aplicado ao GravityZone <strong>não incide sobre os complementos</strong>${
+                      citaFaixa(doc.investimento) ? ': os valores abaixo são os da tabela deles.' : '.'
+                    }`
                   : ''
               }</p>`
         }

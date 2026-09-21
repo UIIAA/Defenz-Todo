@@ -43,7 +43,7 @@ describe('calcularComplementos — os números das tabelas do Marcos, sem deriva
   it('recusa quantidade abaixo de 5, em vez de inventar preço', () => {
     expect(() => calcularComplementos(['PHASR'], 1)).toThrow()
     expect(() => calcularComplementos(['PHASR'], 4)).toThrow()
-    expect(() => calcularComplementos(['PHASR'], 100_001)).toThrow()
+    expect(() => calcularComplementos(['PHASR'], 14_000)).toThrow()
   })
 
   // 21/09/2026: complemento tem preço único, não escalona por faixa — então

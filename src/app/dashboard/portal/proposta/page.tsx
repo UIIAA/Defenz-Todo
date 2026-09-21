@@ -465,7 +465,14 @@ export default function NovaPropostaPage() {
               <Linha rotulo="Empresa" valor={form.empresaNome} />
               <Linha rotulo="Cliente" valor={form.clienteNome} />
               <Linha rotulo="CNPJ" valor={form.cnpj || '—'} />
-              <Linha rotulo="Licenças" valor={`${form.quantidade} (faixa ${previa.investimento.faixa})`} />
+              <Linha
+                rotulo="Licenças"
+                valor={
+                  Number(form.quantidade) > QUANTIDADE_MAX
+                    ? `${form.quantidade} · acima da cobertura da tabela`
+                    : `${form.quantidade} (faixa ${previa.investimento.faixa})`
+                }
+              />
               <Linha
                 rotulo="Planos"
                 valor={previa.investimento.planos.map((p) => p.label).join(' · ')}
@@ -487,6 +494,19 @@ export default function NovaPropostaPage() {
                 />
               )}
             </dl>
+
+            {/* Achado C4 da crítica: teto nenhum distingue "14000 digitado errado"
+                de "14000 de verdade" — só um humano distingue. A defesa contra o
+                zero a mais é este aviso, na única tela em que alguém confere o
+                número antes de queimar um código de proposta. */}
+            {Number(form.quantidade) > QUANTIDADE_MAX && (
+              <p className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+                <strong>{form.quantidade} licenças está acima das {QUANTIDADE_MAX} que a tabela
+                pública cobre.</strong> O preço sai pela faixa {FAIXA_TOPO}, a mais barata da
+                escada, e o documento não cita a tabela. Confirme o número — e confirme o preço
+                com a SecuriSoft antes de fechar.
+              </p>
+            )}
 
             {/* O acréscimo existe só aqui: o PDF imprime o preço final como preço
                 (feature-proposta-acrescimo-oculto). Quem gera precisa saber disso. */}

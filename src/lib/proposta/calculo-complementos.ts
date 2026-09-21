@@ -170,7 +170,11 @@ export function calcularComplementos(
     quantidade > QUANTIDADE_MAX_PROPOSTA
   ) {
     throw new ApiError(
-      `Quantidade fora da tabela dos complementos (${QUANTIDADE_MIN} a ${QUANTIDADE_MAX_PROPOSTA} licenças).`,
+      // ⚠️ A frase antiga dizia "fora da tabela dos complementos (5 a N)". Ao
+      // trocar a constante, ela passou a AFIRMAR que a tabela dos complementos
+      // cobre 100.000 licenças. Ela cobre 999 (complementos.ts). O que este
+      // guard defende é sanidade, e a mensagem tem de dizer isso.
+      `Quantidade inválida: informe de ${QUANTIDADE_MIN} a ${QUANTIDADE_MAX_PROPOSTA} licenças.`,
       400
     )
   }
