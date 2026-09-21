@@ -294,3 +294,45 @@ A crítica da spec achou cinco coisas; duas mudaram o schema antes de ir a prod:
   registrado como ponto a conferir com a SecuriSoft.
 
 937 testes.
+
+## 2026-09-21 — propostas acima de 999 licenças
+
+O MP da Paraíba pediu 1400 licenças e o gerador travava em 999. A tabela pública
+diz "cliente final até 999 licenças" e o código levava isso ao pé da letra em
+quatro guards. Decisão do Marcos: acima de 999 usa o preço da faixa `500-999`.
+
+Não se interpola nem se extrapola — usa-se um preço que EXISTE na tabela e que,
+por ser de volume menor, nunca subfatura a Defenz (as três escadas de preço são
+monotonicamente decrescentes; `500-999` é o piso).
+
+- `faixaPorQuantidade` devolve a faixa topo acima de 999; teto de sanidade em
+  10.000, dimensionado para pegar o zero a mais (1400 → 14000).
+- **I-Q1**: acima de 999 o documento para de alegar cobertura da tabela. Derivado
+  de `quantidade`, não de campo novo — reimpressão do acervo sai idêntica.
+- A tela de confirmação avisa em destaque, e o AuditLog marca a emissão fora da
+  cobertura. A lista é `Proposta.quantidade > 999`.
+
+A crítica adversarial (3 revisores: spec, documento, código) achou 7 defeitos,
+**2 deles 🔴 que iriam para o PDF de um Ministério Público**:
+
+- 🔴 **A1** — `"Valores conforme tabela vigente"` faz a MESMA alegação sem a
+  palavra "faixa". A supressão era parcial por construção: o gate governava só o
+  sufixo do rodapé, e essa frase tinha ternário próprio duas linhas acima.
+- 🔴 **A2** — a página de Complementos afirmava a tabela POR ESCRITO ("os valores
+  abaixo são os da tabela deles"), e essa tabela declara validade 5–999.
+  Disparava com qualquer desconto: **era o caso exato do MP**.
+- 🟠 a mensagem de erro dos complementos passou a afirmar que a tabela deles
+  cobre 100.000 licenças — trocar a constante arrastou a frase junto.
+- 🟠 o teto de 100.000 não pegava o erro de dedo que existe (71× a maior proposta
+  real); 14000 saía como PDF de R$ 1.431.332,00.
+
+O diagnóstico de fundo, que vale além desta feature: **a invariante foi escrita
+sobre a PALAVRA "faixa", quando o problema é a ALEGAÇÃO de cobertura.** Enquanto
+a invariante for formulada sobre o vocabulário e não sobre a afirmação, ela
+continua mais larga que o conserto.
+
+Um achado ficou ABERTO de propósito: com desconto, a grade ainda imprime o preço
+de referência acima do "Desconto competitivo 15%". Consertar apagaria o desconto
+do documento do cliente — decisão comercial do Marcos, não conserto técnico.
+
+995 testes.

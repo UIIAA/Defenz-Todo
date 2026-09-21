@@ -1,31 +1,43 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-09-14
+**Last updated:** 2026-09-21
 **Version:** 0.4.0
 **Branch:** main
 
-## 🎯 RETOMAR AQUI — 18/09
+## 🎯 RETOMAR AQUI — 21/09
 
-> **18/09:** PHASR e os quatro sensores XDR passaram a **12 meses apenas**, coluna única e fora do total
-> somado (mesma regra do DLP). 984 testes. Continua **não deployado**.
-
-
-> **Catálogo de opções (DLP + MDR + desconto por item): IMPLEMENTADO LOCAL, NÃO DEPLOYADO.**
-> Spec + crítica adversarial (21 achados) em `docs/features/feature-catalogo-opcoes.md`. 983 testes.
-> Junto vai o **acréscimo oculto** de 16/09, que também não foi deployado.
+> **TUDO EM PRODUÇÃO, working tree limpo.** Último commit `af61130`. 995 testes.
 >
-> **Decisões do Marcos (17/09):** MDR sem preço (sob consulta); DLP só 12 meses com renovação anual e
-> **fora do total somado**; câmbio como constante versionada (R$ 5,1521, PTAX 17/09); desconto por item
-> começando no catálogo; item de preço líquido não imprime linha de desconto.
+> **21/09 — propostas acima de 999 licenças.** O MP da Paraíba pediu 1400 e o gerador travava em 999
+> ("cliente final até 999 licenças" da tabela pública, levado ao pé da letra em 4 guards). Decisão do
+> Marcos: acima de 999 usa o preço da faixa `500-999` — a mais barata da escada, que por ser de volume
+> MENOR nunca subfatura a Defenz. Spec + 3 críticas adversariais em
+> `docs/features/feature-quantidade-acima-da-tabela.md`.
 >
-> **Pendências:**
-> 1. **Deploy** (push main) — leva junto o acréscimo oculto e as 5 propostas com acréscimo passam a
->    rebaixar no formato novo.
-> 2. **Atualizar o câmbio** antes de emitir proposta com DLP: `src/lib/proposta/cambio.ts` tem data e fonte.
-> 3. **Preço do MDR**: se um dia existir tabela, o item já está no catálogo esperando (`sobConsulta: true`).
-> 4. **Defeito pré-existente achado pela crítica (fora do escopo, não corrigido):** `planoConsolidado` é o
->    índice da ordem de clique na tela, enquanto o cálculo reordena os planos para a ordem canônica —
->    marcar Premium e depois Business e escolher "Premium" no resumo consolida o **Business**.
+> A crítica achou 7 defeitos, 2 deles 🔴 que iriam para o PDF do Ministério Público: a frase
+> "Valores conforme tabela vigente" e a da página de Complementos ("os valores abaixo são os da tabela
+> deles") continuavam alegando cobertura que a tabela não dá. Diagnóstico de fundo: a invariante foi
+> escrita sobre a PALAVRA "faixa", e o problema é a ALEGAÇÃO de cobertura.
+>
+> **DECISÕES PENDENTES DO MARCOS:**
+> 1. 🔴 **Confirmar o preço de 1400 com a SecuriSoft ANTES de fechar.** O gerador passou a permitir a
+>    emissão; ele não garante que o preço é válido nesse volume. Risco real: vender sem saber o custo.
+>    A lista de propostas emitidas fora da cobertura é `Proposta.quantidade > 999` (e o AuditLog marca).
+> 2. 🟠 **O preço de referência acima do desconto.** Com −15% e 1400 licenças, a grade imprime
+>    "Valor unitário R$ 120,28" e logo abaixo "Desconto competitivo 15%" — o número afirma sozinho o que
+>    o texto parou de afirmar. Consertar = imprimir só o preço final e **apagar o desconto do documento
+>    do cliente**. Decisão comercial, não conserto técnico. NÃO mexi.
+> 3. 🟠 Travar `DELETE /api/tickets/[id]` para admin/gerência (hoje qualquer user da Defenz apaga ticket).
+> 4. **DFZ-2026-02033 (+25%) e 02034 (+20%)** saíram em 16/09 no formato antigo, com o acréscimo visível
+>    ao cliente — reenviar ou deixar?
+>
+> **Pendências operacionais:**
+> - Atualizar `src/lib/proposta/cambio.ts` antes de emitir proposta com DLP (PTAX de 17/09).
+> - Preço do MDR depende de tabela da SecuriSoft (já está no catálogo como `sobConsulta`).
+> - **Defeito conhecido, não corrigido:** `planoConsolidado` usa a ordem de clique, não a canônica —
+>   marcar Premium e depois Business e escolher "Premium" consolida o **Business**. Atinge qualquer
+>   proposta multi-plano com complemento (como a do MP).
+> - Sem teste de rota para `/api/portal/propostas` — a cobertura de servidor é o schema Zod.
 
 ## Histórico — 16/09
 
