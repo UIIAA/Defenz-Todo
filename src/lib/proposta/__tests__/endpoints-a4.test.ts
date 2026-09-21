@@ -8,7 +8,7 @@ import {
   formatarPercent,
   type PropostaDocumento,
 } from '../templates/endpoints-a4'
-import { calcularInvestimento } from '../calculo'
+import { calcularInvestimento, formatarBRL } from '../calculo'
 import { calcularComplementos, consolidar, servicosSobConsulta } from '../calculo-complementos'
 import type { PlanoId } from '../tabela-precos'
 import {
@@ -271,6 +271,32 @@ describe('renderPropostaHtml — bloco de investimento', () => {
     expect(html).not.toContain('7,5%')
     expect(html).not.toContain('não incide sobre os complementos')
     expect(html).not.toContain('tabela vigente')
+  })
+
+  // I-Q1 (feature-quantidade-acima-da-tabela): acima de 999 o preço continua
+  // sendo o da faixa topo, mas o documento PARA de alegar cobertura da tabela.
+  // "1400 licenças · faixa 500-999 da tabela vigente" é o papel se desmentindo
+  // na mesma linha — e este vai para um Ministério Público.
+  it('acima de 999 licenças não cita faixa nenhuma, mas mantém o preço da faixa topo', () => {
+    const base = doc({}, ['PREMIUM'], -15)
+    const html = renderPropostaHtml({
+      ...base,
+      investimento: calcularInvestimento({
+        quantidade: 1400,
+        planos: ['PREMIUM'],
+        ajustePercent: -15,
+      }),
+    })
+    expect(html).toContain('1400 licenças')
+    expect(html).not.toContain('faixa 500-999')
+    expect(html).not.toContain('faixa 500-999 da tabela vigente')
+    // o preço impresso segue sendo o da faixa topo, com o desconto por cima
+    expect(html).toContain(formatarBRL(120.28 * 0.85))
+  })
+
+  it('dentro da tabela a faixa continua sendo citada', () => {
+    const html = renderPropostaHtml(doc({}, ['PREMIUM'], -15))
+    expect(html).toContain('faixa 25-49 da tabela vigente')
   })
 
   it('mostra as três vigências e a faixa aplicada', () => {

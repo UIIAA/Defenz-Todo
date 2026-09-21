@@ -26,6 +26,8 @@ import {
   PLANO_LABEL,
   PLANO_NOME_PRODUTO,
   QUANTIDADE_MAX,
+  QUANTIDADE_MAX_PROPOSTA,
+  FAIXA_TOPO,
   QUANTIDADE_MIN,
   TABELA,
   VIGENCIAS,
@@ -88,26 +90,50 @@ export interface CalculoInput {
 }
 
 /**
+ * `true` quando a quantidade passa do teto da tabela pública.
+ *
+ * O preço continua sendo um preço que EXISTE (o da faixa topo), mas o documento
+ * não pode alegar a faixa: ver `I-Q1` em feature-quantidade-acima-da-tabela.
+ * Derivado da quantidade, nunca de um campo gravado — assim proposta antiga
+ * reimpressa pelo `/arquivo` continua saindo igual.
+ */
+export function quantidadeAcimaDaTabela(inv: Pick<Investimento, 'quantidade'>): boolean {
+  return inv.quantidade > QUANTIDADE_MAX
+}
+
+/**
  * Resolve a faixa da tabela pela quantidade de licenças.
  *
- * Fora de 5..999 RECUSA explicitamente — a tabela pública cobre "cliente final
- * até 999 licenças" e extrapolar seria inventar preço (spec R6).
+ * Abaixo de 5 RECUSA: a tabela não tem preço de licença avulsa e inventar um
+ * seria pior do que recusar (spec R6).
+ *
+ * Acima de 999 NÃO recusa mais (decisão do Marcos, 21/09/2026): devolve
+ * `FAIXA_TOPO`, a última e mais barata faixa da escada. Não se interpola nem se
+ * extrapola — usa-se um preço que existe na tabela, e que por ser de um volume
+ * MENOR nunca subfatura a Defenz. O teto que sobra (`QUANTIDADE_MAX_PROPOSTA`) é
+ * contra erro de dedo, não regra comercial.
  */
 export function faixaPorQuantidade(quantidade: number): Faixa {
   if (!Number.isFinite(quantidade) || !Number.isInteger(quantidade)) {
     throw new ApiError('Quantidade de licenças deve ser um número inteiro', 400)
   }
-  const encontrada = FAIXA_LIMITES.find(
-    (f) => quantidade >= f.de && quantidade <= f.ate
-  )
-  if (!encontrada) {
+  if (quantidade < QUANTIDADE_MIN) {
     throw new ApiError(
-      `Quantidade fora da tabela: a tabela pública cobre entre ${QUANTIDADE_MIN} e ${QUANTIDADE_MAX} licenças. ` +
-        `Para ${quantidade} licenças, consulte a SecuriSoft antes de propor preço.`,
+      `Quantidade fora da tabela: a tabela pública começa em ${QUANTIDADE_MIN} licenças ` +
+        `(o teto de faixa é ${QUANTIDADE_MAX}). Para ${quantidade} licenças não há preço a propor.`,
       400
     )
   }
-  return encontrada.faixa
+  if (quantidade > QUANTIDADE_MAX_PROPOSTA) {
+    throw new ApiError(
+      `Quantidade implausível (${quantidade}). Confira o número antes de gerar a proposta.`,
+      400
+    )
+  }
+  const encontrada = FAIXA_LIMITES.find(
+    (f) => quantidade >= f.de && quantidade <= f.ate
+  )
+  return encontrada ? encontrada.faixa : FAIXA_TOPO
 }
 
 /** Rótulo da linha de ajuste. `null` = a linha não aparece no documento. */

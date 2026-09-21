@@ -40,10 +40,17 @@ describe('calcularComplementos — os números das tabelas do Marcos, sem deriva
   // ⚠️ As tabelas enviadas mostram "QUANTIDADE DE LICENÇAS: 1" como exemplo, mas
   // a regra dita pelo Marcos é 5 a 999 — a mesma da tabela principal. Uma licença
   // avulsa não tem preço nesta tabela, e inventar um seria pior do que recusar.
-  it('recusa quantidade fora de 5..999, em vez de inventar preço', () => {
+  it('recusa quantidade abaixo de 5, em vez de inventar preço', () => {
     expect(() => calcularComplementos(['PHASR'], 1)).toThrow()
     expect(() => calcularComplementos(['PHASR'], 4)).toThrow()
-    expect(() => calcularComplementos(['PHASR'], 1000)).toThrow()
+    expect(() => calcularComplementos(['PHASR'], 100_001)).toThrow()
+  })
+
+  // 21/09/2026: complemento tem preço único, não escalona por faixa — então
+  // volume acima de 999 só multiplica. Antes isto jogava e travava a proposta.
+  it('aceita volume acima de 999 e só multiplica', () => {
+    const [patch] = calcularComplementos(['PATCH_MANAGEMENT'], 1400)
+    expect(patch.vigencias[0].valorTotalFinal).toBeCloseTo(29.95 * 1400, 6)
   })
 
   // I-C4: a descrição vem de material oficial, com a fonte impressa ao lado.

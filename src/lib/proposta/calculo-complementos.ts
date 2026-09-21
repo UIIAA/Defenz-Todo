@@ -18,7 +18,7 @@ import {
   type ComplementoId,
 } from './complementos'
 import { CAMBIO } from './cambio'
-import { QUANTIDADE_MAX, QUANTIDADE_MIN } from './tabela-precos'
+import { QUANTIDADE_MAX_PROPOSTA, QUANTIDADE_MIN } from './tabela-precos'
 import type { Investimento } from './calculo'
 
 /** Desconto por item, em percentual (0 a 90). Ausente = o padrão do catálogo. */
@@ -161,9 +161,16 @@ export function calcularComplementos(
   quantidade: number,
   descontos: DescontosPorItem = {}
 ): BlocoComplemento[] {
-  if (!Number.isInteger(quantidade) || quantidade < QUANTIDADE_MIN || quantidade > QUANTIDADE_MAX) {
+  // Complemento tem preço ÚNICO (não escalona por faixa), então volume acima de
+  // 999 não precisa de faixa nenhuma: multiplica igual. O teto aqui é o mesmo
+  // teto de sanidade da proposta — ver feature-quantidade-acima-da-tabela §3.
+  if (
+    !Number.isInteger(quantidade) ||
+    quantidade < QUANTIDADE_MIN ||
+    quantidade > QUANTIDADE_MAX_PROPOSTA
+  ) {
     throw new ApiError(
-      `Quantidade fora da tabela dos complementos (${QUANTIDADE_MIN} a ${QUANTIDADE_MAX} licenças).`,
+      `Quantidade fora da tabela dos complementos (${QUANTIDADE_MIN} a ${QUANTIDADE_MAX_PROPOSTA} licenças).`,
       400
     )
   }

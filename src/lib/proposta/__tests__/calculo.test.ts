@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
   faixaPorQuantidade,
+  quantidadeAcimaDaTabela,
   calcularInvestimento,
   formatarBRL,
   rotuloAjuste,
 } from '../calculo'
 import { ApiError } from '@/lib/api-helpers'
+import { FAIXA_LIMITES } from '../tabela-precos'
 
 describe('faixaPorQuantidade', () => {
   it('resolve a faixa pelos limites inclusivos', () => {
@@ -18,11 +20,46 @@ describe('faixaPorQuantidade', () => {
 
   it('recusa quantidade abaixo de 5 com mensagem explícita', () => {
     expect(() => faixaPorQuantidade(4)).toThrow(ApiError)
-    expect(() => faixaPorQuantidade(4)).toThrow(/5 e 999/)
+    expect(() => faixaPorQuantidade(4)).toThrow(/começa em 5/)
   })
 
-  it('recusa quantidade acima de 999 — a tabela pública não cobre, extrapolar seria inventar preço', () => {
-    expect(() => faixaPorQuantidade(1000)).toThrow(ApiError)
+  // Mudou em 21/09/2026 (feature-quantidade-acima-da-tabela): acima de 999 NÃO
+  // se recusa mais nem se extrapola — cai na faixa topo, que é um preço que
+  // existe na tabela e é de um volume MENOR, então nunca subfatura a Defenz.
+  it('acima de 999 usa a faixa topo (500-999) em vez de recusar', () => {
+    expect(faixaPorQuantidade(1000)).toBe('500-999')
+    expect(faixaPorQuantidade(1400)).toBe('500-999')
+    expect(faixaPorQuantidade(100_000)).toBe('500-999')
+  })
+
+  it('ainda recusa quantidade implausível — o teto de sanidade pega erro de dedo', () => {
+    expect(() => faixaPorQuantidade(100_001)).toThrow(ApiError)
+    expect(() => faixaPorQuantidade(100_001)).toThrow(/implausível/)
+  })
+
+  it('não mexe em nenhuma faixa de 5 a 999', () => {
+    for (const { faixa, de, ate } of FAIXA_LIMITES) {
+      expect(faixaPorQuantidade(de)).toBe(faixa)
+      expect(faixaPorQuantidade(ate)).toBe(faixa)
+    }
+  })
+
+  it('quantidadeAcimaDaTabela separa o que a tabela cobre do que não cobre', () => {
+    expect(quantidadeAcimaDaTabela({ quantidade: 999 })).toBe(false)
+    expect(quantidadeAcimaDaTabela({ quantidade: 1000 })).toBe(true)
+  })
+
+  it('1400 licenças × Premium 36+12 cobra o preço da faixa topo, com o desconto por cima', () => {
+    const inv = calcularInvestimento({
+      quantidade: 1400,
+      planos: ['PREMIUM'],
+      ajustePercent: -15,
+    })
+    expect(inv.faixa).toBe('500-999')
+    const tresAnos = inv.planos[0].vigencias[2]
+    expect(tresAnos.precoLicenca).toBe(120.28)
+    expect(tresAnos.valorTotal).toBeCloseTo(120.28 * 1400, 6)
+    expect(tresAnos.valorTotalFinal).toBeCloseTo(120.28 * 1400 * 0.85, 6)
   })
 
   it('recusa quantidade não inteira ou não finita', () => {

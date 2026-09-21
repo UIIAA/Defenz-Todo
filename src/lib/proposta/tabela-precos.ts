@@ -69,7 +69,25 @@ export type Vigencia = (typeof VIGENCIAS)[number]
 export type AnosTabela = Vigencia['anos']
 
 export const QUANTIDADE_MIN = 5
+
+/** Teto da TABELA: acima disto o documento não tem faixa própria. */
 export const QUANTIDADE_MAX = 999
+
+/**
+ * Teto de SANIDADE da proposta (feature-quantidade-acima-da-tabela §2).
+ *
+ * Acima de `QUANTIDADE_MAX` a proposta não é recusada: ela passa a usar o preço
+ * da última faixa (`FAIXA_TOPO`), que é a mais barata da escada — decisão do
+ * Marcos em 21/09/2026. Cobra-se o preço de um volume MENOR, então nunca
+ * subfatura; o que sobra é risco comercial, a confirmar com a SecuriSoft.
+ *
+ * Este teto existe só para barrar erro de dedo (um zero a mais), não regra de
+ * negócio.
+ */
+export const QUANTIDADE_MAX_PROPOSTA = 100_000
+
+/** Última faixa da escada — a que vale para qualquer volume acima dela. */
+export const FAIXA_TOPO: Faixa = '500-999'
 
 /** Limites inclusivos de cada faixa, na mesma ordem de `FAIXAS`. */
 export const FAIXA_LIMITES: ReadonlyArray<{ faixa: Faixa; de: number; ate: number }> = [

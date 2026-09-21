@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { PortalTabs } from '@/components/portal/portal-tabs'
 import { AlertCircle, ArrowLeft, CheckCircle2, FileText, Loader2 } from 'lucide-react'
 import { calcularInvestimento, formatarBRL, type Investimento } from '@/lib/proposta/calculo'
-import { PLANOS, PLANO_LABEL, QUANTIDADE_MAX, QUANTIDADE_MIN, type PlanoId } from '@/lib/proposta/tabela-precos'
+import { FAIXA_TOPO, PLANOS, PLANO_LABEL, QUANTIDADE_MAX, QUANTIDADE_MAX_PROPOSTA, QUANTIDADE_MIN, type PlanoId } from '@/lib/proposta/tabela-precos'
 import {
   COMPLEMENTOS,
   FAMILIAS,
@@ -127,10 +127,11 @@ export default function NovaPropostaPage() {
 
     const qtd = Number(form.quantidade)
     if (!Number.isInteger(qtd)) return setErro('Informe a quantidade de licenças.')
-    if (qtd < QUANTIDADE_MIN || qtd > QUANTIDADE_MAX) {
-      return setErro(
-        `A tabela pública cobre de ${QUANTIDADE_MIN} a ${QUANTIDADE_MAX} licenças. Fora dessa faixa não dá para propor preço sem consultar a SecuriSoft.`
-      )
+    if (qtd < QUANTIDADE_MIN) {
+      return setErro(`A tabela pública começa em ${QUANTIDADE_MIN} licenças.`)
+    }
+    if (qtd > QUANTIDADE_MAX_PROPOSTA) {
+      return setErro('Quantidade implausível. Confira o número de licenças.')
     }
     if (form.basePreco !== 'tabela') {
       const p = Number(form.percentual.replace(',', '.'))
@@ -262,13 +263,14 @@ export default function NovaPropostaPage() {
               <Input
                 type="number"
                 min={QUANTIDADE_MIN}
-                max={QUANTIDADE_MAX}
+                max={QUANTIDADE_MAX_PROPOSTA}
                 value={form.quantidade}
                 onChange={(e) => setForm({ ...form, quantidade: e.target.value })}
                 placeholder="30"
               />
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 De {QUANTIDADE_MIN} a {QUANTIDADE_MAX}, faixa coberta pela tabela pública.
+                Acima de {QUANTIDADE_MAX} a proposta sai com o preço da faixa {FAIXA_TOPO} — confirme com a SecuriSoft antes de fechar.
               </p>
             </Campo>
           </div>

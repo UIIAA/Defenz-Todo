@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { PLANOS, QUANTIDADE_MAX, QUANTIDADE_MIN } from '@/lib/proposta/tabela-precos'
+import { PLANOS, QUANTIDADE_MAX_PROPOSTA, QUANTIDADE_MIN } from '@/lib/proposta/tabela-precos'
 import { COMPLEMENTO_IDS } from '@/lib/proposta/complementos'
 
 export const PROPOSTA_TIPOS = ['ENDPOINTS'] as const
@@ -28,9 +28,11 @@ export const createPropostaSchema = z
         QUANTIDADE_MIN,
         `A tabela pública começa em ${QUANTIDADE_MIN} licenças`
       )
+      // Acima de 999 a proposta é EMITIDA com o preço da faixa topo (500-999).
+      // Este teto é só contra erro de dedo — feature-quantidade-acima-da-tabela.
       .max(
-        QUANTIDADE_MAX,
-        `A tabela pública vai até ${QUANTIDADE_MAX} licenças. Acima disso, consulte a SecuriSoft antes de propor preço.`
+        QUANTIDADE_MAX_PROPOSTA,
+        `Quantidade implausível. Confira o número de licenças.`
       ),
 
     planos: z

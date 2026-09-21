@@ -22,7 +22,7 @@ import {
   MANROPE_LATIN_EXT_WOFF2,
   MANROPE_LATIN_WOFF2,
 } from '../assets/embedded'
-import { formatarBRL, type BlocoPlano, type Investimento } from '../calculo'
+import { formatarBRL, quantidadeAcimaDaTabela, type BlocoPlano, type Investimento } from '../calculo'
 import { notaCambio } from '../cambio'
 import type { BlocoComplemento, BlocoServico, Consolidado } from '../calculo-complementos'
 
@@ -244,6 +244,19 @@ function precoAcimaDaTabela(inv: Pick<Investimento, 'ajustePercent'>): boolean {
   return inv.ajustePercent > 0
 }
 
+/**
+ * O sufixo " · faixa X da tabela vigente" só pode aparecer quando a tabela
+ * realmente cobre o caso. Some por DOIS motivos distintos:
+ *
+ *  - preço acima da tabela (acréscimo): a linha seria falsa;
+ *  - quantidade acima de 999 (I-Q1): "1400 licenças · faixa 500-999 da tabela
+ *    vigente" é o documento se contradizendo na mesma linha. O preço segue
+ *    sendo o da faixa topo; o que some é a ALEGAÇÃO de cobertura.
+ */
+function citaFaixa(inv: Pick<Investimento, 'ajustePercent' | 'quantidade'>): boolean {
+  return !precoAcimaDaTabela(inv) && !quantidadeAcimaDaTabela(inv)
+}
+
 function tituloSecao(numero: string, texto: string, sufixo = ''): string {
   return `
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:22px;"></div>
@@ -378,7 +391,7 @@ function paginaInvestimento(
     : precoAcimaDaTabela(inv)
       ? 'Valores por licença, por vigência contratada.'
       : 'Valores conforme tabela vigente, por vigência contratada.'
-  const faixa = precoAcimaDaTabela(inv) ? '' : ` · faixa ${inv.faixa} da tabela vigente`
+  const faixa = citaFaixa(inv) ? ` · faixa ${inv.faixa} da tabela vigente` : ''
 
   return pagina(`${cabecalhoCorrido(doc.empresaNome)}
       <div style="margin-top:66px;">${tituloSecao(
@@ -728,7 +741,7 @@ function paginaResumo(
         </div>
       </div>
 
-      <div style="font-size:12px; color:${C.faint}; font-weight:600; text-align:center;">Valores em reais &middot; ${quantidade} licenças${precoAcimaDaTabela(doc.investimento) ? '' : ` &middot; faixa ${doc.investimento.faixa} da tabela vigente`}.</div>
+      <div style="font-size:12px; color:${C.faint}; font-weight:600; text-align:center;">Valores em reais &middot; ${quantidade} licenças${citaFaixa(doc.investimento) ? ` &middot; faixa ${doc.investimento.faixa} da tabela vigente` : ''}.</div>
 ${rodape(numeroPagina, total, doc.ano, '18px')}`)
 }
 
