@@ -124,8 +124,16 @@ export function numerosDeSecao(opts: {
   temComplementos: boolean
   temServicos: boolean
   temResumo: boolean
+  /**
+   * `false` na proposta só de add-ons: não existe página de Investimento, então
+   * a contagem NÃO pode começar depois dela — senão o documento pula de `05.`
+   * para `07.`, que é exatamente o defeito de 21/08 que esta função existe para
+   * impedir. Ausente = `true`, o comportamento de sempre.
+   */
+  temInvestimento?: boolean
 }): { COMPLEMENTOS: string; SERVICOS: string; RESUMO: string } {
-  let n = Number(SECOES.INVESTIMENTO.replace('.', ''))
+  const investimento = Number(SECOES.INVESTIMENTO.replace('.', ''))
+  let n = opts.temInvestimento === false ? investimento - 1 : investimento
   const proximo = () => `${pad2(++n)}.`
   return {
     COMPLEMENTOS: opts.temComplementos ? proximo() : '',
@@ -437,7 +445,43 @@ ${rodape(numeroPagina, total, doc.ano, '24px')}`)
  * A descrição vem do catálogo (`complementos.ts`), resumida do material oficial
  * da Bitdefender e com a fonte impressa ao lado. Não é texto gerado.
  */
-function tabelaComplemento(c: BlocoComplemento, quantidade: number): string {
+/**
+ * A nota de pré-requisito dos add-ons.
+ *
+ * ⚠️ Add-on não se ativa sozinho. A Bitdefender é explícita: XDR é "GravityZone
+ * Business Security Enterprise **and** a separately purchasable add-on for each
+ * sensor category" — e a tabela de comparação oficial diz que o Premium NÃO
+ * suporta os sensores. Patch e Criptografia exigem GravityZone de qualquer
+ * linha ("separate license key for all available GravityZone packages").
+ *
+ * Proposta de sensor sem base, calada sobre isso, vende algo que o cliente não
+ * consegue ligar. A nota é FIXA e automática (decisão do Marcos, 22/09) e sai
+ * dos dados: some sozinha quando a base está na própria proposta.
+ *
+ * Cobre os dois casos de uma vez — a proposta só de add-ons e a proposta que
+ * marcou sensor XDR com um plano que não é Enterprise.
+ */
+function notaPreRequisito(doc: PropostaDocumento): string {
+  const comps = doc.complementos ?? []
+  const planos = doc.investimento.planos.map((p) => p.plano)
+  const temEnterprise = planos.includes('ENTERPRISE')
+  const temXdr = comps.some((c) => c.familia === 'XDR')
+  const temModuloGz = comps.some((c) => c.familia === 'GRAVITYZONE')
+
+  if (temXdr && !temEnterprise) {
+    return ' Os sensores XDR são complementos do <strong>Bitdefender GravityZone Business Security Enterprise</strong> e exigem essa base ativa no cliente, contratada nesta proposta ou já em vigor.'
+  }
+  if (temModuloGz && planos.length === 0) {
+    return ' Estes módulos são complementos do <strong>Bitdefender GravityZone</strong> e exigem a base ativa no cliente, já em vigor.'
+  }
+  return ''
+}
+
+function tabelaComplemento(c: BlocoComplemento): string {
+  // ⚠️ A quantidade sai do BLOCO, não do principal: cada add-on é SKU próprio e
+  // pode ter a sua (feature-addons-quantidade-propria). Ler a do principal aqui
+  // imprimiria o preço de um volume e o rótulo de outro.
+  const quantidade = c.quantidade
   const vs = c.vigencias
 
   // D6: item de preço líquido (PHASR, sensores, DLP) não imprime linha de
@@ -547,7 +591,15 @@ function paginaComplementos(
         ${
           continuacao
             ? ''
-            : `<p style="font-size:15px; line-height:1.8; color:${C.body}; margin:0 0 8px; max-width:600px; text-align:justify;">Módulos que somam ao GravityZone contratado. Cada um é cobrado à parte, pelas mesmas ${quantidade} licenças, e pode entrar ou sair sem alterar o restante da proposta.${
+            : `<p style="font-size:15px; line-height:1.8; color:${C.body}; margin:0 0 8px; max-width:600px; text-align:justify;">Módulos que somam ao GravityZone contratado. Cada um é cobrado à parte${
+                // ⚠️ "pelas mesmas N licenças" vira MENTIRA no instante em que
+                // uma quantidade diverge — e divergir é o caso normal do sensor
+                // de Produtividade, que licencia caixas de e-mail, não máquinas.
+                // A frase sai dos dados, não de texto fixo: some sozinha.
+                grupo.every((c) => c.quantidade === quantidade)
+                  ? `, pelas mesmas ${quantidade} licenças`
+                  : ', pela quantidade indicada em cada bloco'
+              }, e pode entrar ou sair sem alterar o restante da proposta.${notaPreRequisito(doc)}${
                 // ⚠️ Crítica C2: a página anterior diz "os valores já contemplam
                 // o desconto de X%". Sem esta frase, o cliente lê as duas em
                 // sequência e conclui que o desconto vale aqui também.
@@ -566,7 +618,7 @@ function paginaComplementos(
       </div>
 
       <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">${grupo
-        .map((c) => tabelaComplemento(c, quantidade))
+        .map((c) => tabelaComplemento(c))
         .join('\n')}
       </div>
 
@@ -575,7 +627,9 @@ function paginaComplementos(
         // renováveis), dizer "pelo período contratado" é falso — cada bloco diz o
         // seu prazo. O texto sai dos itens presentes, não de frase fixa.
         grupo.some((c) => c.foraDoTotal) ? ', pelo prazo indicado em cada bloco' : ', pelo período contratado'
-      } &middot; ${quantidade} licenças.</div>
+      }${
+        grupo.every((c) => c.quantidade === quantidade) ? ` &middot; ${quantidade} licenças` : ''
+      }.</div>
 ${rodape(numeroPagina, total, doc.ano, '18px')}`)
 }
 
@@ -719,7 +773,11 @@ function paginaResumo(
 
   return pagina(`${cabecalhoCorrido(doc.empresaNome)}
       <div style="margin-top:56px;">${tituloSecao(numero, 'Resumo do investimento')}
-        <p style="font-size:15px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">A solução completa para <strong>${quantidade} licenças</strong>, com tudo o que foi selecionado nesta proposta.</p>
+        <p style="font-size:15px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">A solução completa${
+          consolidado.quantidadesDivergem ? '' : ` para <strong>${quantidade} licenças</strong>`
+        }, com tudo o que foi selecionado nesta proposta${
+          consolidado.quantidadesDivergem ? ', nas quantidades indicadas ao lado de cada item' : ''
+        }.</p>
       </div>
 
       <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
@@ -789,7 +847,14 @@ export function renderPropostaHtml(doc: PropostaDocumento): string {
 
   // Complementos e resumo entram DEPOIS do investimento e só existem se houver
   // complemento escolhido — sem eles o documento é byte a byte o de antes.
-  const comps = doc.complementos ?? []
+  // ⚠️ Snapshot anterior a 22/09 não tem `quantidade` por bloco — e o template
+  // passou a ler dela. Sem este preenchimento, o re-download de uma proposta já
+  // emitida imprimiria "undefined licenças" e diria "pela quantidade indicada em
+  // cada bloco" numa proposta em que nada divergia. Mesma defesa do
+  // `v.rotulo ?? ...`, pela mesma razão: o acervo não volta para trás.
+  const comps = (doc.complementos ?? []).map((c) =>
+    c.quantidade === undefined ? { ...c, quantidade: doc.investimento.quantidade } : c
+  )
   const grupos: BlocoComplemento[][] = []
   for (let i = 0; i < comps.length; i += COMPLEMENTOS_POR_PAGINA) {
     grupos.push(comps.slice(i, i + COMPLEMENTOS_POR_PAGINA))
@@ -802,6 +867,7 @@ export function renderPropostaHtml(doc: PropostaDocumento): string {
         temComplementos: true,
         temServicos: false,
         temResumo: false,
+        temInvestimento: planos.length > 0,
       }).COMPLEMENTOS)
     )
     .join('\n')
@@ -813,6 +879,7 @@ export function renderPropostaHtml(doc: PropostaDocumento): string {
     temComplementos: comps.length > 0,
     temServicos: servicos.length > 0,
     temResumo,
+    temInvestimento: planos.length > 0,
   })
 
   const paginaDeServicos =

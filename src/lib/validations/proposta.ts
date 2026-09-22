@@ -35,10 +35,12 @@ export const createPropostaSchema = z
         `Quantidade implausível. Confira o número de licenças.`
       ),
 
-    planos: z
-      .array(z.enum(PLANOS))
-      .min(1, 'Marque ao menos um plano')
-      .max(PLANOS.length),
+    /**
+     * Pode vir VAZIA desde 22/09: proposta só de add-ons, para cliente que já
+     * tem a base. O que nunca pode é proposta vazia — ver o superRefine no fim,
+     * que é o único ponto capaz de olhar planos e complementos juntos.
+     */
+    planos: z.array(z.enum(PLANOS)).max(PLANOS.length).default([]),
 
     basePreco: z.enum(BASES_PRECO).default('tabela'),
     /** Sempre positivo no formulário; o sinal vem de `basePreco`. */
@@ -58,6 +60,26 @@ export const createPropostaSchema = z
      */
     descontosComplemento: z
       .record(z.enum(COMPLEMENTO_IDS), z.number().min(0).max(90))
+      .optional(),
+
+    /**
+     * Quantidade por add-on, sobrepondo a do principal.
+     *
+     * ⚠️ A Bitdefender vende assim: cada add-on é SKU próprio com chave própria.
+     * No sensor de Produtividade a divergência é o caso normal — ele licencia
+     * usuários de Microsoft 365 / Google Workspace, não máquinas.
+     *
+     * Opcional: payload antigo, sem o campo, continua idêntico.
+     */
+    quantidadesComplemento: z
+      .record(
+        z.enum(COMPLEMENTO_IDS),
+        z
+          .number()
+          .int('A quantidade de cada complemento precisa ser um número inteiro')
+          .min(QUANTIDADE_MIN)
+          .max(QUANTIDADE_MAX_PROPOSTA)
+      )
       .optional(),
     /**
      * Qual plano entra no resumo somado. Índice dentro de `planos`.
@@ -87,10 +109,38 @@ export const createPropostaSchema = z
     message: 'Complemento repetido na lista',
     path: ['complementos'],
   })
-  .refine((d) => d.complementos.length === 0 || d.planoConsolidado < d.planos.length, {
-    message: 'O plano escolhido para o resumo não está entre os planos marcados',
-    path: ['planoConsolidado'],
+  // ⚠️ `planos` vazio é proposta só de add-ons: não há resumo consolidado para
+  // escolher plano nenhum, então a regra não se aplica (antes, com a lista
+  // vazia, `0 < 0` reprovava e a proposta só de add-ons era impossível).
+  .refine(
+    (d) =>
+      d.complementos.length === 0 ||
+      d.planos.length === 0 ||
+      d.planoConsolidado < d.planos.length,
+    {
+      message: 'O plano escolhido para o resumo não está entre os planos marcados',
+      path: ['planoConsolidado'],
+    }
+  )
+  // Proposta vazia: sem plano E sem complemento não há o que propor. Este é o
+  // único ponto que enxerga os dois campos juntos — por isso a regra mora aqui,
+  // e não num `.min(1)` em cada lista.
+  .refine((d) => d.planos.length > 0 || d.complementos.length > 0, {
+    message: 'Marque ao menos um plano ou um complemento',
+    path: ['planos'],
   })
+  // Mesma regra do desconto (achado 15): quantidade para item não marcado seria
+  // descartada em silêncio, e o vendedor acharia que tinha aplicado.
+  .refine(
+    (d) =>
+      Object.keys(d.quantidadesComplemento ?? {}).every((id) =>
+        d.complementos.includes(id as (typeof COMPLEMENTO_IDS)[number])
+      ),
+    {
+      message: 'Há quantidade informada para um complemento que não foi marcado',
+      path: ['quantidadesComplemento'],
+    }
+  )
   .refine((d) => d.basePreco === 'tabela' || (d.percentual ?? 0) > 0, {
     message: 'Informe o percentual quando o preço não for o de tabela',
     path: ['percentual'],

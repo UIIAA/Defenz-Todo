@@ -42,6 +42,24 @@ function descontosNumericos(form: Formulario): Partial<Record<ComplementoId, num
   return saida
 }
 
+/**
+ * As quantidades digitadas por add-on, só dos itens marcados.
+ *
+ * ⚠️ Mesma regra do desconto: campo vazio = "a mesma do principal", e por isso é
+ * OMITIDO. Mandar a do principal explicitamente faria toda proposta gravar
+ * `quantidadePropria` e sujaria o log sem ninguém ter pedido nada.
+ */
+function quantidadesNumericas(form: Formulario): Partial<Record<ComplementoId, number>> {
+  const saida: Partial<Record<ComplementoId, number>> = {}
+  for (const id of form.complementos) {
+    const bruto = (form.quantidades[id] ?? '').trim()
+    if (bruto === '') continue
+    const n = Number(bruto)
+    if (Number.isInteger(n)) saida[id] = n
+  }
+  return saida
+}
+
 interface Formulario {
   clienteNome: string
   empresaNome: string
@@ -52,6 +70,7 @@ interface Formulario {
   complementos: ComplementoId[]
   /** Desconto por item, em percentual, como digitado. Vazio = o do catálogo. */
   descontos: Partial<Record<ComplementoId, string>>
+  quantidades: Partial<Record<ComplementoId, string>>
   planoConsolidado: number
   basePreco: BasePreco
   percentual: string
@@ -68,6 +87,7 @@ const INICIAL: Formulario = {
   planos: [...PLANOS],
   complementos: [],
   descontos: {},
+  quantidades: {},
   planoConsolidado: 0,
   basePreco: 'tabela',
   percentual: '',
@@ -106,7 +126,7 @@ export default function NovaPropostaPage() {
       })
       // A prévia usa as MESMAS funções do servidor: a tela não pode prometer um
       // total que o PDF não vai trazer.
-      const comps = calcularComplementos(form.complementos, qtd, descontos)
+      const comps = calcularComplementos(form.complementos, qtd, descontos, quantidadesNumericas(form))
       return {
         investimento,
         consolidado:
@@ -117,13 +137,18 @@ export default function NovaPropostaPage() {
     } catch (e) {
       return { erro: e instanceof Error ? e.message : 'Dados inválidos' }
     }
-  }, [form.quantidade, form.planos, form.complementos, form.descontos, form.planoConsolidado, ajuste])
+  }, [form.quantidade, form.planos, form.complementos, form.descontos, form.quantidades, form.planoConsolidado, ajuste])
 
   function validarEAvancar() {
     setErro(null)
     if (!form.clienteNome.trim()) return setErro('Informe o nome do cliente.')
     if (!form.empresaNome.trim()) return setErro('Informe o nome da empresa.')
-    if (form.planos.length === 0) return setErro('Marque ao menos um plano.')
+    // Sem plano é proposta SÓ de add-ons — legítima para quem já tem a base
+    // contratada (a base do MP vai em documento separado). O que não existe é
+    // proposta vazia.
+    if (form.planos.length === 0 && form.complementos.length === 0) {
+      return setErro('Marque ao menos um plano ou um complemento.')
+    }
 
     const qtd = Number(form.quantidade)
     if (!Number.isInteger(qtd)) return setErro('Informe a quantidade de licenças.')
@@ -161,6 +186,7 @@ export default function NovaPropostaPage() {
           planos: form.planos,
           complementos: form.complementos,
           descontosComplemento: descontosNumericos(form),
+          quantidadesComplemento: quantidadesNumericas(form),
           planoConsolidado: form.planoConsolidado,
           basePreco: form.basePreco,
           percentual:
@@ -345,6 +371,23 @@ export default function NovaPropostaPage() {
                         <span className="flex-1">{c.nome.replace('Bitdefender ', '')}</span>
                         {form.complementos.includes(c.id) && !c.sobConsulta && (
                           <span className="flex items-center gap-1 text-xs text-slate-500">
+                            {/* Em branco = a mesma do principal. Cada add-on é SKU
+                                próprio na Bitdefender, e no sensor de Produtividade
+                                divergir é o caso normal (licencia caixas de e-mail,
+                                não máquinas). */}
+                            <Input
+                              value={form.quantidades[c.id] ?? ''}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  quantidades: { ...form.quantidades, [c.id]: e.target.value },
+                                })
+                              }
+                              placeholder={form.quantidade || 'qtd'}
+                              className="h-7 w-20 text-right"
+                              aria-label={`Quantidade de ${c.nome}`}
+                            />
+                            lic.
                             <Input
                               value={form.descontos[c.id] ?? String(c.descontoPadrao * 100)}
                               onChange={(e) =>
@@ -499,6 +542,20 @@ export default function NovaPropostaPage() {
                 de "14000 de verdade" — só um humano distingue. A defesa contra o
                 zero a mais é este aviso, na única tela em que alguém confere o
                 número antes de queimar um código de proposta. */}
+            {/* Sensor XDR exige Business Security Enterprise — a tabela de
+                comparação da Bitdefender é explícita em dizer que o Premium NÃO
+                suporta. Avisa, não bloqueia: a base pode estar em OUTRA proposta
+                para o mesmo cliente (decisão do Marcos, 22/09). */}
+            {form.complementos.some((id) => complemento(id).familia === 'XDR') &&
+              !form.planos.includes('ENTERPRISE') && (
+                <p className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+                  <strong>Sensor XDR sem Enterprise nesta proposta.</strong> Os sensores são
+                  complementos do GravityZone Business Security Enterprise — o Premium não os
+                  suporta. O documento já avisa que a base precisa estar ativa; confirme que ela
+                  vai em outra proposta ou já está contratada.
+                </p>
+              )}
+
             {Number(form.quantidade) > QUANTIDADE_MAX && (
               <p className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
                 <strong>{form.quantidade} licenças está acima das {QUANTIDADE_MAX} que a tabela

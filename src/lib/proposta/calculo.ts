@@ -154,9 +154,11 @@ export function calcularInvestimento(input: CalculoInput): Investimento {
   // Ordem canônica (Business → Premium → Enterprise), não a ordem de chegada:
   // o cliente compara os planos lado a lado e a escada de preço precisa subir.
   const selecionados = PLANOS.filter((p) => input.planos.includes(p))
-  if (selecionados.length === 0) {
-    throw new ApiError('Selecione ao menos um plano para a proposta', 400)
-  }
+  // ⚠️ Lista vazia é LEGÍTIMA desde 22/09: proposta só de add-ons, para quem já
+  // tem a base contratada (feature-addons-quantidade-propria). Quem garante que
+  // não saia uma proposta vazia é o schema — lá dá para ver que existe
+  // complemento; aqui, não. Regra em um lugar só, e é o que enxerga o todo.
+  
 
   const fator = 1 + ajustePercent / 100
 

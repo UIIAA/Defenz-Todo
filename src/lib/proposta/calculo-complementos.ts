@@ -24,6 +24,19 @@ import type { Investimento } from './calculo'
 /** Desconto por item, em percentual (0 a 90). Ausente = o padrão do catálogo. */
 export type DescontosPorItem = Partial<Record<ComplementoId, number>>
 
+/**
+ * Quantidade POR ITEM, sobrepondo a do principal.
+ *
+ * ⚠️ Existe porque a Bitdefender vende assim: cada add-on é SKU próprio, com
+ * chave de licença própria ("a separately purchasable add-on for each sensor
+ * category"). No sensor de Produtividade a divergência é o caso NORMAL — ele
+ * licencia usuários de Microsoft 365 / Google Workspace, e quase toda empresa
+ * tem mais gente com e-mail do que com máquina gerenciada.
+ *
+ * Ausente = usa a quantidade do principal, que é o comportamento de sempre.
+ */
+export type QuantidadesPorItem = Partial<Record<ComplementoId, number>>
+
 export interface LinhaComplemento {
   meses: number
   rotulo: string
@@ -64,6 +77,14 @@ export interface BlocoComplemento {
   precoLiquido: boolean
   /** Fora da linha "Investimento total" do resumo (D5). */
   foraDoTotal: boolean
+  /**
+   * Quantidade DESTE item. Igual à do principal, salvo quando a tela mandou
+   * outra. O documento imprime a quantidade de cada bloco: dizer "pelas mesmas
+   * N licenças" vira mentira no instante em que duas divergem.
+   */
+  quantidade: number
+  /** `true` quando a quantidade veio da tela, não do principal. Vai para o log. */
+  quantidadePropria: boolean
   /**
    * Uma entrada por coluna DO ITEM — três nos módulos do GravityZone, uma só no
    * DLP (12 meses, renovação anual). Não confundir com as três colunas da
@@ -149,6 +170,8 @@ export interface Consolidado {
   foraDoTotal: ItemForaDoTotal[]
   linhas: LinhaConsolidada[]
   itens: string[]
+  /** `true` quando algum add-on tem quantidade diferente da do principal. */
+  quantidadesDivergem: boolean
   /**
    * `true` quando principal e complemento não cobrem o mesmo tempo em alguma
    * coluna. O documento é obrigado a explicar — ver o comentário do topo.
@@ -159,7 +182,8 @@ export interface Consolidado {
 export function calcularComplementos(
   ids: readonly ComplementoId[],
   quantidade: number,
-  descontos: DescontosPorItem = {}
+  descontos: DescontosPorItem = {},
+  quantidades: QuantidadesPorItem = {}
 ): BlocoComplemento[] {
   // Complemento tem preço ÚNICO (não escalona por faixa), então volume acima de
   // 999 não precisa de faixa nenhuma: multiplica igual. O teto aqui é o mesmo
@@ -179,6 +203,16 @@ export function calcularComplementos(
     )
   }
 
+  for (const [id, q] of Object.entries(quantidades)) {
+    if (q === undefined) continue
+    if (!Number.isInteger(q) || q < QUANTIDADE_MIN || q > QUANTIDADE_MAX_PROPOSTA) {
+      throw new ApiError(
+        `Quantidade inválida para ${id}: informe de ${QUANTIDADE_MIN} a ${QUANTIDADE_MAX_PROPOSTA} licenças.`,
+        400
+      )
+    }
+  }
+
   // Item sob consulta não tem preço: sai daqui e vira `BlocoServico` (I-N2).
   return ids
     .map(complemento)
@@ -195,8 +229,11 @@ export function calcularComplementos(
     }
     const desconto = manual !== undefined ? manual / 100 : c.descontoPadrao
     const meses = mesesDoComplemento(c)
+    const qtdItem = quantidades[c.id] ?? quantidade
     return {
       id: c.id,
+      quantidade: qtdItem,
+      quantidadePropria: quantidades[c.id] !== undefined && quantidades[c.id] !== quantidade,
       nome: c.nome,
       descricao: c.descricao,
       fonte: c.fonte,
@@ -218,8 +255,8 @@ export function calcularComplementos(
           precoLicenca,
           precoLicencaFinal,
           valorUnitarioMesFinal: precoLicencaFinal / m,
-          valorTotal: precoLicenca * quantidade,
-          valorTotalFinal: precoLicencaFinal * quantidade,
+          valorTotal: precoLicenca * qtdItem,
+          valorTotalFinal: precoLicencaFinal * qtdItem,
         }
       }),
     }
@@ -259,18 +296,31 @@ export function consolidar(
     }
   })
 
+  const divergem = complementos.some((c) => c.quantidade !== investimento.quantidade)
+
   const foraDoTotal: ItemForaDoTotal[] = complementos
     .filter((c) => c.foraDoTotal)
     .map((c) => {
       const v = vigenciaDaColuna(c, 0)!
-      return { nome: c.nome, meses: v.meses, valorTotalFinal: v.valorTotalFinal }
+      return {
+        nome: `${c.nome}${divergem ? ` (${c.quantidade} licenças)` : ''}`,
+        meses: v.meses,
+        valorTotalFinal: v.valorTotalFinal,
+      }
     })
 
   return {
     planoLabel: bloco.label,
     foraDoTotal,
     linhas,
-    itens: [bloco.label, ...complementos.map((c) => c.nome)],
+    // ⚠️ Com quantidades divergentes a lista precisa dizer QUANTO de cada um —
+    // senão "o que está incluído" esconde que o sensor é de 550 e o parque de
+    // 400. Quando tudo bate, sai como sempre saiu (string idêntica).
+    itens: [
+      `${bloco.label}${divergem ? ` (${investimento.quantidade} licenças)` : ''}`,
+      ...complementos.map((c) => `${c.nome}${divergem ? ` (${c.quantidade} licenças)` : ''}`),
+    ],
+    quantidadesDivergem: divergem,
     coberturasDivergem:
       complementos.length > 0 &&
       linhas.some((l) => l.coberturas.some((m) => m !== l.mesesPrincipal)),

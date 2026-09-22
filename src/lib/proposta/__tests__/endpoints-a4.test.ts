@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   renderPropostaHtml,
   totalPaginas,
+  numerosDeSecao,
   secoesNoHtml,
   SECOES,
   escapeHtml,
@@ -381,6 +382,104 @@ describe('renderPropostaHtml — bloco de investimento', () => {
     expect(html).toContain('36 meses')
     expect(html).toContain('faixa 25-49')
     expect(html).toContain('30 licenças')
+  })
+})
+
+// ⚠️ 22/09 — proposta só de add-ons e quantidade própria por add-on.
+// A fonte da regra é a Bitdefender, não o gosto da casa: XDR é "GravityZone
+// Business Security Enterprise AND a separately purchasable add-on for each
+// sensor category", e o Premium não suporta os sensores.
+describe('add-ons com quantidade própria e proposta só de add-ons', () => {
+  const sensor = (qtdBase: number, propria?: number) =>
+    calcularComplementos(['XDR_PRODUCTIVITY'], qtdBase, {}, propria ? { XDR_PRODUCTIVITY: propria } : {})
+
+  it('400 Enterprise + 550 sensores: o documento para de dizer "pelas mesmas N"', () => {
+    const inv = calcularInvestimento({ quantidade: 400, planos: ['ENTERPRISE'], ajustePercent: 0 })
+    const comps = sensor(400, 550)
+    const html = renderPropostaHtml({
+      ...doc(), investimento: inv, complementos: comps, consolidado: consolidar(inv, 0, comps),
+    })
+    expect(html).not.toMatch(/pelas mesmas \d+ licenças/)
+    expect(html).toContain('pela quantidade indicada em cada bloco')
+    expect(html).toContain('550 licenças')
+    expect(html).toContain('400 licenças')
+    // o preço impresso é o de 550, não o de 400
+    expect(html).toContain(formatarBRL(126 * 550))
+  })
+
+  it('quantidades iguais: o documento sai como sempre saiu', () => {
+    const inv = calcularInvestimento({ quantidade: 400, planos: ['ENTERPRISE'], ajustePercent: 0 })
+    const comps = sensor(400)
+    const html = renderPropostaHtml({
+      ...doc(), investimento: inv, complementos: comps, consolidado: consolidar(inv, 0, comps),
+    })
+    expect(html).toContain('pelas mesmas 400 licenças')
+    expect(html).not.toContain('pela quantidade indicada em cada bloco')
+  })
+
+  it('sensor XDR sem Enterprise: o documento diz que a base é pré-requisito', () => {
+    const semPlano = renderPropostaHtml({
+      ...doc(),
+      investimento: calcularInvestimento({ quantidade: 550, planos: [], ajustePercent: 0 }),
+      complementos: sensor(550),
+    })
+    expect(semPlano).toContain('exigem essa base ativa')
+
+    // o caso perigoso: Premium NÃO suporta sensor XDR, e o papel avisa
+    const comPremium = renderPropostaHtml({
+      ...doc(),
+      investimento: calcularInvestimento({ quantidade: 400, planos: ['PREMIUM'], ajustePercent: 0 }),
+      complementos: sensor(400),
+    })
+    expect(comPremium).toContain('Business Security Enterprise')
+    expect(comPremium).toContain('exigem essa base ativa')
+  })
+
+  it('com Enterprise na própria proposta a nota some — a base está ali', () => {
+    const inv = calcularInvestimento({ quantidade: 400, planos: ['ENTERPRISE'], ajustePercent: 0 })
+    const comps = sensor(400)
+    const html = renderPropostaHtml({
+      ...doc(), investimento: inv, complementos: comps, consolidado: consolidar(inv, 0, comps),
+    })
+    expect(html).not.toContain('exigem essa base ativa')
+  })
+
+  // ⚠️ Sem página de Investimento a contagem NÃO pode começar depois dela: era
+  // assim que o documento pulava de 05. para 07. em 21/08.
+  it('proposta só de add-ons não abre buraco na numeração das seções', () => {
+    const html = renderPropostaHtml({
+      ...doc(),
+      investimento: calcularInvestimento({ quantidade: 550, planos: [], ajustePercent: 0 }),
+      complementos: sensor(550),
+    })
+    expect(html).toContain('06.')
+    expect(html).not.toContain('07.')
+    expect(totalPaginas(0, 1, 0)).toBe(10)
+  })
+
+  // ⚠️ O acervo não volta para trás: snapshot emitido ANTES de 22/09 não tem
+  // `quantidade` no bloco. Sem defesa, o re-download imprimiria "undefined
+  // licenças" e alegaria divergência onde não há. É a classe do achado C1 de
+  // 02/09, em que o /arquivo rebaixava a proposta no re-download.
+  it('reimprime snapshot antigo (sem quantidade no bloco) como sempre saiu', () => {
+    const inv = calcularInvestimento({ quantidade: 400, planos: ['ENTERPRISE'], ajustePercent: 0 })
+    const comps = calcularComplementos(['PATCH_MANAGEMENT'], 400)
+    // simula o snapshot velho: o campo simplesmente não existia
+    const antigos = comps.map(({ quantidade: _q, quantidadePropria: _p, ...resto }) => resto)
+    const html = renderPropostaHtml({
+      ...doc(),
+      investimento: inv,
+      complementos: antigos as typeof comps,
+      consolidado: consolidar(inv, 0, comps),
+    })
+    expect(html).not.toContain('undefined')
+    expect(html).toContain('pelas mesmas 400 licenças')
+    expect(html).not.toContain('pela quantidade indicada em cada bloco')
+  })
+
+  it('numerosDeSecao sem investimento começa no número que sobrou', () => {
+    expect(numerosDeSecao({ temComplementos: true, temServicos: false, temResumo: false, temInvestimento: false }).COMPLEMENTOS).toBe('06.')
+    expect(numerosDeSecao({ temComplementos: true, temServicos: false, temResumo: false }).COMPLEMENTOS).toBe('07.')
   })
 })
 

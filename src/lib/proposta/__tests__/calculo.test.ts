@@ -210,10 +210,15 @@ describe('calcularInvestimento — totais e ajuste', () => {
     expect(r.planos.map((p) => p.plano)).toEqual(['BUSINESS_SECURITY', 'ENTERPRISE'])
   })
 
-  it('recusa lista de planos vazia', () => {
-    expect(() =>
-      calcularInvestimento({ quantidade: 30, planos: [], ajustePercent: 0 })
-    ).toThrow(ApiError)
+  // Mudou em 22/09 (feature-addons-quantidade-propria): lista vazia é proposta
+  // SÓ DE ADD-ONS, para cliente que já tem a base contratada. Quem impede a
+  // proposta vazia é o schema, o único ponto que vê planos e complementos
+  // juntos — aqui não dá para saber se existe complemento.
+  it('aceita lista de planos vazia: é a proposta só de add-ons', () => {
+    const inv = calcularInvestimento({ quantidade: 30, planos: [], ajustePercent: 0 })
+    expect(inv.planos).toEqual([])
+    expect(inv.quantidade).toBe(30)
+    expect(inv.faixa).toBe('25-49')
   })
 
   it('carimba a procedência da tabela no resultado (vira precoSnapshot)', () => {

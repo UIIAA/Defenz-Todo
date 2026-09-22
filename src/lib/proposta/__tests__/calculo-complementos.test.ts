@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { calcularComplementos, consolidar, servicosSobConsulta } from '../calculo-complementos'
 import { calcularInvestimento } from '../calculo'
+import { calcularComplementos, consolidar, servicosSobConsulta } from '../calculo-complementos'
 import { COMPLEMENTOS } from '../complementos'
 
 describe('calcularComplementos — os números das tabelas do Marcos, sem deriva', () => {
@@ -51,6 +51,50 @@ describe('calcularComplementos — os números das tabelas do Marcos, sem deriva
   it('aceita volume acima de 999 e só multiplica', () => {
     const [patch] = calcularComplementos(['PATCH_MANAGEMENT'], 1400)
     expect(patch.vigencias[0].valorTotalFinal).toBeCloseTo(29.95 * 1400, 6)
+  })
+
+  // ⚠️ 22/09 — quantidade própria por add-on. A Bitdefender vende cada add-on
+  // como SKU com chave própria, e no sensor de Produtividade divergir é o caso
+  // NORMAL: ele licencia caixas de Microsoft 365, não máquinas gerenciadas.
+  describe('quantidade própria por add-on', () => {
+    it('multiplica pela quantidade DO ITEM, não pela do principal', () => {
+      const [sensor] = calcularComplementos(['XDR_PRODUCTIVITY'], 400, {}, { XDR_PRODUCTIVITY: 550 })
+      expect(sensor.quantidade).toBe(550)
+      expect(sensor.quantidadePropria).toBe(true)
+      expect(sensor.vigencias[0].valorTotalFinal).toBeCloseTo(126 * 550, 6)
+    })
+
+    it('sem quantidade própria usa a do principal e não se marca como própria', () => {
+      const [sensor] = calcularComplementos(['XDR_PRODUCTIVITY'], 400)
+      expect(sensor.quantidade).toBe(400)
+      expect(sensor.quantidadePropria).toBe(false)
+      expect(sensor.vigencias[0].valorTotalFinal).toBeCloseTo(126 * 400, 6)
+    })
+
+    it('recusa quantidade própria inválida em vez de cair na do principal', () => {
+      expect(() =>
+        calcularComplementos(['XDR_PRODUCTIVITY'], 400, {}, { XDR_PRODUCTIVITY: 4 })
+      ).toThrow()
+      expect(() =>
+        calcularComplementos(['XDR_PRODUCTIVITY'], 400, {}, { XDR_PRODUCTIVITY: 14_000 })
+      ).toThrow()
+    })
+
+    it('o consolidado soma cada item pela sua quantidade e diz quais divergem', () => {
+      const inv = calcularInvestimento({ quantidade: 400, planos: ['ENTERPRISE'], ajustePercent: 0 })
+      const comps = calcularComplementos(['XDR_PRODUCTIVITY'], 400, {}, { XDR_PRODUCTIVITY: 550 })
+      const c = consolidar(inv, 0, comps)
+      expect(c.quantidadesDivergem).toBe(true)
+      expect(c.itens).toEqual(['Enterprise (400 licenças)', 'Bitdefender XDR Sensor · Productivity (550 licenças)'])
+      expect(c.foraDoTotal[0].valorTotalFinal).toBeCloseTo(126 * 550, 6)
+    })
+
+    it('quantidades iguais mantêm a lista do jeito que sempre saiu', () => {
+      const inv = calcularInvestimento({ quantidade: 400, planos: ['ENTERPRISE'], ajustePercent: 0 })
+      const c = consolidar(inv, 0, calcularComplementos(['XDR_PRODUCTIVITY'], 400))
+      expect(c.quantidadesDivergem).toBe(false)
+      expect(c.itens).toEqual(['Enterprise', 'Bitdefender XDR Sensor · Productivity'])
+    })
   })
 
   // I-C4: a descrição vem de material oficial, com a fonte impressa ao lado.

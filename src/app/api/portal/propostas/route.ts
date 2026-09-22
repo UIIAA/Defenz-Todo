@@ -70,14 +70,19 @@ export async function POST(request: NextRequest) {
     const complementos = calcularComplementos(
       dados.complementos,
       dados.quantidade,
-      dados.descontosComplemento
+      dados.descontosComplemento,
+      dados.quantidadesComplemento
     )
     // Serviço sob consulta (MDR) não tem preço e não entra em soma: vai por fora,
     // e precisa viajar junto — sem isto, marcar só o MDR gerava uma proposta sem
     // nenhuma página de MDR, calada (achado 17 da crítica).
     const servicos = servicosSobConsulta(dados.complementos)
+    // ⚠️ Sem plano na proposta (só add-ons) não existe consolidado: ele responde
+    // "quanto custa a solução que escolhi" somando UM plano principal com os
+    // complementos, e aqui não há plano. A página de resumo simplesmente não
+    // existe, e os preços ficam nas páginas de complemento.
     const consolidado =
-      complementos.length > 0
+      complementos.length > 0 && investimento.planos.length > 0
         ? consolidar(investimento, dados.planoConsolidado, complementos)
         : undefined
 
@@ -162,7 +167,20 @@ export async function POST(request: NextRequest) {
               },
             }
           : {}),
-        planos: { from: null, to: dados.planos.join(', ') },
+        planos: { from: null, to: dados.planos.join(', ') || 'só complementos' },
+        // Quantidade própria por add-on: sem isto o log responde "que proposta
+        // foi emitida" sem dizer QUANTO de cada item (mesma regra do desconto).
+        ...(complementos.some((c) => c.quantidadePropria)
+          ? {
+              quantidadesPorItem: {
+                from: null,
+                to: complementos
+                  .filter((c) => c.quantidadePropria)
+                  .map((c) => `${c.nome}: ${c.quantidade}`)
+                  .join(', '),
+              },
+            }
+          : {}),
         ajustePercent: { from: null, to: ajustePercent },
         // Crítica C3: sem isto o log responde "que proposta foi emitida" pela metade.
         complementos: {

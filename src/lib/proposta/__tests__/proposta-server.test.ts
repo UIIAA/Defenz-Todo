@@ -149,6 +149,38 @@ describe('validação do formulário', () => {
     expect(createPropostaSchema.parse(base).quantidade).toBe(30)
   })
 
+  // 22/09: proposta SÓ de add-ons. O que deixa de existir é a proposta vazia.
+  it('aceita proposta sem plano quando há complemento, e recusa a vazia', () => {
+    const soAddon = createPropostaSchema.parse({
+      ...base,
+      planos: [],
+      complementos: ['XDR_PRODUCTIVITY'],
+    })
+    expect(soAddon.planos).toEqual([])
+    expect(() =>
+      createPropostaSchema.parse({ ...base, planos: [], complementos: [] })
+    ).toThrow(/ao menos um plano ou um complemento/)
+  })
+
+  it('recusa quantidade informada para complemento que não foi marcado', () => {
+    expect(() =>
+      createPropostaSchema.parse({
+        ...base,
+        complementos: ['PATCH_MANAGEMENT'],
+        quantidadesComplemento: { XDR_PRODUCTIVITY: 550 },
+      })
+    ).toThrow(/não foi marcado/)
+  })
+
+  it('aceita quantidade própria para complemento marcado', () => {
+    const d = createPropostaSchema.parse({
+      ...base,
+      complementos: ['XDR_PRODUCTIVITY'],
+      quantidadesComplemento: { XDR_PRODUCTIVITY: 550 },
+    })
+    expect(d.quantidadesComplemento).toEqual({ XDR_PRODUCTIVITY: 550 })
+  })
+
   it('recusa 4 licenças, aceita 1400 — acima de 999 vai com o preço da faixa topo', () => {
     expect(() => createPropostaSchema.parse({ ...base, quantidade: 4 })).toThrow()
     expect(createPropostaSchema.parse({ ...base, quantidade: 1400 }).quantidade).toBe(1400)
