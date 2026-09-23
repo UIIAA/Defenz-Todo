@@ -36,7 +36,14 @@ export default function LoginPage() {
         signIn('credentials', {
           email,
           password,
-          redirect: false
+          redirect: false,
+          // ⚠️ Sem isto o NextAuth usa `window.location.href` como destino. Com a
+          // página em `/?error=undefined` (o `pages.error` aponta para `/`), o
+          // login DAVA CERTO — status 200 — mas o servidor devolvia o próprio
+          // endereço como destino, o cliente lia `error=undefined` dele e a tela
+          // dizia "Credenciais invalidas". Toda senha falhava, inclusive a certa,
+          // até alguém limpar a URL na mão (23/09/2026).
+          callbackUrl: '/dashboard',
         }),
         timeoutPromise
       ]) as any
