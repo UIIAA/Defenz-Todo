@@ -220,7 +220,7 @@ function rodape(pagina: number, total: number, ano: number, margemTopo = 'auto')
  * que um alarme a menos. Os dois críticos discordaram neste ponto; ganhou o que
  * trouxe a consequência verificável.
  */
-export const TEMPLATE_VERSAO = '2026-09-17'
+export const TEMPLATE_VERSAO = '2026-10-13'
 
 export const SECOES = {
   CONHECA_NOS: '01.',
@@ -234,12 +234,16 @@ export const SECOES = {
 } as const
 
 /**
- * Os números de seção que aparecem no HTML, na ordem, sem repetição consecutiva.
- * (Investimento repete o mesmo número em cada página de plano — é a mesma seção.)
+ * Os números de seção que aparecem no HTML, na ordem, exatamente como impressos.
+ * Página de continuação não leva número (I-N1), então repetição aqui é defeito.
  */
 export function secoesNoHtml(html: string): string[] {
-  const achados = [...html.matchAll(/>(\d{2}\.)<\/span>/g)].map((m) => m[1])
-  return achados.filter((n, i) => n !== achados[i - 1])
+  // ⚠️ Devolve o que está IMPRESSO, repetição incluída. Até 13/10 esta função
+  // descartava número repetido em sequência ("a mesma seção"), e por isso o
+  // teste aprovava `06. 06. 06.` numa proposta de três planos — exatamente o que
+  // o Fernando viu no papel (feature-proposta-numeracao-secoes, I-N1). Um
+  // verificador que normaliza o defeito antes de comparar não verifica nada.
+  return [...html.matchAll(/>(\d{2}\.)<\/span>/g)].map((m) => m[1])
 }
 
 /**
@@ -273,10 +277,25 @@ function citaFaixa(inv: Pick<Investimento, 'ajustePercent' | 'quantidade'>): boo
   return !precoAcimaDaTabela(inv) && !quantidadeAcimaDaTabela(inv)
 }
 
-function tituloSecao(numero: string, texto: string, sufixo = ''): string {
+function tituloSecao(numero: string, texto: string): string {
   return `
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:22px;"></div>
-        <h2 style="font-size:40px; font-weight:800; letter-spacing:-0.02em; margin:0 0 22px;"><span style="color:${C.accent};">${numero}</span>&nbsp;&nbsp;${texto}${sufixo}</h2>`
+        <h2 style="font-size:40px; font-weight:800; letter-spacing:-0.02em; margin:0 0 22px;"><span style="color:${C.accent};">${numero}</span>&nbsp;&nbsp;${texto}</h2>`
+}
+
+/**
+ * Cabeçalho da página que CONTINUA uma seção: sem número.
+ *
+ * ⚠️ I-N1 (feature-proposta-numeracao-secoes): cada número de seção aparece uma
+ * vez só, na página em que a seção começa. Até 13/10 a continuação repetia o
+ * título grande — "06. Investimento continuação" — e para quem lê eram dois
+ * itens 06. (Fernando, caso Clayton Casal). Um lugar só para Investimento e
+ * Complementos: a mesma regra escrita duas vezes é como uma delas fica para trás.
+ */
+function tituloContinuacao(texto: string): string {
+  return `
+        <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:16px;"></div>
+        <div style="font-size:13px; letter-spacing:0.12em; text-transform:uppercase; color:${C.faint}; font-weight:800; margin:0 0 22px;">${texto} · continuação</div>`
 }
 
 function pagina(conteudo: string): string {
@@ -419,13 +438,9 @@ function paginaInvestimento(
   const faixa = citaFaixa(inv) ? ` · faixa ${inv.faixa} da tabela vigente` : ''
 
   return pagina(`${cabecalhoCorrido(doc.empresaNome)}
-      <div style="margin-top:66px;">${tituloSecao(
-        SECOES.INVESTIMENTO,
-        'Investimento',
-        continuacao
-          ? ` &nbsp;<span style="font-size:22px; color:${C.faint}; font-weight:700;">continuação</span>`
-          : ''
-      )}
+      <div style="margin-top:66px;">${
+        continuacao ? tituloContinuacao('Investimento') : tituloSecao(SECOES.INVESTIMENTO, 'Investimento')
+      }
         <p style="font-size:16px; line-height:1.8; color:${C.body}; margin:0; max-width:600px; text-align:justify;">Dimensionamento para <strong>${inv.quantidade} licenças</strong> na linha <strong>${escapeHtml(bloco.label)}</strong> do Bitdefender GravityZone. ${nota}</p>
       </div>
 
@@ -581,13 +596,9 @@ function paginaComplementos(
   const continuacao = indice > 0
 
   return pagina(`${cabecalhoCorrido(doc.empresaNome)}
-      <div style="margin-top:56px;">${tituloSecao(
-        numero,
-        'Complementos',
-        continuacao
-          ? ` &nbsp;<span style="font-size:22px; color:${C.faint}; font-weight:700;">continuação</span>`
-          : ''
-      )}
+      <div style="margin-top:56px;">${
+        continuacao ? tituloContinuacao('Complementos') : tituloSecao(numero, 'Complementos')
+      }
         ${
           continuacao
             ? ''

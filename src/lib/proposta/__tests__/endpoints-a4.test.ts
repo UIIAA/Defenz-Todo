@@ -96,6 +96,88 @@ describe('renderPropostaHtml — estrutura', () => {
     expect(html).toContain('Windows, Linux e Mac')
   })
 
+  // I-N1 (13/10/2026, Fernando, caso Clayton Casal): "O item 6 deve ser
+  // exclusivamente Investimento, sem outro item com o mesmo número, mesmo quando
+  // houver quebra de página." A continuação de uma seção NÃO leva número.
+  describe('I-N1: cada número de seção aparece exatamente uma vez', () => {
+    const semRepetir = (secoes: string[]) => {
+      expect(new Set(secoes).size).toBe(secoes.length)
+      expect([...secoes].sort()).toEqual(secoes)
+    }
+
+    it('o caso do Fernando: 25 licenças, Business Security + Premium', () => {
+      const html = renderPropostaHtml({
+        ...doc(),
+        investimento: calcularInvestimento({
+          quantidade: 25,
+          planos: ['BUSINESS_SECURITY', 'PREMIUM'],
+          ajustePercent: 0,
+        }),
+      })
+      expect(contar(html, '>06.</span>')).toBe(1)
+      expect(html).toContain('Investimento · continuação')
+      semRepetir(secoesNoHtml(html))
+    })
+
+    it('complementos em mais de uma página também não repetem o número', () => {
+      const investimento = calcularInvestimento({
+        quantidade: 30,
+        planos: ['BUSINESS_SECURITY', 'PREMIUM', 'ENTERPRISE'],
+        ajustePercent: -10,
+      })
+      // 5 itens com preço = 3 páginas de complementos (2 por página)
+      const comps = calcularComplementos(
+        ['PATCH_MANAGEMENT', 'CRIPTOGRAFIA_DISCO', 'PHASR', 'XDR_NETWORK', 'XDR_IDENTITY'],
+        30
+      )
+      const html = renderPropostaHtml({
+        ...doc(),
+        investimento,
+        complementos: comps,
+        consolidado: consolidar(investimento, 0, comps),
+      })
+      expect(contar(html, '>07.</span>')).toBe(1)
+      expect(html).toContain('Complementos · continuação')
+      const secoes = secoesNoHtml(html)
+      semRepetir(secoes)
+      expect(secoes).toEqual(['01.', '02.', '03.', '04.', '05.', '06.', '07.', '08.'])
+    })
+
+    it('com serviço sob consulta e resumo: 01 a 09, sem repetir', () => {
+      const investimento = calcularInvestimento({
+        quantidade: 30, planos: ['BUSINESS_SECURITY', 'PREMIUM'], ajustePercent: 0,
+      })
+      const comps = calcularComplementos(['PATCH_MANAGEMENT', 'CRIPTOGRAFIA_DISCO', 'PHASR'], 30)
+      const html = renderPropostaHtml({
+        ...doc(),
+        investimento,
+        complementos: comps,
+        servicos: servicosSobConsulta(['MDR_GERENCIADO']),
+        consolidado: consolidar(investimento, 0, comps),
+      })
+      const secoes = secoesNoHtml(html)
+      semRepetir(secoes)
+      expect(secoes).toEqual(['01.', '02.', '03.', '04.', '05.', '06.', '07.', '08.', '09.'])
+    })
+
+    it('proposta só de add-ons com complementos em várias páginas: 01 a 06, sem repetir', () => {
+      const html = renderPropostaHtml({
+        ...doc(),
+        investimento: calcularInvestimento({ quantidade: 30, planos: [], ajustePercent: 0 }),
+        complementos: calcularComplementos(['PATCH_MANAGEMENT', 'CRIPTOGRAFIA_DISCO', 'PHASR'], 30),
+      })
+      const secoes = secoesNoHtml(html)
+      semRepetir(secoes)
+      expect(secoes).toEqual(['01.', '02.', '03.', '04.', '05.', '06.'])
+      expect(html).toContain('Complementos · continuação')
+    })
+
+    it('página única por seção: nenhum rótulo de continuação', () => {
+      const html = renderPropostaHtml(doc({}, ['BUSINESS_SECURITY']))
+      expect(html).not.toContain('continuação')
+    })
+  })
+
   // ⚠️ Este bloco existe por um bug que foi para PRODUÇÃO em 21/08 e quem viu foi o
   // Marcos: ao remover a página de clientes, as seções fixas foram renumeradas mas o
   // Investimento — que mora em outra função — ficou em '07.'. O documento pulava de
