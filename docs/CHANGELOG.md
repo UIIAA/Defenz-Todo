@@ -336,3 +336,17 @@ de referência acima do "Desconto competitivo 15%". Consertar apagaria o descont
 do documento do cliente — decisão comercial do Marcos, não conserto técnico.
 
 995 testes.
+
+## 2026-10-13 — página de continuação não repete o número da seção
+
+Fernando (23/09 e 07/10, caso Clayton Casal): a DFZ-2026-02039 imprimia
+"06. Investimento" e, na página seguinte, de novo "06. Investimento continuação".
+Agora a continuação abre com um rótulo sem número ("INVESTIMENTO · CONTINUAÇÃO"),
+em Investimento e em Complementos. Spec `feature-proposta-numeracao-secoes.md`.
+
+O defeito passou porque `secoesNoHtml` deduplicava número repetido antes de comparar:
+o teste lia `06. 06. 06.` como `06.`. Com o verificador honesto, dois testes antigos
+ficaram vermelhos antes do conserto. `TEMPLATE_VERSAO` subiu (21 das 29 propostas do
+modelo anterior mudam no re-download). Também em 22–23/09: add-on com quantidade
+própria + proposta só de add-ons; login que recusava a senha certa com a URL em
+`/?error=undefined`. 1016 testes.

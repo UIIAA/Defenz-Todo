@@ -1,10 +1,22 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-09-21
+**Last updated:** 2026-10-13
 **Version:** 0.4.0
 **Branch:** main
 
-## 🎯 RETOMAR AQUI — 21/09
+## 🎯 RETOMAR AQUI — 13/10
+
+> **TUDO EM PRODUÇÃO** (`bbe1a30`, deploy Ready). 1016 testes.
+> - 13/10: continuação de seção sem número no PDF (pedido do Fernando, caso Clayton Casal).
+>   PDF de exemplo em `~/Downloads/Proposta Defenz - EXEMPLO numeracao corrigida.pdf` para o
+>   Marcos mandar ao Fernando validar.
+> - 23/09: login recusava a senha certa com a URL em `/?error=undefined` (callbackUrl fixo).
+> - 22/09: add-on com quantidade própria + proposta só de add-ons (sensor XDR exige Enterprise;
+>   nota fixa impressa + aviso na tela, sem bloqueio — a base vai em proposta separada).
+> - Pendente do Marcos: renomear a conta `marcos@defenz.com.br` de "Marcos (Defenz)" para
+>   "Marcos Cruz" (hoje o re-download sai com o nome antigo); trocar a senha (apareceu em print).
+
+## Histórico — 21/09
 
 > **TUDO EM PRODUÇÃO, working tree limpo.** Último commit `af61130`. 995 testes.
 >
