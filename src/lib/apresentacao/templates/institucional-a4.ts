@@ -36,21 +36,42 @@ import {
 } from '../comparativo'
 import { BITDEFENDER, PROVAS } from '../institucional-fatos'
 import type { FatoMercado } from '../mercado-fatos'
+import {
+  C,
+  cartaoFato,
+  escapeHtml,
+  iconeCheck,
+  linhaFonte,
+  logo,
+  pad2,
+  rodape,
+  tituloSecao,
+  type Secao,
+} from './a4-base'
+import { secoesDlpBitdefender, secoesDlp, MOLDURA_DLP } from './dlp-secoes'
+import { GTB_VIGENCIA } from '../gtb-fatos'
 
-/** Paleta do brandbook, a mesma da proposta. ~70% papel, ~22% tinta, ~8% crimson. */
-const C = {
-  accent: '#C1121F',
-  ink: '#16191D',
-  paper: '#F6F3EE',
-  surface: '#FBF9F4',
-  body: '#3C3A34',
-  muted: '#6B6459',
-  faint: '#A39C8D',
-  line: '#E3DED4',
-} as const
+export { escapeHtml }
 
 export const TELEFONE_DEFENZ = '(11) 3040-2960'
 export const TEMPLATE_VERSAO = '2026-09-17'
+
+/**
+ * A versão do texto fixo de UM documento — a base mais o conteúdo GTB quando ele entra.
+ *
+ * ⚠️ Crítica 🔴4 (23/10): as provas e listas da GTB vêm do código no render. Sem
+ * carimbar a vigência delas, mover um recurso de lista ou ligar a certificação
+ * mudaria em silêncio o re-download de um PDF já enviado. O documento Bitdefender
+ * sem DLP continua com a versão de sempre — e por isso nenhum registro antigo dele
+ * passa a acusar divergência.
+ */
+export function templateVersaoDoDocumento(
+  tipo: TipoApresentacao | undefined,
+  complementos: readonly string[] | undefined
+): string {
+  const temGtb = tipo === 'dlp' || (complementos ?? []).includes('DLP_GTB')
+  return temGtb ? `${TEMPLATE_VERSAO}+gtb-${GTB_VIGENCIA}` : TEMPLATE_VERSAO
+}
 
 export interface CasoApresentado {
   oQueAconteceu: string
@@ -81,82 +102,62 @@ export interface ApresentacaoDocumento {
    * em reais aparecer aqui, a regra que separa os dois documentos caiu.
    */
   complementos?: ComplementoId[]
+  /**
+   * `'dlp'` = apresentação só de DLP GTB (feature-apresentacao-dlp-gtb.md §5.2):
+   * nenhuma página Bitdefender, e `nivelDestaque`/`complementos`/`casos` ignorados.
+   * Ausente = `'bitdefender'`, o documento de sempre.
+   */
+  tipo?: TipoApresentacao
 }
 
-export function escapeHtml(valor: string): string {
-  return String(valor)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
+export type TipoApresentacao = 'bitdefender' | 'dlp'
+
+/**
+ * O que muda na moldura (capa, abertura, cabeçalho, encerramento) entre os dois
+ * documentos. O miolo são as seções; a moldura é o resto.
+ *
+ * ⚠️ I-G5: a moldura Bitdefender promete "avaliação no seu ambiente" e fala do
+ * "GravityZone". Nenhuma dessas frases pode aparecer no documento DLP — por isso
+ * a moldura é um objeto inteiro trocado, não um `if` espalhado pelo template.
+ */
+export interface Moldura {
+  rotuloCabecalho: string
+  capaTitulo: string
+  capaSubtitulo: (setor: string | null) => string
+  aberturaRoteiro: (setor: string | null) => string
+  aberturaFecho: string
+  encerramentoTitulo: string
+  encerramentoTexto: string
+  encerramentoPassos: string[]
 }
 
-const pad2 = (n: number) => String(n).padStart(2, '0')
-const LOGO_RATIO = 480 / 131
-
-function logo(alturaPx: number): string {
-  return `<span class="dz-logo" style="height:${alturaPx}px; width:${Math.round(alturaPx * LOGO_RATIO)}px;"></span>`
+const MOLDURA_BITDEFENDER: Moldura = {
+  rotuloCabecalho: 'Bitdefender GravityZone com a Defenz',
+  capaTitulo: 'Segurança que<br>simplifica.<br>Performance<br>que escala.',
+  capaSubtitulo: (setor) =>
+    `A plataforma Bitdefender GravityZone${setor ? `, aplicada ao contexto de ${setor}` : ''}, com implantação e suporte da Defenz no Brasil.`,
+  aberturaRoteiro: (setor) =>
+    `Este documento foi montado para ser lido sem ninguém do lado explicando. Ele responde, nesta ordem: quem é a fabricante, o que instituições independentes dizem dela, quem é a Defenz${setor ? `, o que está acontecendo hoje em ${setor}` : ''} e o que existe dentro da plataforma.`,
+  aberturaFecho: 'Proteção não se compra por folheto.<br>Se confere.',
+  encerramentoTitulo: 'O próximo passo<br>é uma conversa<br>de 30 minutos.',
+  encerramentoTexto:
+    'Nela mostramos a plataforma funcionando, dimensionamos para o seu ambiente e, se fizer sentido, montamos uma avaliação sem custo com um grupo de máquinas suas.',
+  encerramentoPassos: [
+    'Demonstração técnica da console, com o seu cenário',
+    'Dimensionamento e proposta comercial',
+    'Avaliação assistida no seu ambiente',
+  ],
 }
 
-function cabecalho(doc: ApresentacaoDocumento): string {
+function cabecalho(doc: ApresentacaoDocumento, moldura: Moldura): string {
   return `
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div style="font-size:11.6px; color:${C.faint}; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; line-height:1.8;">${escapeHtml(doc.empresaNome)} · Bitdefender GravityZone com a Defenz</div>
+        <div style="font-size:11.6px; color:${C.faint}; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; line-height:1.8;">${escapeHtml(doc.empresaNome)} · ${moldura.rotuloCabecalho}</div>
         ${logo(20)}
       </div>`
 }
 
-function rodape(pagina: number, total: number, ano: number, margemTopo = 'auto'): string {
-  return `
-      <div style="margin-top:${margemTopo}; padding-top:20px; display:flex; justify-content:space-between; align-items:flex-end;">
-        ${logo(22)}
-        <div style="text-align:right; font-size:11.6px; color:${C.faint}; font-weight:600; line-height:1.7;"><div>Página ${pad2(pagina)} de ${pad2(total)}</div><div>© Defenz Cybersecurity ${ano} · Confidencial</div></div>
-      </div>`
-}
-
-function tituloSecao(numero: string, texto: string): string {
-  return `
-        <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:22px;"></div>
-        <h2 style="font-size:40.2px; font-weight:800; letter-spacing:-0.02em; margin:0 0 22px; line-height:1.1;"><span style="color:${C.accent};">${numero}</span>&nbsp;&nbsp;${texto}</h2>`
-}
-
-function linhaFonte(texto: string): string {
-  return `<div style="font-size:11.6px; color:${C.faint}; font-weight:600; margin-top:6px;">${texto}</div>`
-}
-
-/** Cartão de dado: o número grande, a frase, e a fonte embaixo. */
-function cartaoFato(f: FatoMercado): string {
-  const ano = f.ano === 'lei' ? '' : ` · ${f.ano}`
-  return `
-          <div style="border-left:3px solid ${C.accent}; padding:2px 0 2px 18px;">
-            <div style="font-size:27.5px; font-weight:800; letter-spacing:-0.02em; color:${C.accent}; line-height:1.2;">${escapeHtml(f.valor)}</div>
-            <p style="font-size:14.8px; line-height:1.6; color:${C.body}; margin:4px 0 0;">${escapeHtml(f.texto)}</p>
-            ${linhaFonte(`${escapeHtml(f.fonte)}${ano}`)}
-          </div>`
-}
-
 /** Tabela dos três níveis, com a coluna recomendada em destaque. */
-/**
- * O "tem este recurso" da tabela dos níveis, desenhado em SVG.
- *
- * ⚠️ NÃO usar caractere de check (`&#10003;`, U+2713). O Manrope embutido é o
- * subset latino do Google Fonts: o glifo **não existe** nele (`cmap` conferido,
- * 218 glifos) e a `unicode-range` das duas `@font-face` também não cobre o ponto
- * de código. O Chromium então cai na fonte do sistema — que no macOS resolve
- * (o PDF gerado aqui trazia um `LucidaGrande-Bold` embutido só por causa deste
- * caractere) e **no Lambda não existe**, deixando a coluna inteira em branco.
- *
- * Foi assim que a tabela chegou ao cliente sem nenhum tique, com os travessões
- * aparecendo normalmente — o travessão (U+2014) está dentro de `U+2000-206F` e
- * o check não está em faixa nenhuma.
- *
- * Traço em SVG não depende de fonte, escala com o zoom e herda a cor.
- */
-function iconeCheck(cor: string): string {
-  return `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="${cor}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;" aria-hidden="true"><path d="M2.5 8.6 L6.2 12.3 L13.5 4"/></svg>`
-}
-
 function tabelaNiveis(destaque: NivelId): string {
   const th = (n: NivelId) => {
     const on = n === destaque
@@ -213,15 +214,13 @@ const FAQ = [
 // MESMAS (mesmo woff2). Re-exportadas aqui porque este módulo já era a porta.
 export { UNICODE_RANGES_EMBUTIDAS, cobertoPelaFonte }
 
-export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
-  const empresa = escapeHtml(doc.empresaNome)
-  const cliente = escapeHtml(doc.clienteNome)
+/** As seções do documento Bitdefender, em ORDEM. O número sai do índice, nunca da mão. */
+function secoesBitdefender(doc: ApresentacaoDocumento): Secao[] {
   const setor = doc.setor ? escapeHtml(doc.setor) : null
   const temCasos = doc.casos.length > 0
   const fatos = doc.fatos.slice(0, 5)
-
   // ── as seções numeradas, em ORDEM. O número sai do índice, nunca da mão.
-  const secoes: { titulo: string; corpo: (n: string) => string }[] = []
+  const secoes: Secao[] = []
 
   secoes.push({
     titulo: 'Quem é a Bitdefender',
@@ -334,7 +333,10 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
         <div style="font-size:13.2px; color:${C.faint}; font-weight:600; text-align:center; padding-top:10px;">BS = Business Security. O detalhamento técnico de cada recurso é apresentado na reunião.</div>`,
   })
 
-  const complementos = (doc.complementos ?? []).map(complemento)
+  // Modo A (feature-apresentacao-dlp-gtb §5.1): com DLP marcado, ele sai da lista
+  // genérica e ganha páginas próprias logo abaixo — para não aparecer duas vezes.
+  const comDlp = (doc.complementos ?? []).includes('DLP_GTB')
+  const complementos = (doc.complementos ?? []).filter((id) => id !== 'DLP_GTB').map(complemento)
   // ⚠️ Achado 6 da crítica: a frase fixa "os valores estão na proposta comercial"
   // vira mentira com um item sob consulta marcado — o MDR não tem preço em lugar
   // nenhum. I-N1 proíbe preço aqui; isto impede prometer que o preço existe.
@@ -363,6 +365,7 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
         </div>`,
     })
   }
+  if (comDlp) secoes.push(...secoesDlpBitdefender())
 
   secoes.push({
     titulo: 'O que dizem os testes independentes',
@@ -396,6 +399,16 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
         </div>`,
   })
 
+  return secoes
+}
+
+export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
+  const empresa = escapeHtml(doc.empresaNome)
+  const cliente = escapeHtml(doc.clienteNome)
+  const setor = doc.setor ? escapeHtml(doc.setor) : null
+  const moldura = doc.tipo === 'dlp' ? MOLDURA_DLP : MOLDURA_BITDEFENDER
+  const secoes = doc.tipo === 'dlp' ? secoesDlp(doc) : secoesBitdefender(doc)
+
   // ── páginas, em ordem. Numeração derivada daqui — ver o comentário do topo.
   const capa = `
   <section class="page">
@@ -406,8 +419,8 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
       </div>
       <div style="margin-top:auto; margin-bottom:auto;">
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:28px;"></div>
-        <h1 style="font-size:55px; line-height:1.06; font-weight:800; letter-spacing:-0.03em; margin:0 0 22px;">Segurança que<br>simplifica.<br>Performance<br>que escala.</h1>
-        <p style="font-size:17.9px; line-height:1.7; color:${C.muted}; margin:0; max-width:520px;">A plataforma Bitdefender GravityZone${setor ? `, aplicada ao contexto de ${setor}` : ''}, com implantação e suporte da Defenz no Brasil.</p>
+        <h1 style="font-size:55px; line-height:1.06; font-weight:800; letter-spacing:-0.03em; margin:0 0 22px;">${moldura.capaTitulo}</h1>
+        <p style="font-size:17.9px; line-height:1.7; color:${C.muted}; margin:0; max-width:520px;">${moldura.capaSubtitulo(setor)}</p>
         <div style="margin-top:54px;">
           <div style="font-size:11.6px; letter-spacing:0.14em; text-transform:uppercase; color:${C.faint}; font-weight:800;">Preparado para</div>
           <div style="font-size:25px; font-weight:800; letter-spacing:-0.02em; color:${C.ink}; line-height:1.25; margin-top:7px;">${empresa}</div>
@@ -433,11 +446,11 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
 
   const abertura = (n: number, total: number) => `
   <section class="page">
-    <div style="height:100%; padding:56px 66px 44px; display:flex; flex-direction:column;">${cabecalho(doc)}
+    <div style="height:100%; padding:56px 66px 44px; display:flex; flex-direction:column;">${cabecalho(doc, moldura)}
       <div style="margin-top:52px; flex:1; display:flex; flex-direction:column;">
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:26px;"></div>
         <h2 style="font-size:35px; font-weight:800; letter-spacing:-0.02em; margin:0 0 30px;">O que você vai ler aqui</h2>
-        <p style="font-size:16.6px; line-height:1.75; color:${C.body}; margin:0 0 28px; max-width:620px; text-align:justify;">Este documento foi montado para ser lido sem ninguém do lado explicando. Ele responde, nesta ordem: quem é a fabricante, o que instituições independentes dizem dela, quem é a Defenz${setor ? `, o que está acontecendo hoje em ${setor}` : ''} e o que existe dentro da plataforma.</p>
+        <p style="font-size:16.6px; line-height:1.75; color:${C.body}; margin:0 0 28px; max-width:620px; text-align:justify;">${moldura.aberturaRoteiro(setor)}</p>
         <p style="font-size:16.6px; line-height:1.75; color:${C.body}; margin:0 0 28px; max-width:620px; text-align:justify;">Todo número apresentado traz a fonte e o ano. Nada aqui é estimativa nossa: se um dado não tinha origem verificável, ele ficou de fora.</p>
 
         <div style="margin-top:14px; border:1px solid ${C.line}; background:${C.surface}; padding:30px 34px; max-width:620px;">
@@ -448,7 +461,7 @@ export function renderApresentacaoHtml(doc: ApresentacaoDocumento): string {
         </div>
 
         <div style="margin-top:auto; padding-top:34px;">
-          <div style="border-left:3px solid ${C.accent}; padding-left:22px;"><div style="font-size:23px; font-weight:800; letter-spacing:-0.01em; line-height:1.35;">Proteção não se compra por folheto.<br>Se confere.</div></div>
+          <div style="border-left:3px solid ${C.accent}; padding-left:22px;"><div style="font-size:23px; font-weight:800; letter-spacing:-0.01em; line-height:1.35;">${moldura.aberturaFecho}</div></div>
         </div>
       </div>
 ${rodape(n, total, doc.ano, '24px')}
@@ -462,10 +475,10 @@ ${rodape(n, total, doc.ano, '24px')}
       <div style="align-self:flex-start;">${logo(34)}</div>
       <div style="margin-top:auto; margin-bottom:auto;">
         <div style="width:56px; height:4px; background:${C.accent}; margin-bottom:28px;"></div>
-        <h1 style="font-size:50.8px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; margin:0 0 22px;">O próximo passo<br>é uma conversa<br>de 30 minutos.</h1>
-        <p style="font-size:17.5px; line-height:1.7; color:#4A4740; margin:0 0 26px; max-width:540px;">Nela mostramos a plataforma funcionando, dimensionamos para o seu ambiente e, se fizer sentido, montamos uma avaliação sem custo com um grupo de máquinas suas.</p>
+        <h1 style="font-size:50.8px; line-height:1.08; font-weight:800; letter-spacing:-0.03em; margin:0 0 22px;">${moldura.encerramentoTitulo}</h1>
+        <p style="font-size:17.5px; line-height:1.7; color:#4A4740; margin:0 0 26px; max-width:540px;">${moldura.encerramentoTexto}</p>
         <div style="display:flex; flex-direction:column; gap:10px; max-width:540px;">
-          ${['Demonstração técnica da console, com o seu cenário', 'Dimensionamento e proposta comercial', 'Avaliação assistida no seu ambiente']
+          ${moldura.encerramentoPassos
             .map(
               (t) =>
                 `<div style="display:flex; gap:12px; align-items:flex-start;"><span style="color:${C.accent}; font-weight:800; font-size:16.9px; line-height:1.5;">·</span><span style="font-size:15.8px; color:#3A3833; font-weight:600;">${t}</span></div>`
@@ -489,7 +502,7 @@ ${rodape(n, total, doc.ano, '24px')}
     .map((s, i) =>
       `
   <section class="page">
-    <div style="height:100%; padding:56px 66px 44px; display:flex; flex-direction:column;">${cabecalho(doc)}
+    <div style="height:100%; padding:56px 66px 44px; display:flex; flex-direction:column;">${cabecalho(doc, moldura)}
       <div style="margin-top:56px; flex:1; display:flex; flex-direction:column;">${s.corpo(`${pad2(i + 1)}.`)}
       </div>
 ${rodape(i + 3, total, doc.ano)}

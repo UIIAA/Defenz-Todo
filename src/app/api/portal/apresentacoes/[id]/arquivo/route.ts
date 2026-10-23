@@ -4,10 +4,13 @@ import { getCurrentUser, companyScopeWhere } from '@/lib/auth'
 import { handleApiError, ApiError } from '@/lib/api-helpers'
 import { renderPdf } from '@/lib/proposta/pdf'
 import type { ComplementoId } from '@/lib/proposta/complementos'
-import type { CasoApresentado } from '@/lib/apresentacao/templates/institucional-a4'
+import type {
+  CasoApresentado,
+  TipoApresentacao,
+} from '@/lib/apresentacao/templates/institucional-a4'
 import {
   renderApresentacaoHtml,
-  TEMPLATE_VERSAO,
+  templateVersaoDoDocumento,
 } from '@/lib/apresentacao/templates/institucional-a4'
 import { formatarDataSP } from '@/lib/apresentacao/apresentacao-server'
 import type { FatoMercado } from '@/lib/apresentacao/mercado-fatos'
@@ -45,6 +48,7 @@ export async function GET(
         empresaNome: true,
         setor: true,
         nivelDestaque: true,
+        tipo: true,
         fatosSnapshot: true,
         complementosSnapshot: true,
         casosSnapshot: true,
@@ -58,6 +62,9 @@ export async function GET(
     if (!registro) throw new ApiError('Apresentação não encontrada', 404)
 
     const fatos = (registro.fatosSnapshot as unknown as FatoMercado[]) ?? []
+    // ⚠️ Sem o tipo, um documento só-DLP baixado de novo sairia como Bitdefender.
+    const tipo = registro.tipo as TipoApresentacao
+    const complementos = (registro.complementosSnapshot as ComplementoId[] | null) ?? undefined
 
     const html = renderApresentacaoHtml({
       clienteNome: registro.clienteNome,
@@ -80,11 +87,12 @@ export async function GET(
       casos: (registro.casosSnapshot as CasoApresentado[] | null) ?? [],
       nivelDestaque: registro.nivelDestaque as NivelId,
       // Sem isto a reimpressão perderia a página dos complementos citados.
-      complementos: (registro.complementosSnapshot as ComplementoId[] | null) ?? undefined,
+      complementos,
+      tipo,
     })
 
     const pdf = await renderPdf(html)
-    const divergente = registro.templateVersao !== TEMPLATE_VERSAO
+    const divergente = registro.templateVersao !== templateVersaoDoDocumento(tipo, complementos)
 
     return new NextResponse(new Uint8Array(pdf), {
       status: 200,

@@ -3,6 +3,17 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Added (2026-10-23 — DLP GTB na apresentação)
+> **1034 testes verdes**, build ok. **Não deployado.** Coluna `apresentacoes.tipo` já criada no Neon.
+
+- **Apresentação só de DLP** (seletor "Tipo de apresentação" no Portal): 13 páginas sem nada de Bitdefender —
+  perímetro, o que está em jogo (só fonte primária), quem é a GTB, plataforma em camadas, GTB Endpoint Protector,
+  como a plataforma reconhece o dado, IA generativa, "já tenho antivírus", Defenz, FAQ (com o Purview) e próximos passos.
+- **Bitdefender + DLP:** marcar o `DLP_GTB` nos complementos troca o parágrafo por 2 páginas próprias. Sem DLP, HTML idêntico.
+- **Sem certificação GTB, sem promessa de avaliação** no documento DLP (`DEFENZ_GTB.certificada = false`).
+- **Proposta:** DLP só a partir de 25 licenças, na quantidade efetiva.
+- Spec `feature-apresentacao-dlp-gtb.md` + pesquisa `docs/pedidos/2026-10-23-dlp-gtb-pesquisa.md`; 2 rodadas de crítica adversarial.
+
 ### Changed (2026-09-18 — PHASR e sensores XDR passam a 12 meses)
 > **984 testes verdes.** Não deployado (vai junto com o pacote de 17/09).
 

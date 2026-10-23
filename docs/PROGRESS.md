@@ -1,10 +1,21 @@
 # PROGRESS — Defenz To-Do
 
-**Last updated:** 2026-10-13
+**Last updated:** 2026-10-23
 **Version:** 0.4.0
 **Branch:** main
 
-## 🎯 RETOMAR AQUI — 13/10
+## 🎯 RETOMAR AQUI — 23/10
+
+> **DLP GTB na apresentação: IMPLEMENTADO LOCAL (F1–F4), conteúdo aprovado pelo Marcos, NÃO DEPLOYADO.**
+> Spec: `docs/features/feature-apresentacao-dlp-gtb.md` (§14 = estado). Pesquisa: `docs/pedidos/2026-10-23-dlp-gtb-pesquisa.md`.
+> - Coluna `apresentacoes.tipo` já está no Neon (aditiva, default) — o deploy pode ir direto.
+> - Exemplos: `npx tsx scripts/modelo-apresentacao-dlp.ts <pasta>` (cliente fictício, assinado por Marcos Cruz).
+> - **Próximo:** GO do Marcos para deploy (push main) → testar no Portal os dois modos → perguntas P1–P7 à
+>   SecuriSoft (a mais importante: o bundle de US$ 48 inclui IA generativa, OCR, fingerprint?). Quando confirmar,
+>   o item muda de `AGENTE_PLATAFORMA`/`PLATAFORMA` para `ENDPOINT_BUNDLE` e sobe `GTB_VIGENCIA` + hash do teste.
+> - Antes do deploy: conferir Gartner Peer Insights ao vivo (4,7/97 de abr/2026) e a versão vigente da Res. CMN 4.893.
+
+## Histórico — 13/10
 
 > **TUDO EM PRODUÇÃO** (`bbe1a30`, deploy Ready). 1016 testes.
 > - 13/10: continuação de seção sem número no PDF (pedido do Fernando, caso Clayton Casal).

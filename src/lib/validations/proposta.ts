@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { PLANOS, QUANTIDADE_MAX_PROPOSTA, QUANTIDADE_MIN } from '@/lib/proposta/tabela-precos'
-import { COMPLEMENTO_IDS } from '@/lib/proposta/complementos'
+import { COMPLEMENTO_IDS, complemento } from '@/lib/proposta/complementos'
 
 export const PROPOSTA_TIPOS = ['ENDPOINTS'] as const
 
@@ -128,6 +128,22 @@ export const createPropostaSchema = z
   .refine((d) => d.planos.length > 0 || d.complementos.length > 0, {
     message: 'Marque ao menos um plano ou um complemento',
     path: ['planos'],
+  })
+  // Mínimo do fabricante (DLP GTB: 25). Vale para a quantidade EFETIVA — a
+  // própria do add-on ou, sem ela, a do principal (crítica 🟠10, 23/10): sem
+  // isso, 10 licenças no principal e o DLP sem quantidade própria passariam.
+  .superRefine((d, ctx) => {
+    for (const id of d.complementos) {
+      const minimo = complemento(id).quantidadeMinima
+      const efetiva = d.quantidadesComplemento?.[id] ?? d.quantidade
+      if (minimo && efetiva < minimo) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `${complemento(id).nome}: o fabricante só cota a partir de ${minimo} licenças`,
+          path: ['quantidadesComplemento', id],
+        })
+      }
+    }
   })
   // Mesma regra do desconto (achado 15): quantidade para item não marcado seria
   // descartada em silêncio, e o vendedor acharia que tinha aplicado.

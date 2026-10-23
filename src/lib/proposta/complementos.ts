@@ -76,6 +76,13 @@ export interface Complemento {
   mesesCobertura?: readonly number[]
   /** Item sem preço: escopo descrito, investimento sob consulta. */
   sobConsulta?: boolean
+  /**
+   * Menor quantidade que o fabricante cota. Ausente = o mínimo da tabela.
+   *
+   * ⚠️ DLP GTB: a SecuriSoft só cota a partir de 25 licenças (regra de canal
+   * GTB, reunião de 22/10/2026 — feature-apresentacao-dlp-gtb §9).
+   */
+  quantidadeMinima?: number
   /** Moeda de origem. Ausente = BRL. `USD` obriga a nota de câmbio (I-N3). */
   moeda?: 'BRL' | 'USD'
   /** Preço de origem em dólar, antes da conversão. Só serve para a procedência. */
@@ -235,6 +242,7 @@ const OPCOES_NAO_BITDEFENDER: readonly Complemento[] = [
     descontoPadrao: 0,
     precoLiquido: true,
     foraDoTotal: true,
+    quantidadeMinima: 25,
     descricao:
       'Solução integrada para descoberta, classificação e proteção de dados sensíveis nos endpoints. Localiza informações armazenadas em computadores e no Microsoft Outlook, controla dispositivos USB e mídias removíveis, gerencia aplicações e audita arquivos compartilhados. Inclui classificação e watermarking, ampliando a visibilidade e o controle sobre o uso das informações pelos usuários. Com gestão centralizada e políticas adaptáveis ao contexto da organização, protege contra vazamentos acidentais ou intencionais em ambientes locais, remotos ou híbridos. Acompanha o console central on-premises, sem custo adicional. Funcionalidades: Local PC Discovery, MS Outlook Discovery, USB & Device Controls, Classification & Watermarking, Application Controls e File Share Audit.',
     fonte: FONTE_DLP,

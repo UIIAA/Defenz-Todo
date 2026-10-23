@@ -8,6 +8,7 @@ import { PortalTabs } from '@/components/portal/portal-tabs'
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Presentation } from 'lucide-react'
 import { NIVEIS, NIVEL_NOME, type NivelId } from '@/lib/apresentacao/comparativo'
 import { fatosParaSetor } from '@/lib/apresentacao/mercado-fatos'
+import { dlpFatosParaSetor } from '@/lib/apresentacao/dlp-fatos'
 import { mensagemDeErroApi } from '@/lib/api-erro-legivel'
 import { COMPLEMENTOS, type ComplementoId } from '@/lib/proposta/complementos'
 import {
@@ -16,7 +17,10 @@ import {
   type CasoEmRevisao,
 } from '@/components/portal/revisao-casos'
 
+type Tipo = 'bitdefender' | 'dlp'
+
 interface Formulario {
+  tipo: Tipo
   clienteNome: string
   empresaNome: string
   setor: string
@@ -28,6 +32,7 @@ interface Formulario {
 const SETOR_MAX = 80
 
 const INICIAL: Formulario = {
+  tipo: 'bitdefender',
   clienteNome: '',
   empresaNome: '',
   setor: '',
@@ -88,7 +93,8 @@ export default function NovaApresentacaoPage() {
 
   // Prévia do que o nicho muda: a mesma função pura que o servidor usa, então
   // a tela não pode prometer um número que o documento não vai trazer.
-  const fatos = fatosParaSetor(form.setor.trim() || undefined)
+  const dlp = form.tipo === 'dlp'
+  const fatos = (dlp ? dlpFatosParaSetor : fatosParaSetor)(form.setor.trim() || undefined)
   const especificos = fatos.filter((f) => f.setores?.length)
 
   const casosIncluidos = (casos ?? []).filter((c) => c.incluido)
@@ -97,7 +103,7 @@ export default function NovaApresentacaoPage() {
     !!form.clienteNome.trim() &&
     !!form.empresaNome.trim() &&
     !gerando &&
-    (casosIncluidos.length === 0 || aceite)
+    (dlp || casosIncluidos.length === 0 || aceite)
 
   async function gerar() {
     setErro(null)
@@ -110,13 +116,18 @@ export default function NovaApresentacaoPage() {
           clienteNome: form.clienteNome.trim(),
           empresaNome: form.empresaNome.trim(),
           setor: form.setor.trim() || null,
+          tipo: form.tipo,
           nivelDestaque: form.nivelDestaque,
-          complementos: form.complementos,
-          pesquisaId,
+          // No documento só-DLP não há níveis, complementos nem casos: o servidor
+          // recusa casos nesse modo, então nem mandamos.
+          complementos: dlp ? [] : form.complementos,
+          pesquisaId: dlp ? null : pesquisaId,
           aceite,
-          casos: (casos ?? [])
-            .filter((c) => c.incluido)
-            .map(({ bandeiras: _b, incluido: _i, ...c }) => c),
+          casos: dlp
+            ? []
+            : (casos ?? [])
+                .filter((c) => c.incluido)
+                .map(({ bandeiras: _b, incluido: _i, ...c }) => c),
         }),
       })
 
@@ -170,13 +181,31 @@ export default function NovaApresentacaoPage() {
           Nova apresentação
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
-          Documento institucional para quem ainda não conhece a Bitdefender. Vai por e-mail
-          e se explica sozinho, sem apresentador. Não mostra preço — quem faz preço é a
-          proposta.
+          Documento institucional que vai por e-mail e se explica sozinho, sem apresentador.
+          Não mostra preço — quem faz preço é a proposta.
         </p>
       </div>
 
       <div className="max-w-2xl space-y-5 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
+            Tipo de apresentação
+          </span>
+          <select
+            value={form.tipo}
+            onChange={(e) => setForm({ ...form, tipo: e.target.value as Tipo })}
+            className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="bitdefender">Bitdefender GravityZone</option>
+            <option value="dlp">Só DLP · GTB Endpoint Protector</option>
+          </select>
+          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+            {dlp
+              ? 'Para quem já tem antivírus e quer proteção de dados. Sem nenhuma página Bitdefender.'
+              : 'Para incluir o DLP junto, marque “GTB Endpoint Protector (DLP)” nos complementos: ele ganha duas páginas próprias.'}
+          </span>
+        </label>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -231,102 +260,107 @@ export default function NovaApresentacaoPage() {
           </span>
         </label>
 
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-            Nível em destaque
-          </span>
-          <select
-            value={form.nivelDestaque}
-            onChange={(e) => setForm({ ...form, nivelDestaque: e.target.value as NivelId })}
-            className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-          >
-            {NIVEIS.map((n) => (
-              <option key={n} value={n}>
-                {NIVEL_NOME[n]}
-              </option>
-            ))}
-          </select>
-          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-            Marca a coluna recomendada na tabela dos três níveis.
-          </span>
-        </label>
-
-        <div className="rounded-md border border-slate-200 p-4 dark:border-slate-700">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                Casos reais do setor
+        {/* Níveis, casos e complementos são do documento Bitdefender. */}
+        {!dlp && (
+          <>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                Nível em destaque
               </span>
-              <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
-                Busca incidentes noticiados no setor informado. Você revisa antes de
-                virar documento — nada entra sem passar por você.
-              </span>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={pesquisar}
-              disabled={!form.setor.trim() || !form.empresaNome.trim() || pesquisando}
-            >
-              {pesquisando ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Pesquisando…
-                </>
-              ) : casos ? (
-                'Pesquisar de novo'
-              ) : (
-                'Pesquisar'
-              )}
-            </Button>
-          </div>
-
-          {casos && (
-            <div className="mt-4">
-              <RevisaoCasos
-                casos={casos}
-                fontes={fontes}
-                aceite={aceite}
-                descartados={descartados}
-                onChange={setCasos}
-                onAceite={setAceite}
-              />
-            </div>
-          )}
-        </div>
-
-        <div>
-          <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-            Complementos a citar
-          </span>
-          <div className="space-y-1.5">
-            {COMPLEMENTOS.map((c) => (
-              <label
-                key={c.id}
-                className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"
+              <select
+                value={form.nivelDestaque}
+                onChange={(e) => setForm({ ...form, nivelDestaque: e.target.value as NivelId })}
+                className="h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white"
               >
-                <input
-                  type="checkbox"
-                  checked={form.complementos.includes(c.id)}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      complementos: e.target.checked
-                        ? [...form.complementos, c.id]
-                        : form.complementos.filter((x) => x !== c.id),
-                    })
-                  }
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300"
-                />
-                <span>{c.nome.replace('Bitdefender ', '')}</span>
-              </label>
-            ))}
-          </div>
-          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-            A apresentação diz o que cada módulo <strong>faz</strong>, e não mostra
-            valor nenhum — quem faz preço é a proposta.
-          </span>
-        </div>
+                {NIVEIS.map((n) => (
+                  <option key={n} value={n}>
+                    {NIVEL_NOME[n]}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                Marca a coluna recomendada na tabela dos três níveis.
+              </span>
+            </label>
+
+            <div className="rounded-md border border-slate-200 p-4 dark:border-slate-700">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Casos reais do setor
+                  </span>
+                  <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
+                    Busca incidentes noticiados no setor informado. Você revisa antes de
+                    virar documento — nada entra sem passar por você.
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={pesquisar}
+                  disabled={!form.setor.trim() || !form.empresaNome.trim() || pesquisando}
+                >
+                  {pesquisando ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Pesquisando…
+                    </>
+                  ) : casos ? (
+                    'Pesquisar de novo'
+                  ) : (
+                    'Pesquisar'
+                  )}
+                </Button>
+              </div>
+
+              {casos && (
+                <div className="mt-4">
+                  <RevisaoCasos
+                    casos={casos}
+                    fontes={fontes}
+                    aceite={aceite}
+                    descartados={descartados}
+                    onChange={setCasos}
+                    onAceite={setAceite}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div>
+              <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                Complementos a citar
+              </span>
+              <div className="space-y-1.5">
+                {COMPLEMENTOS.map((c) => (
+                  <label
+                    key={c.id}
+                    className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.complementos.includes(c.id)}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          complementos: e.target.checked
+                            ? [...form.complementos, c.id]
+                            : form.complementos.filter((x) => x !== c.id),
+                        })
+                      }
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                    />
+                    <span>{c.nome.replace('Bitdefender ', '')}</span>
+                  </label>
+                ))}
+              </div>
+              <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                A apresentação diz o que cada módulo <strong>faz</strong>, e não mostra
+                valor nenhum — quem faz preço é a proposta.
+              </span>
+            </div>
+          </>
+        )}
 
         {erro && (
           <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">

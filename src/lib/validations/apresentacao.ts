@@ -43,6 +43,14 @@ export const createApresentacaoSchema = z
   /** Complementos a CITAR. Sem preço — ver I-C1 da feature-complementos. */
   complementos: z.array(z.enum(COMPLEMENTO_IDS)).max(COMPLEMENTO_IDS.length).default([]),
   companyId: z.string().cuid().nullable().optional(),
+  /** `dlp` = apresentação só de DLP GTB (feature-apresentacao-dlp-gtb.md §5.2). */
+  tipo: z.enum(['bitdefender', 'dlp']).default('bitdefender'),
+  })
+  // A pesquisa de casos mapeia caso → recurso Bitdefender; no documento DLP não
+  // há página de casos. Recusar em vez de descartar em silêncio (spec §10).
+  .refine((d) => d.tipo !== 'dlp' || d.casos.length === 0, {
+    message: 'A apresentação só de DLP não leva casos pesquisados',
+    path: ['casos'],
   })
   .refine((d) => d.casos.length === 0 || !!d.pesquisaId, {
     message: 'Casos só entram acompanhados da pesquisa que os originou',

@@ -8,9 +8,10 @@ import { createApresentacaoSchema } from '@/lib/validations/apresentacao'
 import { renderPdf } from '@/lib/proposta/pdf'
 import {
   renderApresentacaoHtml,
-  TEMPLATE_VERSAO,
+  templateVersaoDoDocumento,
 } from '@/lib/apresentacao/templates/institucional-a4'
 import { fatosParaSetor } from '@/lib/apresentacao/mercado-fatos'
+import { dlpFatosParaSetor } from '@/lib/apresentacao/dlp-fatos'
 import { revisarCasos, exigirAceite } from '@/lib/apresentacao/pesquisa/revisao'
 import type { CasoApresentado } from '@/lib/apresentacao/templates/institucional-a4'
 import { formatarDataSP } from '@/lib/apresentacao/apresentacao-server'
@@ -72,7 +73,11 @@ export async function POST(request: NextRequest) {
 
     const setor = dados.setor?.trim() || undefined
     // Os fatos que EFETIVAMENTE entram — congelados no registro logo abaixo.
-    const fatos = fatosParaSetor(setor)
+    // ⚠️ O documento DLP tem catálogo PRÓPRIO, só fonte primária (crítica 🟠8):
+    // o fatosParaSetor traria o R$ 7,19 mi e os números de ransomware.
+    const dlp = dados.tipo === 'dlp'
+    const fatos = dlp ? dlpFatosParaSetor(setor) : fatosParaSetor(setor)
+    const complementos = dlp ? [] : dados.complementos
     const agora = new Date()
 
     const html = renderApresentacaoHtml({
@@ -93,7 +98,8 @@ export async function POST(request: NextRequest) {
       fatos,
       casos,
       nivelDestaque: dados.nivelDestaque,
-      complementos: dados.complementos,
+      complementos,
+      tipo: dados.tipo,
     })
 
     const pdf = await renderPdf(html)
@@ -116,11 +122,12 @@ export async function POST(request: NextRequest) {
         })),
         // Congelado pela mesma razão do fatosSnapshot: a descrição do módulo
         // vem do catálogo, e catálogo muda (crítica C1).
-        complementosSnapshot: dados.complementos.length ? dados.complementos : undefined,
+        complementosSnapshot: complementos.length ? complementos : undefined,
         // Congelados: sem isto a reimpressão perderia a página de casos.
         casosSnapshot: casos.length ? (casos as unknown as Prisma.InputJsonValue) : undefined,
         pesquisaId: dados.pesquisaId ?? undefined,
-        templateVersao: TEMPLATE_VERSAO,
+        templateVersao: templateVersaoDoDocumento(dados.tipo, complementos),
+        tipo: dados.tipo,
         arquivoNome,
         companyId,
         criadoPorId: user.id,

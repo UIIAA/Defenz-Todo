@@ -1187,6 +1187,11 @@ model Apresentacao {
   /// Nivel destacado na tabela dos tres niveis.
   nivelDestaque String
 
+  /// 'bitdefender' (o documento de sempre) | 'dlp' (so DLP GTB).
+  /// feature-apresentacao-dlp-gtb.md -- sem isto o re-download de um documento
+  /// so-DLP sairia como apresentacao Bitdefender.
+  tipo String @default("bitdefender")
+
   /// Os fatos de mercado que EFETIVAMENTE entraram, congelados. Mesma razao do
   /// precoSnapshot da Proposta: sem isto, "o que a gente afirmou ao cliente X"
   /// vira memoria assim que o catalogo mudar.
