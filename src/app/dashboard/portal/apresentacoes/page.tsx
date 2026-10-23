@@ -7,7 +7,6 @@ import { PortalTabs } from '@/components/portal/portal-tabs'
 import { AlertCircle, Download, Loader2, Search } from 'lucide-react'
 import { formatDate } from '@/lib/date'
 import { NIVEL_NOME, type NivelId } from '@/lib/apresentacao/comparativo'
-import { TEMPLATE_VERSAO } from '@/lib/apresentacao/templates/institucional-a4'
 
 interface Item {
   id: string
@@ -15,7 +14,9 @@ interface Item {
   empresaNome: string
   setor: string | null
   nivelDestaque: string
+  tipo: string
   templateVersao: string
+  divergente: boolean
   arquivoNome: string
   createdAt: string
   criadoPor: { name: string | null; email: string } | null
@@ -130,7 +131,7 @@ export default function LogApresentacoesPage() {
                   {/* O texto institucional vive no código: documento emitido com
                       outra versão sai DIFERENTE do que o cliente recebeu, e isso
                       tem que aparecer, não ser descoberto pelo cliente. */}
-                  {a.templateVersao !== TEMPLATE_VERSAO && (
+                  {a.divergente && (
                     <div
                       className="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400"
                       title={`Emitida com o modelo de ${a.templateVersao}. Os números são os da época; o texto institucional é o de hoje.`}
@@ -144,7 +145,9 @@ export default function LogApresentacoesPage() {
                   {a.setor || <span className="text-slate-400">institucional</span>}
                 </td>
                 <td className="whitespace-nowrap px-4 py-2">
-                  {NIVEL_NOME[a.nivelDestaque as NivelId] ?? a.nivelDestaque}
+                  {a.tipo === 'dlp'
+                    ? 'Só DLP'
+                    : (NIVEL_NOME[a.nivelDestaque as NivelId] ?? a.nivelDestaque)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-2">
                   {formatDate(a.createdAt)}

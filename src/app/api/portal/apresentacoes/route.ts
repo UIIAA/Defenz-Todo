@@ -13,7 +13,10 @@ import {
 import { fatosParaSetor } from '@/lib/apresentacao/mercado-fatos'
 import { dlpFatosParaSetor } from '@/lib/apresentacao/dlp-fatos'
 import { revisarCasos, exigirAceite } from '@/lib/apresentacao/pesquisa/revisao'
-import type { CasoApresentado } from '@/lib/apresentacao/templates/institucional-a4'
+import type {
+  CasoApresentado,
+  TipoApresentacao,
+} from '@/lib/apresentacao/templates/institucional-a4'
 import { formatarDataSP } from '@/lib/apresentacao/apresentacao-server'
 import { nomeArquivoApresentacao } from '@/lib/apresentacao/apresentacao-server'
 
@@ -103,7 +106,7 @@ export async function POST(request: NextRequest) {
     })
 
     const pdf = await renderPdf(html)
-    const arquivoNome = nomeArquivoApresentacao(dados.empresaNome, agora)
+    const arquivoNome = nomeArquivoApresentacao(dados.empresaNome, agora, dados.tipo)
 
     // Registro DEPOIS do render: sem número de série a queimar, gravar antes só
     // criaria linha órfã se o Chromium falhasse (a cicatriz da Proposta, §8).
@@ -200,6 +203,8 @@ export async function GET(request: NextRequest) {
         empresaNome: true,
         setor: true,
         nivelDestaque: true,
+        tipo: true,
+        complementosSnapshot: true,
         templateVersao: true,
         arquivoNome: true,
         createdAt: true,
@@ -209,7 +214,19 @@ export async function GET(request: NextRequest) {
       take: MAX_ITENS,
     })
 
-    return NextResponse.json({ success: true, data: apresentacoes })
+    // A versão esperada depende do documento (GTB carimba `+gtb-<vigência>`): comparar
+    // com TEMPLATE_VERSAO puro marcaria como divergente todo documento novo com DLP.
+    const data = apresentacoes.map(({ complementosSnapshot, ...a }) => ({
+      ...a,
+      divergente:
+        a.templateVersao !==
+        templateVersaoDoDocumento(
+          a.tipo as TipoApresentacao,
+          (complementosSnapshot as string[] | null) ?? undefined
+        ),
+    }))
+
+    return NextResponse.json({ success: true, data })
   } catch (error) {
     return handleApiError(error)
   }

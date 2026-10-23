@@ -10,12 +10,17 @@ export function formatarDataSP(quando: Date): string {
 }
 
 /**
- * `Defenz_Apresentacao_<Empresa>_<AAAA-MM-DD>_<HHMM>.pdf`.
+ * `Defenz_Apresentacao_<Empresa>_<AAAA-MM-DD>_<HHMM>.pdf` — `Defenz_Apresentacao_DLP_...` no
+ * modo só DLP, para os dois documentos da mesma empresa não saírem com o mesmo nome.
  *
  * Sufixo é o HORÁRIO, não um contador: contador exigiria consultar o banco e
  * dois cliques simultâneos gerariam o mesmo nome (spec §8).
  */
-export function nomeArquivoApresentacao(empresaNome: string, quando: Date): string {
+export function nomeArquivoApresentacao(
+  empresaNome: string,
+  quando: Date,
+  tipo: 'bitdefender' | 'dlp' = 'bitdefender'
+): string {
   const slug =
     empresaNome
       .normalize('NFD')
@@ -35,7 +40,8 @@ export function nomeArquivoApresentacao(empresaNome: string, quando: Date): stri
   }).formatToParts(quando)
   const g = (t: string) => partes.find((p) => p.type === t)?.value ?? '00'
 
-  return `Defenz_Apresentacao_${slug}_${g('year')}-${g('month')}-${g('day')}_${g('hour')}${g('minute')}.pdf`
+  const prefixo = tipo === 'dlp' ? 'Defenz_Apresentacao_DLP' : 'Defenz_Apresentacao'
+  return `${prefixo}_${slug}_${g('year')}-${g('month')}-${g('day')}_${g('hour')}${g('minute')}.pdf`
 }
 
 /**

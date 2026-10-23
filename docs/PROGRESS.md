@@ -6,14 +6,14 @@
 
 ## 🎯 RETOMAR AQUI — 23/10
 
-> **DLP GTB na apresentação: IMPLEMENTADO LOCAL (F1–F4), conteúdo aprovado pelo Marcos, NÃO DEPLOYADO.**
+> **DLP GTB na apresentação: EM PRODUÇÃO (23/10).** Marcos dispensou as perguntas à SecuriSoft — o texto
+> fica no escopo conservador (só os 6 itens do bundle SecuriSoft, sem certificação). 1035 testes.
 > Spec: `docs/features/feature-apresentacao-dlp-gtb.md` (§14 = estado). Pesquisa: `docs/pedidos/2026-10-23-dlp-gtb-pesquisa.md`.
-> - Coluna `apresentacoes.tipo` já está no Neon (aditiva, default) — o deploy pode ir direto.
+> - Log de apresentações: "Só DLP" na coluna Nível; divergência de modelo calculada por documento; arquivo `Defenz_Apresentacao_DLP_...`.
 > - Exemplos: `npx tsx scripts/modelo-apresentacao-dlp.ts <pasta>` (cliente fictício, assinado por Marcos Cruz).
-> - **Próximo:** GO do Marcos para deploy (push main) → testar no Portal os dois modos → perguntas P1–P7 à
->   SecuriSoft (a mais importante: o bundle de US$ 48 inclui IA generativa, OCR, fingerprint?). Quando confirmar,
->   o item muda de `AGENTE_PLATAFORMA`/`PLATAFORMA` para `ENDPOINT_BUNDLE` e sobe `GTB_VIGENCIA` + hash do teste.
-> - Antes do deploy: conferir Gartner Peer Insights ao vivo (4,7/97 de abr/2026) e a versão vigente da Res. CMN 4.893.
+> - Se um dia a SecuriSoft confirmar IA/OCR/fingerprint no bundle: mover de `AGENTE_PLATAFORMA`/`PLATAFORMA` para
+>   `ENDPOINT_BUNDLE` e subir `GTB_VIGENCIA` + hash do teste.
+> - Em aberto: rota de apresentação não grava AuditLog.
 
 ## Histórico — 13/10
 

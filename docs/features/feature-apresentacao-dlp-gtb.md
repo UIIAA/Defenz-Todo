@@ -280,5 +280,8 @@ Crítica adversarial (12 achados) — o que mudou na implementação:
 - **2ª crítica** (aplicado): USB sem "pelo conteúdo do arquivo"; cartão IBM shadow AI só na página de IA;
   template recusa fato fora de `DLP_FATOS` no modo B.
 
-**Pendente:** deploy (push main) com GO do Marcos · perguntas P1–P7 à SecuriSoft · conferir Gartner ao
-vivo e a versão vigente da Res. CMN 4.893 · listagem não mostra `tipo` e o nome do arquivo é o mesmo nos dois modos (🟡).
+**Pendente (atualizado 23/10, deploy):** Marcos dispensou as perguntas P1–P7 — o texto segue no escopo
+conservador (só os 6 itens SecuriSoft, `certificada=false`). Os dois 🟡 fechados: a listagem mostra
+"Só DLP" e calcula a divergência com `templateVersaoDoDocumento` (antes todo documento novo com GTB
+aparecia como modelo divergente), e o arquivo do modo B sai `Defenz_Apresentacao_DLP_...`. Em aberto:
+rota de apresentação não grava AuditLog.

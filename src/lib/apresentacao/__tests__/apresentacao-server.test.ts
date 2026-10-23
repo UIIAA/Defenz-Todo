@@ -15,6 +15,12 @@ describe('nome do arquivo', () => {
     )
   })
 
+  it('modo só DLP não sai com o mesmo nome do documento Bitdefender', () => {
+    expect(nomeArquivoApresentacao('Clínica São Rafael', quando, 'dlp')).toBe(
+      'Defenz_Apresentacao_DLP_Clinica-Sao-Rafael_2026-08-22_0030.pdf'
+    )
+  })
+
   it('empresa sem caractere aproveitável não gera nome quebrado', () => {
     expect(nomeArquivoApresentacao('///', quando)).toContain('Defenz_Apresentacao_Cliente_')
   })
