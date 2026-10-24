@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, ChevronLeft, ChevronRight, FileText, Plus, Pencil, Trash2, Upload, ArrowUpRight, Link2 } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, FileText, Plus, Pencil, Trash2, Upload, ArrowUpRight, Link2, Download } from 'lucide-react'
 import { formatDateTime } from '@/lib/date'
 
 interface AuditLog {
@@ -40,6 +40,7 @@ const ACTION_LABELS: Record<string, { label: string; color: string; icon: typeof
   DELETE: { label: 'Exclusao', color: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20', icon: Trash2 },
   IMPORT: { label: 'Importacao', color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20', icon: Upload },
   ESCALATE: { label: 'Escalonamento', color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20', icon: ArrowUpRight },
+  DOWNLOAD: { label: 'Download', color: 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/40', icon: Download },
   LINK: { label: 'Vinculo', color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20', icon: Link2 },
 }
 
@@ -136,6 +137,7 @@ export default function LogsPage() {
             <SelectItem value="UPDATE">Edicao</SelectItem>
             <SelectItem value="DELETE">Exclusao</SelectItem>
             <SelectItem value="IMPORT">Importacao</SelectItem>
+            <SelectItem value="DOWNLOAD">Download</SelectItem>
           </SelectContent>
         </Select>
 

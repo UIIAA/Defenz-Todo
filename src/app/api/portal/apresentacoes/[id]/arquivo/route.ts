@@ -12,7 +12,8 @@ import {
   renderApresentacaoHtml,
   templateVersaoDoDocumento,
 } from '@/lib/apresentacao/templates/institucional-a4'
-import { formatarDataSP } from '@/lib/apresentacao/apresentacao-server'
+import { formatarDataSP, auditoriaReDownload } from '@/lib/apresentacao/apresentacao-server'
+import { createAuditLog } from '@/lib/audit'
 import type { FatoMercado } from '@/lib/apresentacao/mercado-fatos'
 import type { NivelId } from '@/lib/apresentacao/comparativo'
 
@@ -92,7 +93,22 @@ export async function GET(
     })
 
     const pdf = await renderPdf(html)
-    const divergente = registro.templateVersao !== templateVersaoDoDocumento(tipo, complementos)
+    const templateAtual = templateVersaoDoDocumento(tipo, complementos)
+    const divergente = registro.templateVersao !== templateAtual
+
+    await createAuditLog({
+      userId: user.id,
+      action: 'DOWNLOAD',
+      entityType: 'Apresentacao',
+      entityId: id,
+      userEmail: user.email ?? '',
+      changes: auditoriaReDownload({
+        arquivoNome: registro.arquivoNome,
+        emitidaEm: registro.createdAt,
+        templateVersao: registro.templateVersao,
+        templateAtual,
+      }),
+    })
 
     return new NextResponse(new Uint8Array(pdf), {
       status: 200,

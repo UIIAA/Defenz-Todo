@@ -18,7 +18,11 @@ import type {
   TipoApresentacao,
 } from '@/lib/apresentacao/templates/institucional-a4'
 import { formatarDataSP } from '@/lib/apresentacao/apresentacao-server'
-import { nomeArquivoApresentacao } from '@/lib/apresentacao/apresentacao-server'
+import {
+  nomeArquivoApresentacao,
+  auditoriaEmissao,
+} from '@/lib/apresentacao/apresentacao-server'
+import { createAuditLog } from '@/lib/audit'
 
 export const maxDuration = 120
 
@@ -110,7 +114,8 @@ export async function POST(request: NextRequest) {
 
     // Registro DEPOIS do render: sem número de série a queimar, gravar antes só
     // criaria linha órfã se o Chromium falhasse (a cicatriz da Proposta, §8).
-    await db.apresentacao.create({
+    const templateVersao = templateVersaoDoDocumento(dados.tipo, complementos)
+    const registro = await db.apresentacao.create({
       data: {
         clienteNome: dados.clienteNome,
         empresaNome: dados.empresaNome,
@@ -129,12 +134,33 @@ export async function POST(request: NextRequest) {
         // Congelados: sem isto a reimpressão perderia a página de casos.
         casosSnapshot: casos.length ? (casos as unknown as Prisma.InputJsonValue) : undefined,
         pesquisaId: dados.pesquisaId ?? undefined,
-        templateVersao: templateVersaoDoDocumento(dados.tipo, complementos),
+        templateVersao,
         tipo: dados.tipo,
         arquivoNome,
         companyId,
         criadoPorId: user.id,
       },
+      select: { id: true },
+    })
+
+    await createAuditLog({
+      userId: user.id,
+      action: 'CREATE',
+      entityType: 'Apresentacao',
+      entityId: registro.id,
+      userEmail: user.email ?? '',
+      changes: auditoriaEmissao({
+        tipo: dados.tipo,
+        empresaNome: dados.empresaNome,
+        clienteNome: dados.clienteNome,
+        setor,
+        nivelDestaque: dados.nivelDestaque,
+        complementos,
+        casos: casos.length,
+        casosRecusados: recusados,
+        arquivoNome,
+        templateVersao,
+      }),
     })
 
     return new NextResponse(new Uint8Array(pdf), {

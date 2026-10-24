@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { formatarDataSP, nomeArquivoApresentacao, inicioDoDiaSP } from '../apresentacao-server'
+import {
+  formatarDataSP,
+  nomeArquivoApresentacao,
+  inicioDoDiaSP,
+  auditoriaEmissao,
+  auditoriaReDownload,
+} from '../apresentacao-server'
 import { createApresentacaoSchema } from '@/lib/validations/apresentacao'
 
 describe('nome do arquivo', () => {
@@ -96,5 +102,44 @@ describe('inicioDoDiaSP — o cap diário é do dia do vendedor, não do servido
     expect(inicioDoDiaSP(new Date('2026-09-02T12:00:00Z')).toISOString()).toBe(
       '2026-09-02T03:00:00.000Z'
     )
+  })
+})
+
+describe('AuditLog da apresentação', () => {
+  const base = {
+    empresaNome: 'Clínica São Rafael',
+    clienteNome: 'Dr. Antônio',
+    setor: 'saude',
+    nivelDestaque: 'premium',
+    complementos: ['DLP_GTB'],
+    casos: 2,
+    casosRecusados: 1,
+    arquivoNome: 'Defenz_Apresentacao_x.pdf',
+    templateVersao: '2026-09-17+gtb-2026-10',
+  }
+
+  it('emissão Bitdefender registra nível, complementos e casos barrados', () => {
+    const m = auditoriaEmissao({ ...base, tipo: 'bitdefender' })
+    expect(m.tipo.to).toBe('Bitdefender')
+    expect(m.complementos.to).toBe('DLP_GTB')
+    expect(m.casos.to).toBe('2 citado(s) · 1 barrado(s) pela revisão')
+    expect(m.templateVersao.to).toBe('2026-09-17+gtb-2026-10')
+  })
+
+  it('emissão só DLP não registra nível nem casos (o documento não tem)', () => {
+    const m = auditoriaEmissao({ ...base, tipo: 'dlp', setor: null })
+    expect(m.tipo.to).toBe('Só DLP')
+    expect(m.setor.to).toBe('institucional')
+    expect(m.nivelDestaque).toBeUndefined()
+    expect(m.casos).toBeUndefined()
+  })
+
+  it('re-download com modelo divergente registra de qual para qual', () => {
+    const emitidaEm = new Date('2026-08-22T15:00:00Z')
+    const igual = auditoriaReDownload({ arquivoNome: 'a.pdf', emitidaEm, templateVersao: 'v1', templateAtual: 'v1' })
+    expect(igual.modelo).toBeUndefined()
+    const diverge = auditoriaReDownload({ arquivoNome: 'a.pdf', emitidaEm, templateVersao: 'v1', templateAtual: 'v2' })
+    expect(diverge.modelo).toEqual({ from: 'v1', to: 'v2' })
+    expect(diverge.emitidaEm.to).toBe('22/08/2026')
   })
 })
