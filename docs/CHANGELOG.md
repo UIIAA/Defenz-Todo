@@ -3,6 +3,9 @@
 Formato: semver. Entradas mais recentes primeiro.
 
 ## [Unreleased]
+### Added (2026-10-24 — AuditLog da apresentação)
+- Emissão de apresentação grava `CREATE` no AuditLog (tipo, empresa, cliente, setor, nível, complementos, casos barrados, arquivo, versão do modelo); re-download grava `DOWNLOAD` (nova ação em /dashboard/logs), com de-para do modelo quando o documento sai diferente do original. 1038 testes.
+
 ### Added (2026-10-23 — DLP GTB na apresentação)
 > **1035 testes verdes**, build ok. **Deployado em 23/10.** Coluna `apresentacoes.tipo` já criada no Neon.
 

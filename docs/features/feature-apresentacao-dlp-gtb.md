@@ -283,5 +283,5 @@ Crítica adversarial (12 achados) — o que mudou na implementação:
 **Pendente (atualizado 23/10, deploy):** Marcos dispensou as perguntas P1–P7 — o texto segue no escopo
 conservador (só os 6 itens SecuriSoft, `certificada=false`). Os dois 🟡 fechados: a listagem mostra
 "Só DLP" e calcula a divergência com `templateVersaoDoDocumento` (antes todo documento novo com GTB
-aparecia como modelo divergente), e o arquivo do modo B sai `Defenz_Apresentacao_DLP_...`. Em aberto:
-rota de apresentação não grava AuditLog.
+aparecia como modelo divergente), e o arquivo do modo B sai `Defenz_Apresentacao_DLP_...`. AuditLog
+entregue em 24/10 (`79a9bc6`): emissão = `CREATE`, re-download = `DOWNLOAD`.

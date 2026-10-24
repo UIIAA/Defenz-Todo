@@ -13,7 +13,9 @@
 > - Exemplos: `npx tsx scripts/modelo-apresentacao-dlp.ts <pasta>` (cliente fictício, assinado por Marcos Cruz).
 > - Se um dia a SecuriSoft confirmar IA/OCR/fingerprint no bundle: mover de `AGENTE_PLATAFORMA`/`PLATAFORMA` para
 >   `ENDPOINT_BUNDLE` e subir `GTB_VIGENCIA` + hash do teste.
-> - Em aberto: rota de apresentação não grava AuditLog.
+> - **AuditLog (24/10, `79a9bc6`):** emissão grava `CREATE` e re-download grava `DOWNLOAD` (com de-para do modelo
+>   quando diverge), entityType `Apresentacao`, visíveis em /dashboard/logs. Conferido em prod pelo Chrome: Só DLP
+>   (13 págs) e Bitdefender+DLP (12 págs) emitidos como `TESTE Claude ...`. Apresentações antigas não têm log retroativo.
 
 ## Histórico — 13/10
 
